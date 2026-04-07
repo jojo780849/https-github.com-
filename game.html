@@ -2,7 +2,10 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>生存割草 V6 - 天赋系统</title>
+    <title>生存割草 V7 - 移动端支持</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <style>
         body {
             margin: 0; overflow: hidden; background-color: #1a1a1a;
@@ -98,6 +101,57 @@
         
         /* 当前天赋显示 */
         #active-talents { position: absolute; top: 65px; left: 20px; font-size: 12px; opacity: 0.8; pointer-events: none; }
+        
+        /* 虚拟摇杆 */
+        #joystick-container {
+            display: none; /* 默认隐藏，触屏设备显示 */
+            position: fixed; bottom: 80px; left: 60px;
+            width: 120px; height: 120px; z-index: 50;
+        }
+        #joystick-base {
+            position: absolute; width: 120px; height: 120px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;
+        }
+        #joystick-stick {
+            position: absolute; width: 50px; height: 50px;
+            background: radial-gradient(circle, rgba(0,229,255,0.8) 0%, rgba(0,229,255,0.4) 100%);
+            border: 2px solid rgba(0,229,255,0.9); border-radius: 50%;
+            left: 35px; top: 35px; /* 居中 */
+            box-shadow: 0 0 15px rgba(0,229,255,0.5);
+        }
+        
+        /* 移动端提示 */
+        #mobile-hint {
+            display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            font-size: 12px; color: rgba(255,255,255,0.5); z-index: 50; pointer-events: none;
+        }
+        
+        /* 移动端样式调整 */
+        @media (max-width: 1024px), (pointer: coarse) {
+            #joystick-container { display: block; }
+            #mobile-hint { display: block; }
+            canvas { width: 100vw !important; height: auto !important; max-height: 70vh; border-radius: 0; }
+            body { overflow: hidden; touch-action: none; }
+            #ui { top: 10px; left: 10px; font-size: 12px; }
+            #ui h2 { font-size: 14px; margin: 0; }
+            #exp-bar-container { width: 200px; }
+            #timer { top: 10px; right: 10px; font-size: 18px; }
+            #active-talents { top: 50px; font-size: 10px; }
+            #weapons-display { font-size: 11px; }
+            #boss-bar-container { width: 80%; top: 45px; }
+            #talent-select h1 { font-size: 24px; }
+            #talent-select .subtitle { font-size: 12px; }
+            #talent-cards { gap: 8px; padding: 0 10px; }
+            .talent-card { width: 100px; padding: 10px; }
+            .talent-icon { font-size: 28px; }
+            .talent-name { font-size: 13px; }
+            .talent-desc { font-size: 10px; }
+            #levelup-menu { padding: 15px; width: 95%; max-width: none; }
+            .card { width: 140px; padding: 10px; margin: 5px; }
+            .card h3 { font-size: 14px; }
+            .card p { font-size: 11px; }
+        }
     </style>
 </head>
 <body>
@@ -118,6 +172,13 @@
     <div id="wave-notice"></div>
     <div id="enemy-stats"></div>
     <div id="active-talents"></div>
+
+    <!-- 虚拟摇杆 -->
+    <div id="joystick-container">
+        <div id="joystick-base"></div>
+        <div id="joystick-stick"></div>
+    </div>
+    <div id="mobile-hint">🕹️ 左侧滑动移动 | 自动攻击</div>
 
     <!-- 开局天赋选择 -->
     <div id="talent-select">
@@ -157,6 +218,8 @@
     const rerollBtn = document.getElementById('reroll-btn');
     const startBtn = document.getElementById('start-btn');
     const activeTalentsEl = document.getElementById('active-talents');
+    const joystickContainer = document.getElementById('joystick-container');
+    const joystickStick = document.getElementById('joystick-stick');
 
     let score = 0;
     let frameCount = 0;
@@ -357,6 +420,111 @@
 
     window.addEventListener('keydown', (e) => { const key = e.key.toLowerCase(); if (key in keys) keys[key] = true; });
     window.addEventListener('keyup', (e) => { const key = e.key.toLowerCase(); if (key in keys) keys[key] = false; });
+
+    // === 虚拟摇杆系统 ===
+    let joystickActive = false;
+    let joystickTouchId = null;
+    let joystickInput = { x: 0, y: 0 }; // -1 到 1 的方向值
+    const joystickMaxDistance = 35; // 摇杆最大移动距离
+
+    // 检测是否为触屏设备
+    const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    
+    // 响应式 Canvas
+    function resizeCanvas() {
+        if (isTouchDevice || window.innerWidth <= 1024) {
+            const maxWidth = window.innerWidth;
+            const maxHeight = window.innerHeight * 0.65;
+            const ratio = Math.min(maxWidth / 1000, maxHeight / 700);
+            canvas.style.width = (1000 * ratio) + 'px';
+            canvas.style.height = (700 * ratio) + 'px';
+        }
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // 触屏事件处理
+    function handleJoystickStart(e) {
+        e.preventDefault();
+        const touch = e.changedTouches[0];
+        const rect = joystickContainer.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        
+        // 检查触摸是否在摇杆区域附近
+        const distFromCenter = Math.hypot(touch.clientX - centerX, touch.clientY - centerY);
+        if (distFromCenter < 100) {
+            joystickActive = true;
+            joystickTouchId = touch.identifier;
+            updateJoystickPosition(touch.clientX, touch.clientY, rect);
+        }
+    }
+
+    function handleJoystickMove(e) {
+        if (!joystickActive) return;
+        e.preventDefault();
+        
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            const touch = e.changedTouches[i];
+            if (touch.identifier === joystickTouchId) {
+                const rect = joystickContainer.getBoundingClientRect();
+                updateJoystickPosition(touch.clientX, touch.clientY, rect);
+                break;
+            }
+        }
+    }
+
+    function handleJoystickEnd(e) {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            if (e.changedTouches[i].identifier === joystickTouchId) {
+                joystickActive = false;
+                joystickTouchId = null;
+                joystickInput = { x: 0, y: 0 };
+                // 重置摇杆位置
+                joystickStick.style.left = '35px';
+                joystickStick.style.top = '35px';
+                break;
+            }
+        }
+    }
+
+    function updateJoystickPosition(touchX, touchY, rect) {
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        
+        let deltaX = touchX - centerX;
+        let deltaY = touchY - centerY;
+        
+        // 限制在最大距离内
+        const distance = Math.hypot(deltaX, deltaY);
+        if (distance > joystickMaxDistance) {
+            deltaX = (deltaX / distance) * joystickMaxDistance;
+            deltaY = (deltaY / distance) * joystickMaxDistance;
+        }
+        
+        // 更新摇杆位置
+        joystickStick.style.left = (35 + deltaX) + 'px';
+        joystickStick.style.top = (35 + deltaY) + 'px';
+        
+        // 计算输入值 (-1 到 1)
+        joystickInput.x = deltaX / joystickMaxDistance;
+        joystickInput.y = deltaY / joystickMaxDistance;
+    }
+
+    // 绑定触屏事件
+    if (isTouchDevice) {
+        joystickContainer.addEventListener('touchstart', handleJoystickStart, { passive: false });
+        document.addEventListener('touchmove', handleJoystickMove, { passive: false });
+        document.addEventListener('touchend', handleJoystickEnd, { passive: false });
+        document.addEventListener('touchcancel', handleJoystickEnd, { passive: false });
+        
+        // 防止页面滚动和缩放
+        document.addEventListener('touchmove', (e) => {
+            if (e.target === canvas || e.target.closest('#joystick-container')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+    }
 
     function getDistance(x1, y1, x2, y2) { return Math.hypot(x2 - x1, y2 - y1); }
     function randomInRange(min, max) { return Math.random() * (max - min) + min; }
@@ -1264,11 +1432,33 @@
             }
         }
 
-        // 玩家移动
-        if (keys.w && player.y - player.radius > 0) player.y -= player.speed;
-        if (keys.s && player.y + player.radius < canvas.height) player.y += player.speed;
-        if (keys.a && player.x - player.radius > 0) player.x -= player.speed;
-        if (keys.d && player.x + player.radius < canvas.width) player.x += player.speed;
+        // 玩家移动（键盘 + 虚拟摇杆）
+        let moveX = 0, moveY = 0;
+        
+        // 键盘输入
+        if (keys.w) moveY -= 1;
+        if (keys.s) moveY += 1;
+        if (keys.a) moveX -= 1;
+        if (keys.d) moveX += 1;
+        
+        // 虚拟摇杆输入（优先级更高）
+        if (joystickActive && (Math.abs(joystickInput.x) > 0.1 || Math.abs(joystickInput.y) > 0.1)) {
+            moveX = joystickInput.x;
+            moveY = joystickInput.y;
+        }
+        
+        // 标准化对角移动
+        const moveLength = Math.hypot(moveX, moveY);
+        if (moveLength > 0) {
+            moveX = moveX / moveLength;
+            moveY = moveY / moveLength;
+        }
+        
+        // 应用移动
+        const newX = player.x + moveX * player.speed;
+        const newY = player.y + moveY * player.speed;
+        if (newX > player.radius && newX < canvas.width - player.radius) player.x = newX;
+        if (newY > player.radius && newY < canvas.height - player.radius) player.y = newY;
 
         // 所有武器
         fireBullets();

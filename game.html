@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>生存割草 V10 - 顶视角射击</title>
+    <title>生存割草 V11 - 深度Boss战</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
@@ -49,17 +49,21 @@
             display: none; position: absolute; top: 5px; left: 50%; transform: translateX(-50%);
             width: 90%; max-width: 400px; text-align: center; z-index: 20;
         }
-        #boss-name { font-size: 14px; color: #ff4444; margin-bottom: 3px; text-shadow: 0 0 10px #ff0000; }
-        #boss-bar-bg { width: 100%; height: 10px; background: #333; border-radius: 5px; overflow: hidden; border: 2px solid #ff4444; }
-        #boss-bar { width: 100%; height: 100%; background: linear-gradient(90deg, #ff0000, #ff6600); transition: width 0.3s; }
+        #boss-name { font-size: 14px; color: #ff4444; margin-bottom: 3px; text-shadow: 0 0 10px #ff0000; transition: all 0.3s; }
+        #boss-bar-bg { width: 100%; height: 12px; background: #222; border-radius: 6px; overflow: hidden; border: 2px solid #ff4444; box-shadow: 0 0 10px rgba(255,0,0,0.3); }
+        #boss-bar { width: 100%; height: 100%; background: linear-gradient(90deg, #ff0000, #ff6600, #ffaa00); transition: width 0.3s; position: relative; }
+        #boss-bar::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 50%; background: linear-gradient(180deg, rgba(255,255,255,0.3), transparent); }
         
         /* Boss 警告 */
         #boss-warning {
             display: none; position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
-            font-size: 28px; color: #ff0000; text-shadow: 0 0 30px #ff0000;
-            animation: blink 0.3s infinite; z-index: 30;
+            font-size: 28px; color: #ff0000; text-shadow: 0 0 30px #ff0000, 0 0 60px #ff0000;
+            animation: bossAppear 0.5s ease-out, blink 0.3s infinite 0.5s; z-index: 30;
+            background: rgba(0,0,0,0.7); padding: 15px 30px; border-radius: 10px;
+            border: 2px solid #ff0000;
         }
-        @keyframes blink { 50% { opacity: 0.5; } }
+        @keyframes bossAppear { from { transform: translate(-50%, -50%) scale(2); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+        @keyframes blink { 50% { opacity: 0.7; text-shadow: 0 0 50px #ff0000, 0 0 100px #ff0000; } }
         
         /* 波次提示 */
         #wave-notice {
@@ -823,13 +827,82 @@
     function getDistance(x1, y1, x2, y2) { return Math.hypot(x2 - x1, y2 - y1); }
     function randomInRange(min, max) { return Math.random() * (max - min) + min; }
 
-    // --- Boss 定义 ---
+    // --- Boss 定义（V11 深度Boss战系统）---
     const bossTypes = [
-        { name: '🔥 炎魔领主', color: '#ff4400', radius: 40, hpMult: 50, speed: 1.2, pattern: 'charge', expDrop: 50 },
-        { name: '💀 骷髅王', color: '#aaaaaa', radius: 35, hpMult: 40, speed: 0.8, pattern: 'summon', expDrop: 60 },
-        { name: '🐙 深渊触手', color: '#6600aa', radius: 45, hpMult: 60, speed: 1.0, pattern: 'tentacle', expDrop: 70 },
-        { name: '⚡ 雷霆巨人', color: '#ffff00', radius: 50, hpMult: 80, speed: 0.6, pattern: 'lightning', expDrop: 100 }
+        { 
+            name: '🔥 炎魔领主', 
+            color: '#ff4400', 
+            secondaryColor: '#ffaa00',
+            radius: 40, 
+            hpMult: 50, 
+            speed: 1.8, 
+            aoeRadius: 120,
+            dashSpeed: 18,
+            abilities: ['aoe', 'dash', 'fireball'],
+            expDrop: 50 
+        },
+        { 
+            name: '💀 骷髅王', 
+            color: '#aaaaaa', 
+            secondaryColor: '#dddddd',
+            radius: 35, 
+            hpMult: 40, 
+            speed: 1.2, 
+            aoeRadius: 100,
+            dashSpeed: 15,
+            abilities: ['summon', 'aoe', 'bonestorm'],
+            expDrop: 60 
+        },
+        { 
+            name: '🐙 深渊触手', 
+            color: '#6600aa', 
+            secondaryColor: '#9933ff',
+            radius: 45, 
+            hpMult: 60, 
+            speed: 1.4, 
+            aoeRadius: 140,
+            dashSpeed: 20,
+            abilities: ['tentacle', 'aoe', 'vortex'],
+            expDrop: 70 
+        },
+        { 
+            name: '⚡ 雷霆巨人', 
+            color: '#ffff00', 
+            secondaryColor: '#ffffff',
+            radius: 50, 
+            hpMult: 80, 
+            speed: 1.0, 
+            aoeRadius: 160,
+            dashSpeed: 25,
+            abilities: ['lightning_strike', 'dash', 'shockwave'],
+            expDrop: 100 
+        },
+        { 
+            name: '👑 虚空帝王', 
+            color: '#aa00ff', 
+            secondaryColor: '#ff00ff',
+            radius: 55, 
+            hpMult: 100, 
+            speed: 1.6, 
+            aoeRadius: 180,
+            dashSpeed: 22,
+            abilities: ['teleport', 'aoe', 'dash', 'clone'],
+            expDrop: 150 
+        }
     ];
+
+    // Boss 状态机
+    const BOSS_STATES = {
+        CHASE: 'chase',
+        WARN_AOE: 'warn_aoe',
+        AOE_EXPLODE: 'aoe_explode',
+        WARN_DASH: 'warn_dash',
+        DASHING: 'dashing',
+        SUMMON: 'summon',
+        CASTING: 'casting',
+        STUNNED: 'stunned',
+        RAGE: 'rage'
+    };
 
     function spawnBoss() {
         const typeIdx = Math.min(bossDefeated, bossTypes.length - 1);
@@ -845,16 +918,48 @@
         
         const bossHp = type.hpMult * (10 + player.level * 5);
         currentBoss = {
-            x, y, radius: type.radius, speed: type.speed,
-            hp: bossHp, maxHp: bossHp,
-            color: type.color, name: type.name,
-            pattern: type.pattern, expDrop: type.expDrop,
-            actionTimer: 0, phase: 0
+            x, y, 
+            radius: type.radius, 
+            baseSpeed: type.speed,
+            speed: type.speed,
+            hp: bossHp, 
+            maxHp: bossHp,
+            color: type.color, 
+            secondaryColor: type.secondaryColor,
+            name: type.name,
+            abilities: type.abilities,
+            aoeRadius: type.aoeRadius,
+            dashSpeed: type.dashSpeed,
+            expDrop: type.expDrop,
+            // 状态机
+            state: BOSS_STATES.CHASE,
+            stateTimer: 0,
+            // 攻击目标
+            targetX: 0,
+            targetY: 0,
+            // 冲刺向量
+            vx: 0,
+            vy: 0,
+            // 阶段（根据血量变化）
+            phase: 1,
+            // 攻击冷却
+            abilityCooldown: 0,
+            abilityIndex: 0,
+            // 特效
+            flashTimer: 0,
+            shakeIntensity: 0,
+            // 召唤物
+            summonCount: 0,
+            // 分身
+            clones: [],
+            // 狂暴模式
+            isEnraged: false
         };
         
         // 显示警告
         bossWarning.style.display = 'block';
-        setTimeout(() => { bossWarning.style.display = 'none'; }, 2000);
+        bossWarning.innerHTML = `⚠️ ${type.name} ⚠️<br><span style="font-size:14px">来临!</span>`;
+        setTimeout(() => { bossWarning.style.display = 'none'; }, 2500);
         bossBarContainer.style.display = 'block';
         bossNameEl.innerText = type.name;
     }
@@ -1909,65 +2014,611 @@
         }
     }
 
+    // === 深度 Boss 战斗系统 ===
     function updateBoss() {
         if (!currentBoss) return;
         const b = currentBoss;
         
-        // 移动向玩家
-        const angle = Math.atan2(player.y - b.y, player.x - b.x);
-        b.x += Math.cos(angle) * b.speed;
-        b.y += Math.sin(angle) * b.speed;
+        b.stateTimer++;
+        b.abilityCooldown--;
         
-        // Boss 特殊攻击
-        b.actionTimer++;
-        if (b.pattern === 'charge' && b.actionTimer % 120 === 0) {
-            b.speed = 4; // 冲刺
-            setTimeout(() => { if (currentBoss) currentBoss.speed = 1.2; }, 500);
+        // 检测血量阶段转换
+        const hpPercent = b.hp / b.maxHp;
+        if (hpPercent < 0.3 && b.phase < 3) {
+            b.phase = 3;
+            b.isEnraged = true;
+            b.speed = b.baseSpeed * 1.5;
+            showWaveNotice('💢 Boss 进入狂暴状态！');
+        } else if (hpPercent < 0.6 && b.phase < 2) {
+            b.phase = 2;
+            b.speed = b.baseSpeed * 1.25;
+            showWaveNotice('⚠️ Boss 变得更强了！');
         }
-        if (b.pattern === 'summon' && b.actionTimer % 180 === 0) {
-            for (let i = 0; i < 3; i++) spawnEnemy();
+        
+        // 距离计算
+        const dist = getDistance(player.x, player.y, b.x, b.y);
+        const angleToPlayer = Math.atan2(player.y - b.y, player.x - b.x);
+        
+        // 状态机更新
+        switch (b.state) {
+            case BOSS_STATES.CHASE:
+                // 追踪玩家
+                b.x += Math.cos(angleToPlayer) * b.speed;
+                b.y += Math.sin(angleToPlayer) * b.speed;
+                
+                // 选择下一个技能
+                if (b.stateTimer > 90 + Math.random() * 60) {
+                    b.stateTimer = 0;
+                    
+                    // 根据能力列表选择技能
+                    const ability = b.abilities[b.abilityIndex % b.abilities.length];
+                    b.abilityIndex++;
+                    
+                    switch (ability) {
+                        case 'aoe':
+                            b.state = BOSS_STATES.WARN_AOE;
+                            b.targetX = player.x;
+                            b.targetY = player.y;
+                            break;
+                        case 'dash':
+                            b.state = BOSS_STATES.WARN_DASH;
+                            b.targetX = player.x;
+                            b.targetY = player.y;
+                            break;
+                        case 'summon':
+                            b.state = BOSS_STATES.SUMMON;
+                            break;
+                        case 'fireball':
+                            shootBossFireballs(b, 5);
+                            break;
+                        case 'bonestorm':
+                            shootBossFireballs(b, 8);
+                            break;
+                        case 'lightning_strike':
+                            b.state = BOSS_STATES.WARN_AOE;
+                            b.targetX = player.x;
+                            b.targetY = player.y;
+                            break;
+                        case 'tentacle':
+                            spawnTentacleAttack(b);
+                            break;
+                        case 'vortex':
+                            b.state = BOSS_STATES.CASTING;
+                            break;
+                        case 'shockwave':
+                            createBossShockwave(b);
+                            break;
+                        case 'teleport':
+                            bossTeleport(b);
+                            break;
+                        case 'clone':
+                            spawnBossClone(b);
+                            break;
+                        default:
+                            // 默认冲刺
+                            b.state = BOSS_STATES.WARN_DASH;
+                            b.targetX = player.x;
+                            b.targetY = player.y;
+                    }
+                }
+                
+                // 近身碰撞伤害
+                if (dist < player.radius + b.radius) {
+                    dealDamageToPlayer(0.2);
+                }
+                break;
+                
+            case BOSS_STATES.WARN_AOE:
+                // AOE 预警阶段 - 绘制警告圆圈
+                const warnProgress = Math.min(b.stateTimer / 90, 1);
+                
+                // 绘制预警圆
+                ctx.beginPath();
+                ctx.arc(b.targetX, b.targetY, b.aoeRadius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 50, 50, ${warnProgress * 0.45})`;
+                ctx.fill();
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = b.color;
+                ctx.setLineDash([10, 5]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // 收缩圆（倒计时效果）
+                const shrinkRadius = b.aoeRadius * (1 - warnProgress * 0.3);
+                ctx.beginPath();
+                ctx.arc(b.targetX, b.targetY, shrinkRadius, 0, Math.PI * 2);
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // 预警文字
+                ctx.fillStyle = '#ff0000';
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('⚠️ 危险 ⚠️', b.targetX, b.targetY - b.aoeRadius - 10);
+                
+                if (b.stateTimer > 90) {
+                    b.state = BOSS_STATES.AOE_EXPLODE;
+                    b.stateTimer = 0;
+                }
+                break;
+                
+            case BOSS_STATES.AOE_EXPLODE:
+                // AOE 爆炸
+                if (b.stateTimer === 1) {
+                    // 伤害判定
+                    if (getDistance(player.x, player.y, b.targetX, b.targetY) < b.aoeRadius) {
+                        dealDamageToPlayer(25 + b.phase * 5);
+                    }
+                    
+                    // 创建爆炸特效
+                    explosions.push({ 
+                        x: b.targetX, 
+                        y: b.targetY, 
+                        radius: 0, 
+                        maxRadius: b.aoeRadius * 1.2, 
+                        damage: 0,  // 伤害已处理
+                        hasDamaged: true, 
+                        alpha: 1,
+                        isBossAOE: true,
+                        color: b.color
+                    });
+                    
+                    // 屏幕闪白
+                    b.flashTimer = 8;
+                }
+                
+                if (b.stateTimer > 30) {
+                    b.state = BOSS_STATES.CHASE;
+                    b.stateTimer = 0;
+                }
+                break;
+                
+            case BOSS_STATES.WARN_DASH:
+                // 冲刺预警 - 显示冲刺路径
+                const dashAngle = Math.atan2(b.targetY - b.y, b.targetX - b.x);
+                const dashWarnProgress = Math.min(b.stateTimer / 60, 1);
+                
+                // 绘制冲刺路径预警
+                ctx.save();
+                ctx.translate(b.x, b.y);
+                ctx.rotate(dashAngle);
+                
+                // 危险区域
+                ctx.fillStyle = `rgba(255, 50, 50, ${dashWarnProgress * 0.42})`;
+                ctx.fillRect(0, -25, Math.max(canvas.width, canvas.height) + 100, 50);
+                
+                // 箭头指示
+                for (let i = 0; i < 5; i++) {
+                    const arrowX = 50 + i * 60 + (b.stateTimer * 2) % 60;
+                    ctx.fillStyle = `rgba(255, 255, 255, ${0.8 - i * 0.15})`;
+                    ctx.beginPath();
+                    ctx.moveTo(arrowX, 0);
+                    ctx.lineTo(arrowX - 15, -12);
+                    ctx.lineTo(arrowX - 15, 12);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+                
+                ctx.restore();
+                
+                // Boss 蓄力动画
+                b.shakeIntensity = dashWarnProgress * 3;
+                
+                if (b.stateTimer > 60) {
+                    b.state = BOSS_STATES.DASHING;
+                    b.stateTimer = 0;
+                    b.vx = Math.cos(dashAngle) * b.dashSpeed;
+                    b.vy = Math.sin(dashAngle) * b.dashSpeed;
+                    b.shakeIntensity = 0;
+                }
+                break;
+                
+            case BOSS_STATES.DASHING:
+                // 高速冲刺
+                b.x += b.vx;
+                b.y += b.vy;
+                
+                // 冲刺拖尾效果
+                if (b.stateTimer % 2 === 0) {
+                    createBossTrail(b);
+                }
+                
+                // 碰撞玩家
+                if (dist < player.radius + b.radius + 10) {
+                    dealDamageToPlayer(20 + b.phase * 5);
+                    b.state = BOSS_STATES.STUNNED;
+                    b.stateTimer = 0;
+                }
+                
+                // 冲刺结束条件
+                if (b.stateTimer > 25 || b.x < -50 || b.x > canvas.width + 50 || b.y < -50 || b.y > canvas.height + 50) {
+                    b.state = BOSS_STATES.CHASE;
+                    b.stateTimer = 0;
+                }
+                break;
+                
+            case BOSS_STATES.STUNNED:
+                // 短暂眩晕（撞墙或撞到玩家后）
+                if (b.stateTimer > 45) {
+                    b.state = BOSS_STATES.CHASE;
+                    b.stateTimer = 0;
+                }
+                break;
+                
+            case BOSS_STATES.SUMMON:
+                // 召唤小怪
+                if (b.stateTimer === 1) {
+                    const summonCount = 2 + b.phase;
+                    for (let i = 0; i < summonCount; i++) {
+                        setTimeout(() => {
+                            if (!currentBoss) return;
+                            const angle = (i / summonCount) * Math.PI * 2;
+                            const sx = b.x + Math.cos(angle) * 50;
+                            const sy = b.y + Math.sin(angle) * 50;
+                            
+                            // 召唤特效
+                            explosions.push({ x: sx, y: sy, radius: 0, maxRadius: 30, damage: 0, hasDamaged: true, alpha: 0.8 });
+                            
+                            const type = enemyTypes.eggshell;
+                            enemies.push({
+                                x: sx, y: sy,
+                                radius: type.radius,
+                                speed: type.baseSpeed * 1.3,
+                                baseSpeed: type.baseSpeed * 1.3,
+                                hp: type.baseHp * 2,
+                                maxHp: type.baseHp * 2,
+                                color: b.secondaryColor,
+                                type: 'eggshell',
+                                behavior: 'normal',
+                                shape: 'eggshell',
+                                expDrop: 2,
+                                behaviorTimer: 0, phase: 0, alpha: 1,
+                                dashAngle: 0, dashTimer: 0, chargeAngle: 0, chargeTimer: 0
+                            });
+                        }, i * 150);
+                    }
+                }
+                
+                if (b.stateTimer > 60 + b.phase * 20) {
+                    b.state = BOSS_STATES.CHASE;
+                    b.stateTimer = 0;
+                }
+                break;
+                
+            case BOSS_STATES.CASTING:
+                // 施法（漩涡吸引）
+                if (b.stateTimer < 120) {
+                    // 吸引玩家
+                    const pullStrength = 1.5 + b.phase * 0.5;
+                    const pullAngle = Math.atan2(b.y - player.y, b.x - player.x);
+                    player.x += Math.cos(pullAngle) * pullStrength;
+                    player.y += Math.sin(pullAngle) * pullStrength;
+                    
+                    // 漩涡特效
+                    ctx.strokeStyle = `rgba(${b.color === '#6600aa' ? '102, 0, 170' : '255, 100, 0'}, ${0.5 + Math.sin(b.stateTimer * 0.2) * 0.3})`;
+                    ctx.lineWidth = 3;
+                    for (let r = 30; r < 200; r += 30) {
+                        ctx.beginPath();
+                        ctx.arc(b.x, b.y, r, b.stateTimer * 0.1, b.stateTimer * 0.1 + Math.PI);
+                        ctx.stroke();
+                    }
+                }
+                
+                if (b.stateTimer > 120) {
+                    b.state = BOSS_STATES.CHASE;
+                    b.stateTimer = 0;
+                }
+                break;
         }
+        
+        // 边界限制
+        b.x = Math.max(b.radius, Math.min(canvas.width - b.radius, b.x));
+        b.y = Math.max(b.radius, Math.min(canvas.height - b.radius, b.y));
         
         // 绘制 Boss
+        drawBoss(b);
+        
+        // 更新分身
+        updateBossClones(b);
+        
+        // 更新血条
+        bossBar.style.width = (b.hp / b.maxHp) * 100 + '%';
+        
+        // 阶段指示器
+        bossNameEl.innerHTML = `${b.name} ${b.isEnraged ? '💢' : ''} <span style="font-size:10px">(阶段 ${b.phase})</span>`;
+        
+        // 闪白效果
+        if (b.flashTimer > 0) {
+            ctx.fillStyle = `rgba(255, 255, 255, ${b.flashTimer / 10})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            b.flashTimer--;
+        }
+        
+        // Boss 死亡
+        if (b.hp <= 0) {
+            // 死亡动画
+            for (let i = 0; i < 15; i++) {
+                setTimeout(() => {
+                    explosions.push({
+                        x: b.x + randomInRange(-40, 40),
+                        y: b.y + randomInRange(-40, 40),
+                        radius: 0,
+                        maxRadius: 50 + Math.random() * 30,
+                        damage: 0,
+                        hasDamaged: true,
+                        alpha: 1
+                    });
+                }, i * 100);
+            }
+            
+            // 掉落大量经验
+            for (let i = 0; i < 15; i++) {
+                gems.push({ 
+                    x: b.x + randomInRange(-50, 50), 
+                    y: b.y + randomInRange(-50, 50), 
+                    val: b.expDrop / 15 
+                });
+            }
+            
+            bossDefeated++;
+            score += 50 + bossDefeated * 20;
+            scoreEl.innerText = score;
+            currentBoss = null;
+            bossBarContainer.style.display = 'none';
+            showWaveNotice(`🎉 ${b.name} 被击败！`);
+        }
+    }
+    
+    // 绘制 Boss
+    function drawBoss(b) {
+        ctx.save();
+        
+        // 蓄力震动
+        const shakeX = b.shakeIntensity ? (Math.random() - 0.5) * b.shakeIntensity * 2 : 0;
+        const shakeY = b.shakeIntensity ? (Math.random() - 0.5) * b.shakeIntensity * 2 : 0;
+        
+        // 狂暴光环
+        if (b.isEnraged) {
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, b.radius + 15 + Math.sin(frameCount * 0.1) * 5, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+        
+        // Boss 主体
+        const grad = ctx.createRadialGradient(
+            b.x + shakeX - 10, b.y + shakeY - 10, 0,
+            b.x + shakeX, b.y + shakeY, b.radius
+        );
+        grad.addColorStop(0, b.secondaryColor);
+        grad.addColorStop(0.7, b.color);
+        grad.addColorStop(1, '#000');
+        
         ctx.beginPath();
-        ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
-        ctx.fillStyle = b.color;
+        ctx.arc(b.x + shakeX, b.y + shakeY, b.radius, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
         ctx.shadowBlur = 30;
         ctx.shadowColor = b.color;
         ctx.fill();
         ctx.shadowBlur = 0;
         
+        // 外圈
+        ctx.strokeStyle = b.secondaryColor;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
         // Boss 眼睛
+        const eyeOffsetX = (player.x - b.x) * 0.02;
+        const eyeOffsetY = (player.y - b.y) * 0.02;
+        
         ctx.fillStyle = 'white';
         ctx.beginPath();
-        ctx.arc(b.x - 10, b.y - 5, 6, 0, Math.PI * 2);
-        ctx.arc(b.x + 10, b.y - 5, 6, 0, Math.PI * 2);
+        ctx.arc(b.x + shakeX - 12 + eyeOffsetX, b.y + shakeY - 5, 8, 0, Math.PI * 2);
+        ctx.arc(b.x + shakeX + 12 + eyeOffsetX, b.y + shakeY - 5, 8, 0, Math.PI * 2);
         ctx.fill();
-        ctx.fillStyle = 'black';
+        
+        // 瞳孔（跟踪玩家）
+        ctx.fillStyle = b.state === BOSS_STATES.DASHING ? '#ff0000' : '#000';
         ctx.beginPath();
-        ctx.arc(b.x - 10, b.y - 5, 3, 0, Math.PI * 2);
-        ctx.arc(b.x + 10, b.y - 5, 3, 0, Math.PI * 2);
+        ctx.arc(b.x + shakeX - 12 + eyeOffsetX * 2, b.y + shakeY - 5 + eyeOffsetY, 4, 0, Math.PI * 2);
+        ctx.arc(b.x + shakeX + 12 + eyeOffsetX * 2, b.y + shakeY - 5 + eyeOffsetY, 4, 0, Math.PI * 2);
         ctx.fill();
         
-        // 更新血条
-        bossBar.style.width = (b.hp / b.maxHp) * 100 + '%';
-        
-        // 碰撞玩家
-        if (getDistance(player.x, player.y, b.x, b.y) < player.radius + b.radius) {
-            player.hp -= 1;
-            hpEl.innerText = Math.max(0, Math.floor(player.hp));
+        // 狂暴状态眼睛发光
+        if (b.isEnraged) {
+            ctx.fillStyle = '#ff0000';
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#ff0000';
+            ctx.beginPath();
+            ctx.arc(b.x + shakeX - 12, b.y + shakeY - 5, 3, 0, Math.PI * 2);
+            ctx.arc(b.x + shakeX + 12, b.y + shakeY - 5, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
         }
         
-        // Boss 死亡
-        if (b.hp <= 0) {
-            for (let i = 0; i < 10; i++) {
-                gems.push({ x: b.x + randomInRange(-30, 30), y: b.y + randomInRange(-30, 30), val: b.expDrop / 10 });
+        // 状态指示
+        if (b.state === BOSS_STATES.STUNNED) {
+            ctx.fillStyle = '#ffff00';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('💫', b.x, b.y - b.radius - 10);
+        }
+        
+        ctx.restore();
+    }
+    
+    // Boss 辅助函数
+    function shootBossFireballs(b, count) {
+        const baseAngle = Math.atan2(player.y - b.y, player.x - b.x);
+        for (let i = 0; i < count; i++) {
+            const angle = baseAngle + (i - (count - 1) / 2) * 0.25;
+            enemyProjectiles.push({
+                x: b.x,
+                y: b.y,
+                vx: Math.cos(angle) * (4 + b.phase),
+                vy: Math.sin(angle) * (4 + b.phase),
+                radius: 10,
+                color: b.color,
+                damage: 12 + b.phase * 3,
+                life: 120
+            });
+        }
+    }
+    
+    function spawnTentacleAttack(b) {
+        for (let i = 0; i < 4 + b.phase; i++) {
+            setTimeout(() => {
+                if (!currentBoss) return;
+                const tx = player.x + randomInRange(-80, 80);
+                const ty = player.y + randomInRange(-80, 80);
+                
+                // 触手预警
+                setTimeout(() => {
+                    // 伤害
+                    if (getDistance(player.x, player.y, tx, ty) < 40) {
+                        dealDamageToPlayer(15);
+                    }
+                    explosions.push({ x: tx, y: ty, radius: 0, maxRadius: 50, damage: 0, hasDamaged: true, alpha: 1 });
+                }, 500);
+                
+                // 警告圈
+                const warnDuration = 30;
+                let warnFrame = 0;
+                const warnInterval = setInterval(() => {
+                    warnFrame++;
+                    if (warnFrame >= warnDuration || !currentBoss) {
+                        clearInterval(warnInterval);
+                        return;
+                    }
+                }, 16);
+            }, i * 200);
+        }
+    }
+    
+    function createBossShockwave(b) {
+        // 创建扩散冲击波
+        for (let r = 0; r < 3; r++) {
+            setTimeout(() => {
+                if (!currentBoss) return;
+                explosions.push({
+                    x: b.x,
+                    y: b.y,
+                    radius: 0,
+                    maxRadius: 150 + r * 30,
+                    damage: 0,
+                    hasDamaged: true,
+                    alpha: 0.8,
+                    isShockwave: true
+                });
+                
+                // 环形伤害判定
+                if (getDistance(player.x, player.y, b.x, b.y) < 150 + r * 30 + 30) {
+                    dealDamageToPlayer(10);
+                }
+            }, r * 300);
+        }
+    }
+    
+    function bossTeleport(b) {
+        // 瞬移到玩家附近
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 80 + Math.random() * 60;
+        b.x = player.x + Math.cos(angle) * dist;
+        b.y = player.y + Math.sin(angle) * dist;
+        b.x = Math.max(b.radius, Math.min(canvas.width - b.radius, b.x));
+        b.y = Math.max(b.radius, Math.min(canvas.height - b.radius, b.y));
+        
+        // 瞬移特效
+        explosions.push({ x: b.x, y: b.y, radius: 0, maxRadius: 60, damage: 0, hasDamaged: true, alpha: 0.7 });
+    }
+    
+    function spawnBossClone(b) {
+        if (b.clones.length >= 2) return;
+        
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 80;
+        b.clones.push({
+            x: b.x + Math.cos(angle) * dist,
+            y: b.y + Math.sin(angle) * dist,
+            hp: 3,
+            angle: 0
+        });
+    }
+    
+    function updateBossClones(b) {
+        for (let i = b.clones.length - 1; i >= 0; i--) {
+            const c = b.clones[i];
+            
+            // 分身绕主体旋转
+            c.angle += 0.03;
+            c.x = b.x + Math.cos(c.angle) * 80;
+            c.y = b.y + Math.sin(c.angle) * 80;
+            
+            // 绘制分身（半透明）
+            ctx.globalAlpha = 0.5;
+            ctx.beginPath();
+            ctx.arc(c.x, c.y, b.radius * 0.6, 0, Math.PI * 2);
+            ctx.fillStyle = b.color;
+            ctx.fill();
+            ctx.globalAlpha = 1;
+            
+            // 分身被子弹击中
+            for (let j = bullets.length - 1; j >= 0; j--) {
+                const bullet = bullets[j];
+                if (getDistance(c.x, c.y, bullet.x, bullet.y) < b.radius * 0.6 + bullet.radius) {
+                    c.hp--;
+                    bullets.splice(j, 1);
+                    if (c.hp <= 0) {
+                        b.clones.splice(i, 1);
+                        explosions.push({ x: c.x, y: c.y, radius: 0, maxRadius: 40, damage: 0, hasDamaged: true, alpha: 1 });
+                    }
+                    break;
+                }
             }
-            bossDefeated++;
-            score += 50;
-            scoreEl.innerText = score;
-            currentBoss = null;
-            bossBarContainer.style.display = 'none';
+        }
+    }
+    
+    function createBossTrail(b) {
+        // 冲刺拖尾
+        ctx.globalAlpha = 0.3;
+        ctx.beginPath();
+        ctx.arc(b.x - b.vx * 0.5, b.y - b.vy * 0.5, b.radius * 0.8, 0, Math.PI * 2);
+        ctx.fillStyle = b.color;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+    }
+    
+    function dealDamageToPlayer(damage) {
+        // 闪避检测
+        if (player.dodgeChance > 0 && Math.random() < player.dodgeChance) {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('闪避!', player.x, player.y - 30);
+            return;
+        }
+        
+        player.hp -= damage;
+        hpEl.innerText = Math.max(0, Math.floor(player.hp));
+        
+        // 受伤屏幕闪红
+        ctx.fillStyle = 'rgba(255, 0, 0, 0.2)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        if (player.hp <= 0) {
+            if (player.revive && !player.reviveUsed) {
+                player.reviveUsed = true;
+                player.hp = player.maxHp * 0.5;
+                hpEl.innerText = Math.floor(player.hp);
+                showWaveNotice('🔥 凤凰涅槃！');
+            } else {
+                isGameOver = true;
+                const talentNames = activeTalents.map(t => t.name).join(', ') || '无';
+                alert(`💀 被击溃！\n存活时间: ${formatTime(gameTime)}\n等级: Lv.${player.level}\n击杀: ${score}\nBoss击败: ${bossDefeated}\n天赋: ${talentNames}`);
+                location.reload();
+            }
         }
     }
 

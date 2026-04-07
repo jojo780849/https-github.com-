@@ -2,199 +2,230 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>生存割草 V7 - 移动端支持</title>
+    <title>生存割草 V8 - 手机竖版</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <style>
+        * { box-sizing: border-box; }
         body {
-            margin: 0; overflow: hidden; background-color: #1a1a1a;
-            display: flex; justify-content: center; align-items: center;
-            height: 100vh; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0; overflow: hidden; background-color: #0a0a0a;
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh; min-height: -webkit-fill-available;
+            color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            touch-action: none; user-select: none; -webkit-user-select: none;
         }
-        canvas { background-color: #222; box-shadow: 0 0 40px rgba(0, 0, 0, 0.9); border-radius: 8px; }
-        #ui { position: absolute; top: 20px; left: 20px; pointer-events: none; text-shadow: 1px 1px 2px black; }
+        html { height: -webkit-fill-available; }
         
-        #exp-bar-container { width: 400px; height: 10px; background: #333; margin-top: 10px; border-radius: 5px; overflow: hidden; }
+        /* 游戏容器 - 竖版布局 */
+        #game-container {
+            display: flex; flex-direction: column; align-items: center;
+            width: 100%; max-width: 450px; height: 100vh; height: 100dvh;
+            position: relative;
+        }
+        
+        /* 顶部 UI 区域 */
+        #top-ui {
+            width: 100%; padding: 8px 12px; background: rgba(0,0,0,0.8);
+            display: flex; flex-direction: column; gap: 4px; z-index: 10;
+        }
+        #top-row { display: flex; justify-content: space-between; align-items: center; }
+        #stats { font-size: 14px; font-weight: bold; }
+        #timer { font-size: 20px; font-weight: bold; color: #00e5ff; }
+        #exp-bar-container { width: 100%; height: 8px; background: #333; border-radius: 4px; overflow: hidden; }
         #exp-bar { width: 0%; height: 100%; background: linear-gradient(90deg, #00e5ff, #00ff88); transition: width 0.2s; }
+        #weapons-display { font-size: 12px; color: #aaa; margin-top: 2px; }
+        #active-talents { font-size: 11px; color: #888; }
         
-        #weapons-display { margin-top: 15px; font-size: 14px; }
+        /* 游戏画布区域 */
+        #canvas-wrapper {
+            flex: 1; width: 100%; display: flex; justify-content: center; align-items: center;
+            overflow: hidden; position: relative;
+        }
+        canvas { background-color: #1a1a1a; width: 100%; height: 100%; display: block; }
         
         /* Boss 血条 */
         #boss-bar-container { 
-            display: none; position: absolute; top: 60px; left: 50%; transform: translateX(-50%);
-            width: 500px; text-align: center;
+            display: none; position: absolute; top: 5px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 400px; text-align: center; z-index: 20;
         }
-        #boss-name { font-size: 18px; color: #ff4444; margin-bottom: 5px; text-shadow: 0 0 10px #ff0000; }
-        #boss-bar-bg { width: 100%; height: 15px; background: #333; border-radius: 8px; overflow: hidden; border: 2px solid #ff4444; }
+        #boss-name { font-size: 14px; color: #ff4444; margin-bottom: 3px; text-shadow: 0 0 10px #ff0000; }
+        #boss-bar-bg { width: 100%; height: 10px; background: #333; border-radius: 5px; overflow: hidden; border: 2px solid #ff4444; }
         #boss-bar { width: 100%; height: 100%; background: linear-gradient(90deg, #ff0000, #ff6600); transition: width 0.3s; }
         
         /* Boss 警告 */
         #boss-warning {
-            display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            font-size: 48px; color: #ff0000; text-shadow: 0 0 30px #ff0000;
-            animation: blink 0.3s infinite;
+            display: none; position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 28px; color: #ff0000; text-shadow: 0 0 30px #ff0000;
+            animation: blink 0.3s infinite; z-index: 30;
         }
         @keyframes blink { 50% { opacity: 0.5; } }
         
-        #levelup-menu {
-            display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(20, 20, 20, 0.95); padding: 30px; border: 2px solid #00e5ff; border-radius: 12px;
-            text-align: center; box-shadow: 0 0 50px rgba(0, 229, 255, 0.3); z-index: 10; max-width: 90%;
-        }
-        .card {
-            background: #333; padding: 15px; margin: 8px; border-radius: 8px; cursor: pointer;
-            transition: all 0.2s; border: 1px solid #555; width: 180px; display: inline-block; vertical-align: top;
-        }
-        .card:hover { background: #444; border-color: #00e5ff; transform: scale(1.05); }
-        .card h3 { margin: 0 0 8px 0; color: #ffd700; font-size: 16px; }
-        .card .type { font-size: 11px; color: #888; margin-bottom: 5px; }
-        .card p { font-size: 12px; margin: 0; }
-        .card-new { border-color: #ff6b00 !important; }
-        .card-special { border-color: #ff00ff !important; background: linear-gradient(135deg, #333, #442244) !important; }
-        .card-special h3 { color: #ff66ff !important; }
-        .card { position: relative; }
-
-        /* 计时器 */
-        #timer { position: absolute; top: 20px; right: 20px; font-size: 24px; font-weight: bold; }
-        
         /* 波次提示 */
         #wave-notice {
-            display: none; position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
-            font-size: 32px; color: #ffaa00; text-shadow: 0 0 20px #ff6600;
-            animation: fadeInOut 2s forwards; pointer-events: none;
+            display: none; position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 22px; color: #ffaa00; text-shadow: 0 0 20px #ff6600;
+            animation: fadeInOut 2s forwards; pointer-events: none; z-index: 30;
         }
         @keyframes fadeInOut { 0%,100% { opacity: 0; } 20%,80% { opacity: 1; } }
         
         /* 敌人统计 */
-        #enemy-stats { position: absolute; bottom: 20px; left: 20px; font-size: 12px; opacity: 0.7; pointer-events: none; }
+        #enemy-stats { 
+            position: absolute; bottom: 5px; left: 10px; 
+            font-size: 10px; opacity: 0.6; pointer-events: none; z-index: 20;
+        }
         
+        /* 底部控制区域 */
+        #controls {
+            width: 100%; height: 180px; min-height: 180px;
+            background: linear-gradient(to top, rgba(0,0,0,0.95), rgba(0,0,0,0.7));
+            display: flex; justify-content: center; align-items: center;
+            position: relative; padding: 10px;
+        }
+        
+        /* 虚拟摇杆 */
+        #joystick-container {
+            width: 140px; height: 140px; position: relative;
+        }
+        #joystick-base {
+            position: absolute; width: 140px; height: 140px;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%);
+            border: 3px solid rgba(255,255,255,0.4); border-radius: 50%;
+        }
+        #joystick-stick {
+            position: absolute; width: 60px; height: 60px;
+            background: radial-gradient(circle, rgba(0,229,255,0.9) 0%, rgba(0,229,255,0.5) 100%);
+            border: 3px solid rgba(0,229,255,1); border-radius: 50%;
+            left: 40px; top: 40px; /* 居中 */
+            box-shadow: 0 0 20px rgba(0,229,255,0.6);
+        }
+        
+        #mobile-hint {
+            position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+            font-size: 11px; color: rgba(255,255,255,0.4); pointer-events: none;
+        }
+
+        /* 升级菜单 */
+        #levelup-menu {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.95); 
+            flex-direction: column; justify-content: center; align-items: center;
+            z-index: 100; padding: 20px;
+        }
+        #levelup-menu h1 { color: #00e5ff; margin: 0 0 15px 0; font-size: 22px; }
+        #cards-container { 
+            display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; 
+            max-width: 100%; overflow-y: auto; max-height: 70vh;
+        }
+        .card {
+            background: #2a2a2a; padding: 12px; border-radius: 10px; cursor: pointer;
+            transition: all 0.2s; border: 2px solid #444; width: calc(50% - 10px); max-width: 160px;
+        }
+        .card:active { background: #3a3a3a; border-color: #00e5ff; transform: scale(0.98); }
+        .card h3 { margin: 0 0 5px 0; color: #ffd700; font-size: 14px; }
+        .card .type { font-size: 10px; color: #888; margin-bottom: 3px; }
+        .card p { font-size: 11px; margin: 0; color: #ccc; }
+        .card-new { border-color: #ff6b00 !important; }
+        .card-special { border-color: #ff00ff !important; background: linear-gradient(135deg, #2a2a2a, #3a2a3a) !important; }
+        .card-special h3 { color: #ff66ff !important; }
+
         /* 开局天赋选择 */
         #talent-select {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.9); display: flex; flex-direction: column;
-            justify-content: center; align-items: center; z-index: 100;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.95); display: flex; flex-direction: column;
+            justify-content: flex-start; align-items: center; z-index: 100;
+            padding: 20px; padding-top: max(20px, env(safe-area-inset-top));
+            overflow-y: auto;
         }
-        #talent-select h1 { color: #ffd700; margin-bottom: 10px; font-size: 36px; }
-        #talent-select .subtitle { color: #888; margin-bottom: 30px; font-size: 16px; }
-        #talent-cards { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; max-width: 900px; }
+        #talent-select h1 { color: #ffd700; margin-bottom: 5px; font-size: 26px; }
+        #talent-select .subtitle { color: #888; margin-bottom: 15px; font-size: 13px; text-align: center; }
+        #talent-cards { 
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; 
+            width: 100%; max-width: 400px;
+        }
         .talent-card {
-            width: 160px; padding: 15px; background: linear-gradient(135deg, #222, #333);
-            border: 2px solid #555; border-radius: 12px; cursor: pointer; text-align: center;
+            padding: 12px; background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+            border: 2px solid #444; border-radius: 12px; cursor: pointer; text-align: center;
             transition: all 0.2s;
         }
-        .talent-card:hover { transform: translateY(-5px); border-color: #ffd700; box-shadow: 0 5px 20px rgba(255, 215, 0, 0.3); }
+        .talent-card:active { transform: scale(0.98); }
         .talent-card.selected { border-color: #00e5ff; background: linear-gradient(135deg, #1a3a4a, #2a4a5a); }
-        .talent-icon { font-size: 36px; margin-bottom: 8px; }
-        .talent-name { font-size: 16px; font-weight: bold; color: #ffd700; margin-bottom: 5px; }
-        .talent-desc { font-size: 12px; color: #aaa; }
-        .talent-rarity { font-size: 10px; margin-top: 5px; padding: 2px 6px; border-radius: 4px; display: inline-block; }
+        .talent-icon { font-size: 32px; margin-bottom: 5px; }
+        .talent-name { font-size: 14px; font-weight: bold; color: #ffd700; margin-bottom: 3px; }
+        .talent-desc { font-size: 11px; color: #aaa; }
+        .talent-rarity { font-size: 9px; margin-top: 4px; padding: 2px 6px; border-radius: 4px; display: inline-block; }
         .rarity-common { background: #555; color: #ddd; }
         .rarity-rare { background: #1a4a8a; color: #66aaff; }
         .rarity-epic { background: #6a2a8a; color: #cc66ff; }
         .rarity-legendary { background: #8a4a00; color: #ffaa00; }
-        #reroll-btn { margin-top: 20px; padding: 10px 25px; background: #444; border: 1px solid #666; color: #aaa; border-radius: 8px; cursor: pointer; font-size: 14px; }
-        #reroll-btn:hover { background: #555; color: #fff; }
-        #start-btn { margin-top: 15px; padding: 15px 50px; background: linear-gradient(135deg, #00aa66, #00dd88); border: none; color: #fff; border-radius: 10px; cursor: pointer; font-size: 18px; font-weight: bold; }
-        #start-btn:hover { transform: scale(1.05); }
-        #start-btn:disabled { background: #555; cursor: not-allowed; }
+        #talent-buttons { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 300px; margin-top: 15px; }
+        #reroll-btn { padding: 12px; background: #333; border: 1px solid #555; color: #aaa; border-radius: 8px; cursor: pointer; font-size: 14px; }
+        #start-btn { padding: 15px; background: linear-gradient(135deg, #00aa66, #00dd88); border: none; color: #fff; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold; }
+        #start-btn:disabled { background: #444; color: #666; }
         
-        /* 当前天赋显示 */
-        #active-talents { position: absolute; top: 65px; left: 20px; font-size: 12px; opacity: 0.8; pointer-events: none; }
-        
-        /* 虚拟摇杆 */
-        #joystick-container {
-            display: none; /* 默认隐藏，触屏设备显示 */
-            position: fixed; bottom: 80px; left: 60px;
-            width: 120px; height: 120px; z-index: 50;
-        }
-        #joystick-base {
-            position: absolute; width: 120px; height: 120px;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
-            border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;
-        }
-        #joystick-stick {
-            position: absolute; width: 50px; height: 50px;
-            background: radial-gradient(circle, rgba(0,229,255,0.8) 0%, rgba(0,229,255,0.4) 100%);
-            border: 2px solid rgba(0,229,255,0.9); border-radius: 50%;
-            left: 35px; top: 35px; /* 居中 */
-            box-shadow: 0 0 15px rgba(0,229,255,0.5);
-        }
-        
-        /* 移动端提示 */
-        #mobile-hint {
-            display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            font-size: 12px; color: rgba(255,255,255,0.5); z-index: 50; pointer-events: none;
-        }
-        
-        /* 移动端样式调整 */
-        @media (max-width: 1024px), (pointer: coarse) {
-            #joystick-container { display: block; }
-            #mobile-hint { display: block; }
-            canvas { width: 100vw !important; height: auto !important; max-height: 70vh; border-radius: 0; }
-            body { overflow: hidden; touch-action: none; }
-            #ui { top: 10px; left: 10px; font-size: 12px; }
-            #ui h2 { font-size: 14px; margin: 0; }
-            #exp-bar-container { width: 200px; }
-            #timer { top: 10px; right: 10px; font-size: 18px; }
-            #active-talents { top: 50px; font-size: 10px; }
-            #weapons-display { font-size: 11px; }
-            #boss-bar-container { width: 80%; top: 45px; }
-            #talent-select h1 { font-size: 24px; }
-            #talent-select .subtitle { font-size: 12px; }
-            #talent-cards { gap: 8px; padding: 0 10px; }
-            .talent-card { width: 100px; padding: 10px; }
-            .talent-icon { font-size: 28px; }
-            .talent-name { font-size: 13px; }
-            .talent-desc { font-size: 10px; }
-            #levelup-menu { padding: 15px; width: 95%; max-width: none; }
-            .card { width: 140px; padding: 10px; margin: 5px; }
-            .card h3 { font-size: 14px; }
-            .card p { font-size: 11px; }
+        /* 桌面端样式 */
+        @media (min-width: 500px) and (pointer: fine) {
+            #game-container { max-width: 450px; border: 2px solid #333; }
+            #controls { display: none; }
+            body::after {
+                content: '🎮 桌面端请使用 WASD 移动';
+                position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%);
+                font-size: 14px; color: #666;
+            }
         }
     </style>
 </head>
 <body>
-    <div id="ui">
-        <h2>Lv.<span id="level">1</span> | 击杀: <span id="score">0</span> | HP: <span id="hp">100</span></h2>
-        <div id="exp-bar-container"><div id="exp-bar"></div></div>
-        <div id="weapons-display">武器: <span id="weapon-list">🔫 基础弹射</span></div>
+    <div id="game-container">
+        <!-- 顶部 UI -->
+        <div id="top-ui">
+            <div id="top-row">
+                <div id="stats">Lv.<span id="level">1</span> | 🗡️<span id="score">0</span> | ❤️<span id="hp">100</span></div>
+                <div id="timer">00:00</div>
+            </div>
+            <div id="exp-bar-container"><div id="exp-bar"></div></div>
+            <div id="weapons-display">武器: <span id="weapon-list">🔫弹射</span></div>
+            <div id="active-talents"></div>
+        </div>
+        
+        <!-- 游戏画布区域 -->
+        <div id="canvas-wrapper">
+            <canvas id="gameCanvas" width="450" height="600"></canvas>
+            <div id="boss-bar-container">
+                <div id="boss-name">⚠️ BOSS ⚠️</div>
+                <div id="boss-bar-bg"><div id="boss-bar"></div></div>
+            </div>
+            <div id="boss-warning">⚠️ BOSS ⚠️</div>
+            <div id="wave-notice"></div>
+            <div id="enemy-stats"></div>
+        </div>
+        
+        <!-- 底部控制区域 -->
+        <div id="controls">
+            <div id="joystick-container">
+                <div id="joystick-base"></div>
+                <div id="joystick-stick"></div>
+            </div>
+            <div id="mobile-hint">🕹️ 滑动摇杆移动 | 自动攻击</div>
+        </div>
     </div>
-    
-    <div id="timer">00:00</div>
-    
-    <div id="boss-bar-container">
-        <div id="boss-name">⚠️ BOSS ⚠️</div>
-        <div id="boss-bar-bg"><div id="boss-bar"></div></div>
-    </div>
-    
-    <div id="boss-warning">⚠️ BOSS 来袭 ⚠️</div>
-    <div id="wave-notice"></div>
-    <div id="enemy-stats"></div>
-    <div id="active-talents"></div>
-
-    <!-- 虚拟摇杆 -->
-    <div id="joystick-container">
-        <div id="joystick-base"></div>
-        <div id="joystick-stick"></div>
-    </div>
-    <div id="mobile-hint">🕹️ 左侧滑动移动 | 自动攻击</div>
 
     <!-- 开局天赋选择 -->
     <div id="talent-select">
         <h1>🎭 选择天赋</h1>
-        <p class="subtitle">选择 1-3 个天赋开始游戏，每个天赋都会影响这局的玩法</p>
+        <p class="subtitle">选择 1-3 个天赋开始游戏</p>
         <div id="talent-cards"></div>
-        <button id="reroll-btn">🎲 重新随机 (剩余 3 次)</button>
-        <button id="start-btn" disabled>开始游戏</button>
+        <div id="talent-buttons">
+            <button id="reroll-btn">🎲 重新随机 (剩余 3 次)</button>
+            <button id="start-btn" disabled>开始游戏</button>
+        </div>
     </div>
 
+    <!-- 升级菜单 -->
     <div id="levelup-menu">
-        <h1 style="color: #00e5ff; margin-top: 0;">🎯 升级！选择能力</h1>
+        <h1>🎯 升级！选择能力</h1>
         <div id="cards-container"></div>
     </div>
-
-    <canvas id="gameCanvas" width="1000" height="700"></canvas>
 
 <script>
     const canvas = document.getElementById('gameCanvas');
@@ -372,10 +403,10 @@
 
     // --- 玩家 ---
     const player = {
-        x: canvas.width / 2, y: canvas.height / 2,
+        x: canvas.width / 2, y: canvas.height / 2,  // 450/2=225, 600/2=300
         radius: 15, speed: 3.5, hp: 100, maxHp: 100, color: '#00e5ff',
         level: 1, exp: 0, maxExp: 10,
-        pickupRange: 80,
+        pickupRange: 70,  // 稍微缩小拾取范围以适应小屏
         critChance: 0.05, critDamage: 1.5, // 暴击
         // 天赋相关属性
         upgradeChoices: 4, // 升级时的选项数
@@ -395,15 +426,15 @@
 
     // --- 武器系统 ---
     const weapons = {
-        bullet: { owned: true, level: 1, maxLevel: 8, cooldown: 35, currentCooldown: 0, count: 1, pierce: 1, damage: 20, range: 300, icon: '🔫', name: '弹射' },
-        orbit: { owned: false, level: 0, maxLevel: 8, count: 2, damage: 15, radius: 80, speed: 0.03, icon: '🔵', name: '环绕护盾' },
-        explosion: { owned: false, level: 0, maxLevel: 8, cooldown: 120, currentCooldown: 0, damage: 40, radius: 100, icon: '💥', name: '爆裂魔法' },
-        summon: { owned: false, level: 0, maxLevel: 8, count: 1, damage: 10, speed: 4, icon: '👻', name: '幽灵召唤' },
+        bullet: { owned: true, level: 1, maxLevel: 8, cooldown: 35, currentCooldown: 0, count: 1, pierce: 1, damage: 20, range: 250, icon: '🔫', name: '弹射' },
+        orbit: { owned: false, level: 0, maxLevel: 8, count: 2, damage: 15, radius: 60, speed: 0.03, icon: '🔵', name: '环绕' },
+        explosion: { owned: false, level: 0, maxLevel: 8, cooldown: 120, currentCooldown: 0, damage: 40, radius: 80, icon: '💥', name: '爆裂' },
+        summon: { owned: false, level: 0, maxLevel: 8, count: 1, damage: 10, speed: 4, icon: '👻', name: '幽灵' },
         // 特殊武器
-        lightning: { owned: false, level: 0, maxLevel: 5, cooldown: 90, currentCooldown: 0, damage: 50, chains: 3, icon: '⚡', name: '连锁闪电', special: true },
-        laser: { owned: false, level: 0, maxLevel: 5, cooldown: 0, currentCooldown: 0, damage: 2, width: 8, icon: '🔴', name: '死亡射线', special: true },
-        blackhole: { owned: false, level: 0, maxLevel: 5, cooldown: 300, currentCooldown: 0, damage: 100, radius: 120, duration: 180, icon: '🕳️', name: '黑洞', special: true },
-        meteor: { owned: false, level: 0, maxLevel: 5, cooldown: 200, currentCooldown: 0, damage: 80, count: 3, radius: 60, icon: '☄️', name: '陨石雨', special: true }
+        lightning: { owned: false, level: 0, maxLevel: 5, cooldown: 90, currentCooldown: 0, damage: 50, chains: 3, icon: '⚡', name: '闪电', special: true },
+        laser: { owned: false, level: 0, maxLevel: 5, cooldown: 0, currentCooldown: 0, damage: 2, width: 8, icon: '🔴', name: '射线', special: true },
+        blackhole: { owned: false, level: 0, maxLevel: 5, cooldown: 300, currentCooldown: 0, damage: 100, radius: 100, duration: 180, icon: '🕳️', name: '黑洞', special: true },
+        meteor: { owned: false, level: 0, maxLevel: 5, cooldown: 200, currentCooldown: 0, damage: 80, count: 3, radius: 50, icon: '☄️', name: '陨石', special: true }
     };
 
     let enemies = [];
@@ -425,22 +456,45 @@
     let joystickActive = false;
     let joystickTouchId = null;
     let joystickInput = { x: 0, y: 0 }; // -1 到 1 的方向值
-    const joystickMaxDistance = 35; // 摇杆最大移动距离
+    const joystickMaxDistance = 45; // 摇杆最大移动距离
 
     // 检测是否为触屏设备
     const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
     
-    // 响应式 Canvas
+    // 响应式 Canvas - 竖版全屏适配
     function resizeCanvas() {
-        if (isTouchDevice || window.innerWidth <= 1024) {
-            const maxWidth = window.innerWidth;
-            const maxHeight = window.innerHeight * 0.65;
-            const ratio = Math.min(maxWidth / 1000, maxHeight / 700);
-            canvas.style.width = (1000 * ratio) + 'px';
-            canvas.style.height = (700 * ratio) + 'px';
+        const wrapper = document.getElementById('canvas-wrapper');
+        const container = document.getElementById('game-container');
+        
+        // 获取可用高度（排除顶部UI和底部控制区）
+        const topUI = document.getElementById('top-ui');
+        const controls = document.getElementById('controls');
+        const topHeight = topUI ? topUI.offsetHeight : 0;
+        const controlsHeight = isTouchDevice ? (controls ? controls.offsetHeight : 180) : 0;
+        
+        const availableHeight = window.innerHeight - topHeight - controlsHeight;
+        const availableWidth = Math.min(window.innerWidth, 450);
+        
+        // 保持宽高比 450:600
+        const aspectRatio = 450 / 600;
+        let canvasWidth, canvasHeight;
+        
+        if (availableWidth / availableHeight > aspectRatio) {
+            // 高度限制
+            canvasHeight = availableHeight;
+            canvasWidth = canvasHeight * aspectRatio;
+        } else {
+            // 宽度限制
+            canvasWidth = availableWidth;
+            canvasHeight = canvasWidth / aspectRatio;
         }
+        
+        canvas.style.width = canvasWidth + 'px';
+        canvas.style.height = canvasHeight + 'px';
     }
+    
     window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 100));
     resizeCanvas();
 
     // 触屏事件处理
@@ -453,7 +507,7 @@
         
         // 检查触摸是否在摇杆区域附近
         const distFromCenter = Math.hypot(touch.clientX - centerX, touch.clientY - centerY);
-        if (distFromCenter < 100) {
+        if (distFromCenter < 120) {
             joystickActive = true;
             joystickTouchId = touch.identifier;
             updateJoystickPosition(touch.clientX, touch.clientY, rect);
@@ -480,9 +534,9 @@
                 joystickActive = false;
                 joystickTouchId = null;
                 joystickInput = { x: 0, y: 0 };
-                // 重置摇杆位置
-                joystickStick.style.left = '35px';
-                joystickStick.style.top = '35px';
+                // 重置摇杆位置 (居中于 140x140 容器)
+                joystickStick.style.left = '40px';
+                joystickStick.style.top = '40px';
                 break;
             }
         }
@@ -503,28 +557,26 @@
         }
         
         // 更新摇杆位置
-        joystickStick.style.left = (35 + deltaX) + 'px';
-        joystickStick.style.top = (35 + deltaY) + 'px';
+        joystickStick.style.left = (40 + deltaX) + 'px';
+        joystickStick.style.top = (40 + deltaY) + 'px';
         
         // 计算输入值 (-1 到 1)
         joystickInput.x = deltaX / joystickMaxDistance;
         joystickInput.y = deltaY / joystickMaxDistance;
     }
 
-    // 绑定触屏事件
-    if (isTouchDevice) {
-        joystickContainer.addEventListener('touchstart', handleJoystickStart, { passive: false });
-        document.addEventListener('touchmove', handleJoystickMove, { passive: false });
-        document.addEventListener('touchend', handleJoystickEnd, { passive: false });
-        document.addEventListener('touchcancel', handleJoystickEnd, { passive: false });
-        
-        // 防止页面滚动和缩放
-        document.addEventListener('touchmove', (e) => {
-            if (e.target === canvas || e.target.closest('#joystick-container')) {
-                e.preventDefault();
-            }
-        }, { passive: false });
-    }
+    // 绑定触屏事件 - 始终绑定以支持竖版布局
+    joystickContainer.addEventListener('touchstart', handleJoystickStart, { passive: false });
+    document.addEventListener('touchmove', handleJoystickMove, { passive: false });
+    document.addEventListener('touchend', handleJoystickEnd, { passive: false });
+    document.addEventListener('touchcancel', handleJoystickEnd, { passive: false });
+    
+    // 防止页面滚动和缩放
+    document.addEventListener('touchmove', (e) => {
+        if (e.target.closest('#game-container')) {
+            e.preventDefault();
+        }
+    }, { passive: false });
 
     function getDistance(x1, y1, x2, y2) { return Math.hypot(x2 - x1, y2 - y1); }
     function randomInRange(min, max) { return Math.random() * (max - min) + min; }
@@ -543,10 +595,10 @@
         const side = Math.floor(Math.random() * 4);
         let x, y;
         switch(side) {
-            case 0: x = -60; y = canvas.height / 2; break;
-            case 1: x = canvas.width + 60; y = canvas.height / 2; break;
-            case 2: x = canvas.width / 2; y = -60; break;
-            case 3: x = canvas.width / 2; y = canvas.height + 60; break;
+            case 0: x = -50; y = canvas.height / 2; break;
+            case 1: x = canvas.width + 50; y = canvas.height / 2; break;
+            case 2: x = canvas.width / 2; y = -50; break;
+            case 3: x = canvas.width / 2; y = canvas.height + 50; break;
         }
         
         const bossHp = type.hpMult * (10 + player.level * 5);
@@ -840,10 +892,12 @@
         if (!w.owned || w.currentCooldown > 0) { w.currentCooldown--; return; }
         
         for (let i = 0; i < w.count; i++) {
-            const targetX = player.x + randomInRange(-200, 200);
-            const targetY = player.y + randomInRange(-200, 200);
+            const targetX = player.x + randomInRange(-150, 150);
+            const targetY = player.y + randomInRange(-150, 150);
             meteors.push({
-                x: targetX, y: targetY - 400, targetX, targetY,
+                x: targetX, y: targetY - 300,
+                targetX: Math.max(20, Math.min(canvas.width - 20, targetX)), 
+                targetY: Math.max(20, Math.min(canvas.height - 20, targetY)),
                 radius: w.radius, damage: w.damage, speed: 8, landed: false
             });
         }

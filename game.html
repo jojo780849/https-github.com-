@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>生存割草 V8 - 手机竖版</title>
+    <title>生存割草 V9 - 武士角色</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
@@ -404,7 +404,7 @@
     // --- 玩家 ---
     const player = {
         x: canvas.width / 2, y: canvas.height / 2,  // 450/2=225, 600/2=300
-        radius: 15, speed: 3.5, hp: 100, maxHp: 100, color: '#00e5ff',
+        radius: 20, speed: 3.5, hp: 100, maxHp: 100, color: '#00e5ff',
         level: 1, exp: 0, maxExp: 10,
         pickupRange: 70,  // 稍微缩小拾取范围以适应小屏
         critChance: 0.05, critDamage: 1.5, // 暴击
@@ -421,8 +421,344 @@
         revive: false, // 复活
         reviveUsed: false, // 是否已用复活
         slowEnemies: 1, // 敌人减速倍率
-        hpRegen: 0 // 每秒回血
+        hpRegen: 0, // 每秒回血
+        // 角色动画状态
+        facing: 1, // 1=右, -1=左
+        isAttacking: false,
+        attackFrame: 0,
+        attackMaxFrames: 12,
+        walkFrame: 0,
+        lastMoveX: 0,
+        lastMoveY: 0
     };
+
+    // === 绘制武士角色 ===
+    function drawPlayer() {
+        ctx.save();
+        const px = player.x, py = player.y;
+        const scale = player.radius / 20; // 基础比例
+        const facing = player.facing;
+        
+        // 行走动画
+        const walkBob = Math.sin(player.walkFrame * 0.15) * 2;
+        const legSwing = Math.sin(player.walkFrame * 0.15) * 0.3;
+        
+        // 攻击动画
+        let swordAngle = -0.3; // 默认持刀角度
+        let swordExtend = 0;
+        let armAngle = 0;
+        if (player.isAttacking) {
+            const t = player.attackFrame / player.attackMaxFrames;
+            // 挥刀动作：准备 -> 挥出 -> 收回
+            if (t < 0.3) {
+                swordAngle = -0.3 - t * 2; // 举刀
+                armAngle = -t * 0.5;
+            } else if (t < 0.6) {
+                const swingT = (t - 0.3) / 0.3;
+                swordAngle = -0.9 + swingT * 2.5; // 快速挥下
+                swordExtend = swingT * 15;
+                armAngle = -0.15 + swingT * 0.8;
+            } else {
+                const returnT = (t - 0.6) / 0.4;
+                swordAngle = 1.6 - returnT * 1.9; // 收回
+                swordExtend = 15 * (1 - returnT);
+                armAngle = 0.65 * (1 - returnT);
+            }
+        }
+        
+        ctx.translate(px, py + walkBob);
+        ctx.scale(facing * scale, scale);
+        
+        // === 身体部件 ===
+        
+        // 阴影
+        ctx.beginPath();
+        ctx.ellipse(0, 28, 12, 4, 0, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.fill();
+        
+        // 靴子（红色带三角花纹）
+        ctx.fillStyle = '#cc3344';
+        // 左靴
+        ctx.save();
+        ctx.translate(-6, 20 + Math.sin(legSwing) * 3);
+        ctx.beginPath();
+        ctx.roundRect(-5, 0, 10, 10, 2);
+        ctx.fill();
+        // 靴子花纹
+        ctx.fillStyle = '#882233';
+        ctx.beginPath();
+        ctx.moveTo(-3, 2); ctx.lineTo(0, 6); ctx.lineTo(3, 2); ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+        // 右靴
+        ctx.save();
+        ctx.translate(6, 20 - Math.sin(legSwing) * 3);
+        ctx.beginPath();
+        ctx.roundRect(-5, 0, 10, 10, 2);
+        ctx.fillStyle = '#cc3344';
+        ctx.fill();
+        ctx.fillStyle = '#882233';
+        ctx.beginPath();
+        ctx.moveTo(-3, 2); ctx.lineTo(0, 6); ctx.lineTo(3, 2); ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+        
+        // 腿（粉色裤子）
+        ctx.fillStyle = '#dd8899';
+        // 左腿
+        ctx.save();
+        ctx.translate(-6, 8);
+        ctx.rotate(legSwing * 0.3);
+        ctx.fillRect(-4, 0, 8, 14);
+        ctx.restore();
+        // 右腿
+        ctx.save();
+        ctx.translate(6, 8);
+        ctx.rotate(-legSwing * 0.3);
+        ctx.fillRect(-4, 0, 8, 14);
+        ctx.restore();
+        
+        // 护膝
+        ctx.fillStyle = '#333';
+        ctx.fillRect(-8, 13, 6, 6);
+        ctx.fillRect(2, 13, 6, 6);
+        
+        // 身体（黑色夹克）
+        ctx.fillStyle = '#222';
+        ctx.beginPath();
+        ctx.roundRect(-12, -8, 24, 20, 3);
+        ctx.fill();
+        
+        // 夹克细节 - 条纹
+        ctx.strokeStyle = '#444';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-10, -5); ctx.lineTo(-10, 8);
+        ctx.moveTo(10, -5); ctx.lineTo(10, 8);
+        ctx.stroke();
+        
+        // 夹克上的图案（狮子/老虎徽章）
+        ctx.fillStyle = '#cc8800';
+        ctx.beginPath();
+        ctx.arc(4, 0, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#222';
+        ctx.beginPath();
+        ctx.arc(3, -1, 2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // 腰带
+        ctx.fillStyle = '#aa2222';
+        ctx.fillRect(-12, 7, 24, 4);
+        
+        // 刀鞘（背后）
+        ctx.save();
+        ctx.translate(-8, -5);
+        ctx.rotate(-0.5);
+        ctx.fillStyle = '#4a3a6a';
+        ctx.fillRect(-3, -15, 6, 35);
+        // 刀鞘装饰
+        ctx.fillStyle = '#7a5a9a';
+        ctx.fillRect(-2, -12, 4, 3);
+        ctx.fillRect(-2, 10, 4, 3);
+        ctx.restore();
+        
+        // 头部
+        ctx.fillStyle = '#e8c0b0'; // 肤色
+        ctx.beginPath();
+        ctx.arc(0, -16, 10, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // 头发（紫色）
+        ctx.fillStyle = '#6a3a6a';
+        ctx.beginPath();
+        // 刘海
+        ctx.moveTo(-10, -18);
+        ctx.quadraticCurveTo(-8, -28, 0, -28);
+        ctx.quadraticCurveTo(8, -28, 10, -18);
+        ctx.lineTo(10, -14);
+        ctx.lineTo(-10, -14);
+        ctx.closePath();
+        ctx.fill();
+        // 马尾
+        ctx.beginPath();
+        ctx.moveTo(-6, -18);
+        ctx.quadraticCurveTo(-20, -15, -18, 5);
+        ctx.quadraticCurveTo(-15, 8, -10, 5);
+        ctx.quadraticCurveTo(-12, -10, -6, -14);
+        ctx.closePath();
+        ctx.fill();
+        
+        // 帽子（黑色鸭舌帽）
+        ctx.fillStyle = '#1a1a1a';
+        // 帽子主体
+        ctx.beginPath();
+        ctx.ellipse(0, -24, 11, 6, 0, Math.PI, 0);
+        ctx.fill();
+        ctx.fillRect(-11, -24, 22, 4);
+        // 帽檐
+        ctx.fillStyle = '#2a2a2a';
+        ctx.beginPath();
+        ctx.ellipse(6, -22, 8, 3, 0.3, 0, Math.PI * 2);
+        ctx.fill();
+        // 帽子闪电标志
+        ctx.fillStyle = '#ffcc00';
+        ctx.beginPath();
+        ctx.moveTo(-2, -28); ctx.lineTo(2, -25); ctx.lineTo(0, -25);
+        ctx.lineTo(3, -21); ctx.lineTo(-1, -24); ctx.lineTo(1, -24);
+        ctx.closePath();
+        ctx.fill();
+        
+        // 耳环
+        ctx.fillStyle = '#aaa';
+        ctx.beginPath();
+        ctx.arc(-10, -14, 2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // 眼睛
+        ctx.fillStyle = '#6a2a6a'; // 紫色眼睛
+        ctx.beginPath();
+        ctx.ellipse(-4, -16, 2.5, 3, 0, 0, Math.PI * 2);
+        ctx.ellipse(4, -16, 2.5, 3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // 眼睛高光
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.arc(-5, -17, 1, 0, Math.PI * 2);
+        ctx.arc(3, -17, 1, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // 手臂和武士刀
+        ctx.save();
+        ctx.translate(12, -2);
+        ctx.rotate(armAngle);
+        
+        // 手臂（夹克袖子）
+        ctx.fillStyle = '#222';
+        ctx.fillRect(-3, -3, 12, 8);
+        // 手
+        ctx.fillStyle = '#e8c0b0';
+        ctx.beginPath();
+        ctx.arc(12, 2, 4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // 武士刀
+        ctx.save();
+        ctx.translate(14, 2);
+        ctx.rotate(swordAngle);
+        
+        // 刀柄
+        ctx.fillStyle = '#2a1a3a';
+        ctx.fillRect(-2, 0, 4, 12);
+        // 刀柄装饰
+        ctx.fillStyle = '#5a3a7a';
+        ctx.fillRect(-1, 2, 2, 2);
+        ctx.fillRect(-1, 6, 2, 2);
+        
+        // 护手
+        ctx.fillStyle = '#666';
+        ctx.fillRect(-4, -2, 8, 3);
+        
+        // 刀身（彩虹渐变）
+        const bladeLength = 40 + swordExtend;
+        const gradient = ctx.createLinearGradient(0, -bladeLength, 0, -5);
+        gradient.addColorStop(0, '#88ffff');
+        gradient.addColorStop(0.25, '#88ff88');
+        gradient.addColorStop(0.5, '#ffff88');
+        gradient.addColorStop(0.75, '#ff88ff');
+        gradient.addColorStop(1, '#8888ff');
+        
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.moveTo(-2, -5);
+        ctx.lineTo(-2, -bladeLength + 5);
+        ctx.lineTo(0, -bladeLength);
+        ctx.lineTo(2, -bladeLength + 5);
+        ctx.lineTo(2, -5);
+        ctx.closePath();
+        ctx.fill();
+        
+        // 刀身光泽
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.fillRect(-1, -bladeLength + 8, 1, bladeLength - 15);
+        
+        // 攻击时的刀光特效
+        if (player.isAttacking && player.attackFrame > 3 && player.attackFrame < 9) {
+            ctx.globalAlpha = 0.6 - (player.attackFrame - 3) * 0.1;
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 3;
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = '#00ffff';
+            ctx.beginPath();
+            ctx.arc(0, -20, 35, -1.5, 0.5);
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+            ctx.globalAlpha = 1;
+        }
+        
+        ctx.restore(); // 刀
+        ctx.restore(); // 手臂
+        
+        // 左手臂
+        ctx.fillStyle = '#222';
+        ctx.save();
+        ctx.translate(-12, -2);
+        ctx.fillRect(-8, -3, 10, 8);
+        ctx.fillStyle = '#e8c0b0';
+        ctx.beginPath();
+        ctx.arc(-10, 2, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+        
+        // 狂战士效果
+        if (player.berserker && player.hp < player.maxHp * 0.5) {
+            const rage = 1 - (player.hp / player.maxHp);
+            ctx.globalAlpha = 0.3 + rage * 0.3;
+            ctx.strokeStyle = '#ff0000';
+            ctx.lineWidth = 3;
+            ctx.shadowBlur = 20 + rage * 20;
+            ctx.shadowColor = '#ff0000';
+            ctx.beginPath();
+            ctx.arc(0, 0, 25, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+        }
+        
+        ctx.restore();
+    }
+
+    // 触发攻击动画
+    function triggerAttackAnimation() {
+        if (!player.isAttacking) {
+            player.isAttacking = true;
+            player.attackFrame = 0;
+        }
+    }
+
+    // 更新角色动画状态
+    function updatePlayerAnimation(moveX, moveY) {
+        // 更新朝向
+        if (moveX > 0.1) player.facing = 1;
+        else if (moveX < -0.1) player.facing = -1;
+        
+        // 更新行走动画
+        if (Math.abs(moveX) > 0.1 || Math.abs(moveY) > 0.1) {
+            player.walkFrame++;
+        }
+        
+        // 更新攻击动画
+        if (player.isAttacking) {
+            player.attackFrame++;
+            if (player.attackFrame >= player.attackMaxFrames) {
+                player.isAttacking = false;
+                player.attackFrame = 0;
+            }
+        }
+        
+        player.lastMoveX = moveX;
+        player.lastMoveY = moveY;
+    }
 
     // --- 武器系统 ---
     const weapons = {
@@ -766,6 +1102,12 @@
         });
         if (nearest) {
             const baseAngle = Math.atan2(nearest.y - player.y, nearest.x - player.x);
+            // 让角色面向敌人
+            if (nearest.x > player.x) player.facing = 1;
+            else player.facing = -1;
+            // 触发攻击动画
+            triggerAttackAnimation();
+            
             for (let i = 0; i < w.count; i++) {
                 const offset = (i - (w.count - 1) / 2) * 0.15;
                 const angle = baseAngle + offset;
@@ -1514,6 +1856,9 @@
         if (newX > player.radius && newX < canvas.width - player.radius) player.x = newX;
         if (newY > player.radius && newY < canvas.height - player.radius) player.y = newY;
 
+        // 更新角色动画
+        updatePlayerAnimation(moveX, moveY);
+
         // 所有武器
         fireBullets();
         fireExplosion();
@@ -1539,23 +1884,8 @@
         ctx.fillStyle = 'rgba(0, 229, 255, 0.05)';
         ctx.fill();
 
-        // 绘制玩家
-        ctx.beginPath();
-        ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
-        // 狂战士模式视觉效果
-        if (player.berserker && player.hp < player.maxHp * 0.5) {
-            const rage = 1 - (player.hp / player.maxHp);
-            player.color = `rgb(${Math.floor(255 * rage)}, ${Math.floor(229 * (1 - rage))}, ${Math.floor(255 * (1 - rage))})`;
-            ctx.shadowBlur = 20 + rage * 20;
-            ctx.shadowColor = '#ff0000';
-        } else {
-            player.color = '#00e5ff';
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = player.color;
-        }
-        ctx.fillStyle = player.color;
-        ctx.fill();
-        ctx.shadowBlur = 0;
+        // 绘制武士角色
+        drawPlayer();
 
         // 经验宝石
         for (let i = gems.length - 1; i >= 0; i--) {

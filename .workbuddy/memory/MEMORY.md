@@ -82,9 +82,16 @@
    - 移速、拾取范围、暴击、生命回复
 
 ### 部署信息
-- **GitHub 仓库**：https://github.com/jojo780849/https-github.com-
-- **在线游戏链接**：https://jojo780849.github.io/https-github.com-/game.html
-- **GitHub 用户名**：jojo780849
+- **GitHub 仓库名**：割一波
+- **GitHub 用户名**：ChrisKiki
+- **GitHub 仓库**：待按 `ChrisKiki/割一波` 更新
+- **在线游戏链接**：待按新仓库 Pages 地址更新
+
+### 协作与跨设备同步约定
+- **GitHub**：存放代码、Excel 进度表、设计文档
+- **腾讯文档**：存放协作版进度追踪、讨论结论、待确认问题
+- **项目目录 `.workbuddy/memory/`**：存放项目上下文、关键结论、每日推进记录
+- **跨电脑迁移建议**：优先同步整个项目目录，至少确保 `game.html`、`割一波_玩法设计进度表.xlsx` 与 `.workbuddy/memory/` 一并带走
 
 ### 开发日期
 - 2026-04-03：创建 MVP → V6 天赋系统 → 部署到 GitHub Pages

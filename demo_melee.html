@@ -93,7 +93,7 @@
             display: flex; justify-content: center; align-items: center;
             position: relative; padding: 10px;
         }
-        #joystick-container { width: 140px; height: 140px; position: absolute; left: 20px; top: 20px; pointer-events: none; transition: opacity 0.15s; }
+        #joystick-container { width: 140px; height: 140px; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); pointer-events: none; transition: opacity 0.15s; }
         #joystick-base {
             position: absolute; width: 140px; height: 140px;
             background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%);
@@ -149,8 +149,9 @@
 <div id="game-container">
     <div id="top-ui">
         <div id="top-row">
-            <span id="stats">❤️ <span id="hp">100</span>/<span id="maxhp">100</span> | Lv.<span id="level">1</span> | 击杀: <span id="score">0</span></span>
+            <span id="stats">Lv.<span id="level">1</span> | ☠️ <span id="score">0</span></span>
             <span id="timer">0:00</span>
+            <span style="display:none"><span id="hp">100</span><span id="maxhp">100</span></span>
         </div>
         <div id="exp-bar-container"><div id="exp-bar"></div></div>
         <div id="weapons-display">⚔️ <span id="weapon-name">-</span> | <span id="skill-list"></span></div>
@@ -513,6 +514,7 @@ function handleJoystickStart(e) {
     // 移动摇杆容器到按下位置
     const localX = t.clientX - ctrlRect.left;
     const localY = t.clientY - ctrlRect.top;
+    joystickContainer.style.transform = 'none'; // V13: 清掉居中 transform
     joystickContainer.style.left = (localX - 70) + 'px'; // 70 = 容器宽度一半
     joystickContainer.style.top = (localY - 70) + 'px';
     joystickContainer.style.opacity = '1';
@@ -544,9 +546,10 @@ function handleJoystickEnd(e) {
             joystickStick.style.left = '40px';
             joystickStick.style.top = '40px';
             joystickContainer.style.opacity = '0.5';
-            // 复位到默认位置
-            joystickContainer.style.left = '20px';
-            joystickContainer.style.top = '20px';
+            // V13: 复位到控制区正中间
+            joystickContainer.style.left = '50%';
+            joystickContainer.style.top = '50%';
+            joystickContainer.style.transform = 'translate(-50%, -50%)';
             break;
         }
     }
@@ -800,10 +803,10 @@ function executeSlash(atkAngle) {
                 text: Math.floor(dmg).toString() + comboText,
                 color: isCrit ? '#ffff00' : isHeavyStrike ? '#ff8800' : 
                        (w.id === 'dagger' && player.comboCount >= 4) ? '#ff44ff' : '#ffffff',
-                life: 35, isCrit, isHeavy: isHeavyStrike,
-                scale: isCrit ? 1.6 : isHeavyStrike ? 1.4 : 
-                       (w.id === 'dagger' && player.comboCount >= 4) ? 1.3 : 1.0,
-                vx: rng(-1,1), vy: -2
+                life: 35, maxLife: 35, isCrit, isHeavy: isHeavyStrike,
+                scale: isCrit ? 1.8 : isHeavyStrike ? 1.6 : 
+                       (w.id === 'dagger' && player.comboCount >= 4) ? 1.4 : 1.1,
+                vx: rng(-1.5,1.5), vy: -2.5
             });
         });
         
@@ -956,7 +959,7 @@ function updateProjectiles() {
             if (!hit && dist(k.x,k.y,e.x,e.y) < e.radius + 5) {
                 e.hp -= k.damage * player.damageBonus;
                 e.hitFlash = 4; hit = true;
-                damageNumbers.push({ x:e.x,y:e.y-10, text:Math.floor(k.damage).toString(), color:'#cccccc', life:25, isCrit:false, scale:0.9, vx:rng(-0.5,0.5), vy:-1.5 });
+                damageNumbers.push({ x:e.x,y:e.y-10, text:Math.floor(k.damage).toString(), color:'#cccccc', life:25, maxLife:25, isCrit:false, scale:0.9, vx:rng(-0.5,0.5), vy:-1.5 });
             }
         });
         // V4: 飞刀打 Boss
@@ -1115,15 +1118,47 @@ function drawSlashEffects() {
 function drawDamageNumbers() {
     for (let i = damageNumbers.length-1; i >= 0; i--) {
         const d = damageNumbers[i];
-        d.x += (d.vx || 0); d.y += (d.vy || -1); d.vy = (d.vy || -1) + 0.05;
+        d.x += (d.vx || 0); d.y += (d.vy || -1); d.vy = (d.vy || -1) + 0.06;
         d.life--;
-        const alpha = Math.min(1, d.life/15);
+        
+        // V13: 弹性缩放 — 出现时放大弹跳，然后缩回
+        const lifeRatio = d.life / (d.maxLife || 35);
+        const age = 1 - lifeRatio;
+        let bounceScale = 1;
+        if (age < 0.15) {
+            // 弹出阶段：快速放大
+            bounceScale = 1 + Math.sin(age / 0.15 * Math.PI) * 0.6;
+        } else if (age < 0.3) {
+            // 回弹阶段：略微缩小再恢复
+            bounceScale = 1 - Math.sin((age - 0.15) / 0.15 * Math.PI) * 0.15;
+        }
+        
+        const alpha = Math.min(1, d.life / 12);
         ctx.save(); ctx.globalAlpha = alpha;
-        const size = Math.floor(13 * (d.scale || 1));
-        ctx.font = (d.isCrit || d.isHeavy ? 'bold ' : '') + size + 'px sans-serif';
-        ctx.fillStyle = d.color; ctx.textAlign = 'center';
-        if (d.isCrit || d.isHeavy) { ctx.shadowBlur = 10; ctx.shadowColor = d.color; }
+        
+        const baseSize = d.isCrit ? 20 : d.isHeavy ? 18 : (d.isPlayerDmg ? 14 : 15);
+        const size = Math.floor(baseSize * (d.scale || 1) * bounceScale);
+        const bold = d.isCrit || d.isHeavy || size >= 16;
+        ctx.font = (bold ? 'bold ' : '') + size + 'px sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        
+        // V13: 描边 + 发光 — 让数字在任何背景上清晰可见
+        if (d.isCrit || d.isHeavy) {
+            ctx.shadowBlur = 15; ctx.shadowColor = d.color;
+        } else {
+            ctx.shadowBlur = 6; ctx.shadowColor = 'rgba(0,0,0,0.8)';
+        }
+        
+        // 描边（黑色外框）
+        ctx.strokeStyle = 'rgba(0,0,0,0.7)';
+        ctx.lineWidth = 3;
+        ctx.lineJoin = 'round';
+        ctx.strokeText(d.text, d.x, d.y);
+        
+        // 填充颜色
+        ctx.fillStyle = d.color;
         ctx.fillText(d.text, d.x, d.y);
+        
         ctx.shadowBlur = 0; ctx.restore();
         if (d.life <= 0) damageNumbers.splice(i,1);
     }
@@ -1435,8 +1470,8 @@ function damageBoss(dmg, isCrit, isHeavy) {
         x: boss.x + rng(-15, 15), y: boss.y - boss.radius - 10,
         text: Math.floor(dmg).toString(),
         color: isCrit ? '#ffff00' : isHeavy ? '#ff8800' : '#ffffff',
-        life: 40, isCrit, isHeavy,
-        scale: isCrit ? 1.8 : isHeavy ? 1.6 : 1.2,
+        life: 40, maxLife: 40, isCrit, isHeavy,
+        scale: isCrit ? 2.0 : isHeavy ? 1.8 : 1.3,
         vx: rng(-1.5, 1.5), vy: -2.5
     });
 }
@@ -1794,6 +1829,47 @@ function drawPlayer() {
     if (player.iframeTimer > 0 && player.iframeFlash) {
         ctx.restore();
     }
+    
+    // V13: 跟随玩家的弧形血条（在角色底部）
+    const hpPct = Math.max(0, player.hp / player.maxHp);
+    const barRadius = player.radius + 8;
+    const barStartAngle = Math.PI * 0.2;    // 从底部左侧开始
+    const barEndAngle = Math.PI * 0.8;      // 到底部右侧结束
+    const barArc = barEndAngle - barStartAngle;
+    
+    // 背景弧
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, barRadius, barStartAngle, barEndAngle);
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+    ctx.lineCap = 'round';
+    ctx.stroke();
+    
+    // 血量弧 — 颜色根据血量变化
+    if (hpPct > 0) {
+        const hpColor = hpPct > 0.6 ? '#44ff66' : hpPct > 0.3 ? '#ffaa22' : '#ff3333';
+        const hpGlow = hpPct > 0.6 ? '#22cc44' : hpPct > 0.3 ? '#ff8800' : '#ff0000';
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, barRadius, barStartAngle, barStartAngle + barArc * hpPct);
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = hpColor;
+        ctx.shadowBlur = hpPct < 0.3 ? 8 : 4;
+        ctx.shadowColor = hpGlow;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+    }
+    
+    // 低血量闪烁警告
+    if (hpPct < 0.25 && Math.floor(frameCount / 10) % 2 === 0) {
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, barRadius + 3, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255,0,0,0.3)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+    ctx.restore();
 }
 
 // ========================================
@@ -1990,7 +2066,8 @@ function damagePlayer(dmg, knockbackFromX, knockbackFromY, knockbackForce) {
     damageNumbers.push({
         x: player.x + rng(-8, 8), y: player.y - 20,
         text: Math.floor(dmg).toString(), color: '#ff3333',
-        life: 30, isCrit: false, scale: 1.1, vx: rng(-0.5, 0.5), vy: -1.8
+        life: 30, maxLife: 30, isCrit: false, isPlayerDmg: true,
+        scale: 1.2, vx: rng(-0.5, 0.5), vy: -1.8
     });
     
     // 死亡检查
@@ -2164,7 +2241,7 @@ function gameLoop() {
             e.poisonTimer--;
             if (frameCount % 20 === 0) {
                 e.hp -= e.poisonDmg;
-                damageNumbers.push({ x:e.x,y:e.y-8, text:Math.floor(e.poisonDmg)+'', color:'#44ff44', life:20, isCrit:false, scale:0.8, vx:rng(-0.5,0.5), vy:-1 });
+                damageNumbers.push({ x:e.x,y:e.y-8, text:Math.floor(e.poisonDmg)+'', color:'#44ff44', life:20, maxLife:20, isCrit:false, scale:0.8, vx:rng(-0.5,0.5), vy:-1 });
             }
         }
         // 眩晕

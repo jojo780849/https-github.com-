@@ -238,8 +238,8 @@ const joystickStick = document.getElementById('joystick-stick');
 const MELEE_WEAPONS = {
     dagger: {
         name: '匕首', icon: '🗡️',
-        arcAngle: Math.PI / 6,      // 30° 极窄
-        range: 40,                   // V3: 35→40 略增
+        arcAngle: Math.PI / 4,      // V15: 30°→45° 稍宽容
+        range: 55,                   // V15: 40→55 贴脸但不用贴死
         cooldown: 10,                // 极快
         damage: 12,                  // V3: 6→12 DPS翻倍
         knockback: 1,
@@ -253,8 +253,8 @@ const MELEE_WEAPONS = {
     },
     sword: {
         name: '长剑', icon: '⚔️',
-        arcAngle: Math.PI / 2,      // 90°
-        range: 65,
+        arcAngle: Math.PI * 0.61,   // V15: 90°→110° 更宽容
+        range: 85,                   // V15: 65→85 中距离安全感
         cooldown: 25,
         damage: 25,
         knockback: 5,
@@ -269,7 +269,7 @@ const MELEE_WEAPONS = {
     axe: {
         name: '巨斧', icon: '🪓',
         arcAngle: Math.PI * 0.83,   // V3: 200°→150°
-        range: 90,                   // V3: 100→90
+        range: 110,                  // V15: 90→110 清波半径更大
         cooldown: 65,                // V3: 55→65 更慢
         damage: 50,                  // V3: 80→50
         knockback: 8,                // V3: 18→8 大幅降低
@@ -699,7 +699,7 @@ function meleeAttack() {
     if (player.meleeCooldown > 0) { player.meleeCooldown--; return; }
     
     // 找最近敌人
-    let nearest = null, minD = w.range + 50;
+    let nearest = null, minD = w.range + 60;
     enemies.forEach(e => {
         const d = dist(player.x,player.y,e.x,e.y);
         if (d < minD) { minD = d; nearest = e; }

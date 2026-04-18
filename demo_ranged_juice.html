@@ -237,10 +237,6 @@
 </div>
 
 <script>
-window.onerror = function(msg, url, line, col, err) {
-    alert('JS Error: ' + msg + '\nLine: ' + line + '\nCol: ' + col);
-    return false;
-};
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const hpEl = document.getElementById('hp');
@@ -447,12 +443,12 @@ let frameCount = 0, gameTime = 0, score = 0;
 let screenShake = 0, hitPauseFrames = 0;
 
 // ========================================
-// 🔥 JUICE SYSTEM #1: Time Scale (慢动作)
+// JUICE SYSTEM #1: Time Scale (慢动作)
 // ========================================
 let timeScale = 1.0;
 let timeScaleTarget = 1.0;
 let timeScaleTimer = 0;
-let screenFlashAlpha = 0;  // 白闪
+let screenFlashAlpha = 0;
 const flashOverlay = document.getElementById('flash-overlay');
 const killstreakBanner = document.getElementById('killstreak-banner');
 
@@ -467,14 +463,14 @@ function triggerFlash(alpha) {
 }
 
 // ========================================
-// 🔥 JUICE SYSTEM #2: Kill Streak Rewards
+// JUICE SYSTEM #2: Kill Streak Rewards
 // ========================================
 const STREAK_MILESTONES = {
     5:  { label: 'KILLING SPREE!', color: '#ffaa00', sound: 'streak1', reward: 'pulse' },
     10: { label: 'RAMPAGE!', color: '#ff4400', sound: 'streak2', reward: 'rapidfire' },
     15: { label: 'UNSTOPPABLE!', color: '#ff00ff', sound: 'streak3', reward: 'nuke' },
     20: { label: 'GODLIKE!', color: '#00ffff', sound: 'godlike', reward: 'godmode' },
-    30: { label: '💀 LEGENDARY 💀', color: '#ffd700', sound: 'godlike', reward: 'nuke' }
+    30: { label: '\u{1F480} LEGENDARY \u{1F480}', color: '#ffd700', sound: 'godlike', reward: 'nuke' }
 };
 let streakRapidFireTimer = 0;
 let streakInvincibleTimer = 0;
@@ -484,13 +480,13 @@ function showKillstreakBanner(text, color) {
     killstreakBanner.innerText = text;
     killstreakBanner.style.color = color;
     killstreakBanner.style.animation = 'none';
-    killstreakBanner.offsetHeight; // force reflow
+    killstreakBanner.offsetHeight;
     killstreakBanner.style.animation = 'bannerPop 1.2s ease-out forwards';
 }
 
 function applyStreakReward(type) {
     switch(type) {
-        case 'pulse': // 5连杀：全屏伤害脉冲
+        case 'pulse':
             holyBursts.push({
                 x: player.x, y: player.y, radius: 0,
                 maxRadius: 200, damage: 30 + player.level * 5,
@@ -500,10 +496,10 @@ function applyStreakReward(type) {
             triggerFlash(0.4);
             setSlowMo(0.2, 12);
             break;
-        case 'rapidfire': // 10连杀：3秒极速射击
+        case 'rapidfire':
             streakRapidFireTimer = 180;
             break;
-        case 'nuke': // 15/30连杀：全屏清场
+        case 'nuke':
             enemies.forEach(e => {
                 e.hp = 0;
                 spawnDeathEffect(e.x, e.y, e.color, e.radius * 1.5);
@@ -511,13 +507,12 @@ function applyStreakReward(type) {
             screenShake = 25;
             triggerFlash(0.7);
             setSlowMo(0.1, 20);
-            // 大量粒子庆祝
             for(let i = 0; i < 40; i++) {
                 const ax = rng(50, canvas.width-50), ay = rng(50, canvas.height-50);
                 spawnDeathEffect(ax, ay, ['#ff4400','#ffaa00','#ff00ff','#00ffff','#ffd700'][Math.floor(rng(0,5))], 15);
             }
             break;
-        case 'godmode': // 20连杀：3秒无敌+极速
+        case 'godmode':
             streakInvincibleTimer = 180;
             streakRapidFireTimer = 180;
             player.iframeTimer = Math.max(player.iframeTimer, 180);
@@ -526,7 +521,7 @@ function applyStreakReward(type) {
 }
 
 // ========================================
-// 🔥 JUICE SYSTEM #6: Web Audio SFX
+// JUICE SYSTEM #6: Web Audio SFX
 // ========================================
 let audioCtx = null;
 function initAudio() {
@@ -535,15 +530,17 @@ function initAudio() {
 }
 function playTone(freq, dur, type, vol, detune) {
     if (!audioCtx) return;
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.type = type || 'square';
-    osc.frequency.value = freq;
-    if (detune) osc.detune.value = detune;
-    gain.gain.setValueAtTime(vol || 0.1, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
-    osc.connect(gain); gain.connect(audioCtx.destination);
-    osc.start(); osc.stop(audioCtx.currentTime + dur);
+    try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type || 'square';
+        osc.frequency.value = freq;
+        if (detune) osc.detune.value = detune;
+        gain.gain.setValueAtTime(vol || 0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + dur);
+    } catch(e) {}
 }
 function sfxShoot() { playTone(800, 0.06, 'square', 0.08); playTone(400, 0.04, 'sawtooth', 0.05, 50); }
 function sfxShotgun() { playTone(200, 0.1, 'sawtooth', 0.12); playTone(100, 0.08, 'square', 0.08); playTone(600, 0.03, 'square', 0.06); }
@@ -900,7 +897,7 @@ function rangedAttack(isMoving) {
         cdMod = 0.80; // 站定散弹射速+20%
     }
     
-    // 🔥 JUICE #2: 连杀极速射击 — CD 减半
+    // JUICE: 连杀极速射击 — CD 减半
     if (streakRapidFireTimer > 0) {
         cdMod *= 0.4;
     }
@@ -1299,7 +1296,7 @@ function updateBullets() {
                     vx: rng(-1.5,1.5), vy: -2.5
                 });
                 
-                // 顿帧+震动 + 🔥 音效
+                // 顿帧+震动 + 音效
                 hitPauseFrames = Math.max(hitPauseFrames, player.rangedWeapon.hitPause + (isCrit ? 3 : 0));
                 screenShake = Math.max(screenShake, 2 + (isCrit ? 5 : 0));
                 if (isCrit) { sfxCrit(); } else { sfxHit(); }
@@ -1415,9 +1412,9 @@ function updateBullets() {
         if (h.healEffect) {
             g.addColorStop(0,'rgba(100,255,150,0.8)'); g.addColorStop(0.5,'rgba(50,255,100,0.4)'); g.addColorStop(1,'rgba(0,200,50,0)');
         } else if (h.isStreakPulse) {
-            g.addColorStop(0,'rgba(255,100,0,0.9)'); g.addColorStop(0.3,'rgba(255,200,50,0.6)'); g.addColorStop(0.6,'rgba(255,50,0,0.3)'); g.addColorStop(1,'rgba(255,0,0,0)');
+            g.addColorStop(0,'rgba(255,100,0,0.9)'); g.addColorStop(0.4,'rgba(255,50,0,0.5)'); g.addColorStop(1,'rgba(255,0,0,0)');
         } else if (h.isLevelUp) {
-            g.addColorStop(0,'rgba(0,229,255,0.9)'); g.addColorStop(0.3,'rgba(0,255,136,0.6)'); g.addColorStop(0.6,'rgba(0,150,255,0.3)'); g.addColorStop(1,'rgba(0,100,200,0)');
+            g.addColorStop(0,'rgba(0,229,255,0.9)'); g.addColorStop(0.4,'rgba(0,150,255,0.5)'); g.addColorStop(1,'rgba(0,100,200,0)');
         } else if (h.precisionBurst) {
             g.addColorStop(0,'rgba(0,255,136,0.9)'); g.addColorStop(0.5,'rgba(0,200,100,0.4)'); g.addColorStop(1,'rgba(0,150,50,0)');
         } else if (h.perfectStand) {
@@ -1446,45 +1443,47 @@ function drawDamageNumbers() {
         d.x += (d.vx || 0); d.y += (d.vy || -1); d.vy = (d.vy || -1) + 0.06;
         d.life--;
         
+        // V13: 弹性缩放 — 出现时放大弹跳，然后缩回
         const lifeRatio = d.life / (d.maxLife || 35);
         const age = 1 - lifeRatio;
         let bounceScale = 1;
         if (age < 0.15) {
-            bounceScale = 1 + Math.sin(age / 0.15 * Math.PI) * 0.8;
+            bounceScale = 1 + Math.sin(age / 0.15 * Math.PI) * 0.6;
         } else if (age < 0.3) {
-            bounceScale = 1 - Math.sin((age - 0.15) / 0.15 * Math.PI) * 0.2;
+            bounceScale = 1 - Math.sin((age - 0.15) / 0.15 * Math.PI) * 0.15;
         }
-        
-        // 🔥 JUICE #3: 连杀颜色渐变
-        let color = d.color;
-        if (!d.isPlayerDmg && !d.isHeal && player.killStreak >= 3) {
-            const ks = player.killStreak;
-            if (ks >= 20) color = '#00ffff';
-            else if (ks >= 15) color = '#ff00ff';
-            else if (ks >= 10) color = '#ff4400';
-            else if (ks >= 6) color = '#ff8800';
-            else color = '#ffcc00';
-        }
-        if (d.isCrit) color = '#ffff00';
         
         const alpha = Math.min(1, d.life / 12);
         ctx.save(); ctx.globalAlpha = alpha;
         
-        // 🔥 JUICE #3: 暴击字体3倍大
-        const baseSize = d.isCrit ? 30 : d.isHeavy ? 22 : (d.isPlayerDmg ? 14 : 15);
-        const size = Math.floor(baseSize * (d.scale || 1) * bounceScale);
+        // JUICE: 连杀数越高，伤害数字颜色越亮
+        let displayColor = d.color;
+        if (!d.isPlayerDmg && !d.isHeal && player.killStreak >= 5) {
+            const streak = player.killStreak;
+            if (streak >= 20) displayColor = '#00ffff';
+            else if (streak >= 15) displayColor = '#ff00ff';
+            else if (streak >= 10) displayColor = '#ff4400';
+            else displayColor = '#ffaa00';
+        }
+        
+        // JUICE: 暴击字体放大3倍
+        const baseSize = d.isCrit ? 20 : d.isHeavy ? 18 : (d.isPlayerDmg ? 14 : 15);
+        const critScale = d.isCrit ? 3.0 : (d.scale || 1);
+        const size = Math.floor(baseSize * critScale * bounceScale);
         const bold = d.isCrit || d.isHeavy || size >= 16;
         ctx.font = (bold ? 'bold ' : '') + size + 'px sans-serif';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         
-        // 暴击抖动效果
-        let dx = 0, dy = 0;
+        // JUICE: 暴击抖动
+        let drawX = d.x, drawY = d.y;
         if (d.isCrit && age < 0.3) {
-            dx = rng(-3, 3); dy = rng(-3, 3);
+            drawX += rng(-2, 2);
+            drawY += rng(-2, 2);
         }
         
+        // V13: 描边 + 发光 — 让数字在任何背景上清晰可见
         if (d.isCrit || d.isHeavy) {
-            ctx.shadowBlur = 25; ctx.shadowColor = color;
+            ctx.shadowBlur = 15; ctx.shadowColor = displayColor;
         } else {
             ctx.shadowBlur = 6; ctx.shadowColor = 'rgba(0,0,0,0.8)';
         }
@@ -1492,17 +1491,19 @@ function drawDamageNumbers() {
         ctx.strokeStyle = 'rgba(0,0,0,0.7)';
         ctx.lineWidth = 3;
         ctx.lineJoin = 'round';
-        ctx.strokeText(d.text, d.x + dx, d.y + dy);
-        ctx.fillStyle = color;
-        ctx.fillText(d.text, d.x + dx, d.y + dy);
+        ctx.strokeText(d.text, drawX, drawY);
         
-        // 🔥 JUICE #3: CRITICAL! 标签
+        ctx.fillStyle = displayColor;
+        ctx.fillText(d.text, drawX, drawY);
+        
+        // JUICE: 暴击 CRITICAL 标签
         if (d.isCrit && age < 0.5) {
-            ctx.font = 'bold 12px sans-serif';
-            ctx.fillStyle = '#ff4444';
-            ctx.shadowBlur = 10; ctx.shadowColor = '#ff0000';
-            ctx.globalAlpha = alpha * (1 - age*2);
-            ctx.fillText('CRITICAL!', d.x, d.y - size*0.7);
+            ctx.font = 'bold 10px sans-serif';
+            ctx.fillStyle = '#ffff00';
+            ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+            ctx.lineWidth = 2;
+            ctx.strokeText('CRITICAL', drawX, drawY - size * 0.5 - 5);
+            ctx.fillText('CRITICAL', drawX, drawY - size * 0.5 - 5);
         }
         
         ctx.shadowBlur = 0; ctx.restore();
@@ -1527,15 +1528,14 @@ function drawDeathEffects() {
 
 function spawnDeathEffect(x, y, color, size) {
     const particles = [];
-    // 🔥 连杀越高粒子越多越大
-    const streakBonus = Math.min(player.killStreak * 0.5, 8);
-    const count = 8 + Math.floor(size * 2) + Math.floor(streakBonus);
+    const streakBonus = player.killStreak >= 10 ? 8 : player.killStreak >= 5 ? 4 : 0;
+    const count = 6 + Math.floor(size * 2) + streakBonus;
     for (let i = 0; i < count; i++) {
         const ang = rng(0, Math.PI*2);
-        const spd = rng(1.5, 5 + streakBonus * 0.3);
+        const spd = rng(1, 4);
         particles.push({
-            x, y, vx: Math.cos(ang)*spd, vy: Math.sin(ang)*spd - 2.5,
-            r: rng(2, 5 + streakBonus * 0.2), color
+            x, y, vx: Math.cos(ang)*spd, vy: Math.sin(ang)*spd - 2,
+            r: rng(2, 4), color
         });
     }
     deathEffects.push({ alpha: 1, particles });
@@ -1605,12 +1605,12 @@ function updateBossPhase() {
         boss.phaseIndex = newPhase;
         const phase = BOSS_DEF.phases[newPhase];
         bossPhaseEl.innerText = phase.name;
-        // 阶段切换：短暂眩晕 + 全屏闪光 + 慢动作
+        // 阶段切换：短暂眩晕 + 全屏闪光
         boss.state = 'stunned';
         boss.stateTimer = 40;
         screenShake = 12;
-        setSlowMo(0.15, 25);
-        triggerFlash(0.6);
+        setSlowMo(0.15, 20);
+        triggerFlash(0.5);
     }
 }
 
@@ -1836,7 +1836,7 @@ function onBossDefeated() {
     victoryStatsEl.innerText = `存活: ${formatTime(gameTime)} | Lv.${player.level} | 击杀: ${score} | HP: ${Math.floor(player.hp)}/${player.maxHp}`;
     bossVictoryEl.style.display = 'flex';
     
-    // 大特效 + 慢动作
+    // 大特效
     screenShake = 20;
     setSlowMo(0.05, 40);
     triggerFlash(0.8);
@@ -2103,21 +2103,20 @@ function drawPlayer() {
     ctx.rotate(player.angle);
     const sc = player.radius / 14;
     ctx.scale(sc,sc);
-    // 远程版：连杀数显示 — 🔥 更夸张
+    // 远程版：连杀数显示
     if (player.killStreak >= 3) {
         ctx.save(); ctx.rotate(-player.angle);
-        const ks = player.killStreak;
-        const ksSize = ks >= 20 ? 20 : ks >= 15 ? 18 : ks >= 10 ? 16 : ks >= 6 ? 14 : 11;
-        ctx.font = `bold ${ksSize}px Impact, sans-serif`; ctx.textAlign = 'center';
-        const ksColor = ks >= 20 ? '#00ffff' : ks >= 15 ? '#ff00ff' : ks >= 10 ? '#ff2222' : ks >= 6 ? '#ff8800' : '#ffaa00';
+        const ksSize = player.killStreak >= 10 ? 14 : player.killStreak >= 6 ? 12 : 10;
+        ctx.font = `bold ${ksSize}px sans-serif`; ctx.textAlign = 'center';
+        const ksColor = player.killStreak >= 10 ? '#ff2222' : player.killStreak >= 6 ? '#ff44ff' : '#ffaa00';
         ctx.fillStyle = ksColor;
-        ctx.shadowBlur = ks >= 10 ? 20 : ks >= 6 ? 15 : 8; ctx.shadowColor = ksColor;
-        const ksPulse = 1 + Math.sin(frameCount * 0.3) * (0.1 + ks * 0.005);
+        ctx.shadowBlur = player.killStreak >= 6 ? 12 : 6; ctx.shadowColor = ksColor;
+        const ksPulse = 1 + Math.sin(frameCount * 0.3) * 0.1;
         ctx.scale(ksPulse, ksPulse);
-        ctx.strokeStyle = 'rgba(0,0,0,0.7)'; ctx.lineWidth = 3; ctx.lineJoin = 'round';
-        const ksLabel = ks >= 20 ? `${ks} GODLIKE!` : ks >= 15 ? `${ks} UNSTOPPABLE!` : ks >= 10 ? `${ks} RAMPAGE!` : ks >= 6 ? `${ks} KILLING SPREE!` : `${ks} KILLS!`;
-        ctx.strokeText(ksLabel, 0, -24);
-        ctx.fillText(ksLabel, 0, -24);
+        ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 3; ctx.lineJoin = 'round';
+        const ksLabel = player.killStreak >= 10 ? `${player.killStreak} RAMPAGE!` : `${player.killStreak} KILLS!`;
+        ctx.strokeText(ksLabel, 0, -22);
+        ctx.fillText(ksLabel, 0, -22);
         ctx.shadowBlur = 0; ctx.restore();
     }
     // 阴影
@@ -2396,16 +2395,10 @@ function gainExp(val) {
 
 function showUpgradePanel() {
     isPaused = true; upgradePanel.style.display = 'flex';
-    // 🔥 JUICE #4: 升级质变 — 慢动作 + 冲击波 + 音效
-    setSlowMo(0.15, 15);
-    triggerFlash(0.5);
-    screenShake = 12;
+    setSlowMo(0.3, 15);
+    triggerFlash(0.3);
     sfxLevelUp();
-    holyBursts.push({
-        x: player.x, y: player.y, radius: 0,
-        maxRadius: 120, damage: 0, hasDamaged: true, alpha: 0.8,
-        isLevelUp: true
-    });
+    holyBursts.push({ x: player.x, y: player.y, radius: 0, maxRadius: 60, damage: 0, hasDamaged: true, alpha: 0.7, isLevelUp: true });
     const opts = generateUpgradeOptions();
     upgradeOptions.innerHTML = '';
     opts.forEach(opt => {
@@ -2506,7 +2499,6 @@ function damagePlayer(dmg, knockbackFromX, knockbackFromY, knockbackForce) {
     
     player.hp -= dmg;
     hpEl.innerText = Math.max(0, Math.floor(player.hp));
-    sfxPlayerHurt();
     
     // 触发无敌帧
     player.iframeTimer = player.iframeDuration;
@@ -2520,6 +2512,7 @@ function damagePlayer(dmg, knockbackFromX, knockbackFromY, knockbackForce) {
     
     // 屏幕震动反馈
     screenShake = Math.max(screenShake, Math.min(dmg * 0.8, 12));
+    sfxPlayerHurt();
     
     // 受伤数字
     damageNumbers.push({
@@ -2605,30 +2598,34 @@ function updateDisplays() {
 function gameLoop() {
     if (isGameOver || isPaused || !gameStarted) return;
     
-    // 🔥 JUICE #1: TimeScale 慢动作系统
+    // 顿帧
+    if (hitPauseFrames > 0) { hitPauseFrames--; requestAnimationFrame(gameLoop); return; }
+    
+    // === Juice: TimeScale 系统 ===
     if (timeScaleTimer > 0) {
         timeScaleTimer--;
-        if (timeScaleTimer <= 0) { timeScaleTarget = 1.0; }
+        if (timeScaleTimer <= 0) timeScaleTarget = 1.0;
     }
-    timeScale += (timeScaleTarget - timeScale) * 0.2;
+    timeScale += (timeScaleTarget - timeScale) * 0.15;
     if (Math.abs(timeScale - timeScaleTarget) < 0.01) timeScale = timeScaleTarget;
-    
-    // 白闪衰减
-    if (screenFlashAlpha > 0) {
-        screenFlashAlpha *= 0.85;
-        if (screenFlashAlpha < 0.01) screenFlashAlpha = 0;
-        flashOverlay.style.opacity = screenFlashAlpha;
+    // timeScale < 1 时跳帧模拟慢动作
+    if (timeScale < 0.99) {
+        if (Math.random() > timeScale) { requestAnimationFrame(gameLoop); return; }
     }
     
-    // 🔥 JUICE #2: 连杀极速射击倒计时
+    // === Juice: Flash overlay 衰减 ===
+    if (screenFlashAlpha > 0) {
+        screenFlashAlpha *= 0.88;
+        if (screenFlashAlpha < 0.02) screenFlashAlpha = 0;
+        if (flashOverlay) flashOverlay.style.opacity = screenFlashAlpha;
+    }
+    
+    // === Juice: Streak timers ===
     if (streakRapidFireTimer > 0) streakRapidFireTimer--;
     if (streakInvincibleTimer > 0) {
         streakInvincibleTimer--;
-        player.iframeTimer = Math.max(player.iframeTimer, 2);
+        player.iframeTimer = Math.max(player.iframeTimer, 2); // 维持无敌
     }
-    
-    // 顿帧（受 timeScale 影响）
-    if (hitPauseFrames > 0) { hitPauseFrames -= timeScale; requestAnimationFrame(gameLoop); return; }
     
     ctx.save();
     if (screenShake > 0) {
@@ -2640,8 +2637,8 @@ function gameLoop() {
     drawBackground();
     frameCount++;
     
-    // 时间（受 timeScale 影响）
-    if (frameCount % Math.max(1, Math.round(60 / timeScale)) === 0) {
+    // 时间
+    if (frameCount % 60 === 0) {
         gameTime++; timerEl.innerText = formatTime(gameTime);
         if (player.hpRegen > 0) {
             player.hp = Math.min(player.maxHp, player.hp+player.hpRegen);
@@ -2691,13 +2688,13 @@ function gameLoop() {
         if (player.standTimer >= player.precisionThreshold && !player.precisionMode) {
             player.precisionMode = true;
             player.precisionPulse = 1.0; // 触发脉冲动画
-            sfxPrecision();
             // 精准模式触发视觉反馈
             holyBursts.push({
                 x: player.x, y: player.y, radius: 0,
                 maxRadius: 35, damage: 0, hasDamaged: true, alpha: 0.4,
                 precisionBurst: true
             });
+            sfxPrecision();
         }
     }
     // 精准脉冲动画衰减
@@ -2721,13 +2718,13 @@ function gameLoop() {
         if (nearThreat && player.perfectStandTimer <= 0) {
             player.perfectStandTimer = 120; // 2秒buff
             player.perfectStandShots = 5;   // 5发强化子弹
-            sfxPerfect();
             // 金色闪光特效
             holyBursts.push({
                 x: player.x, y: player.y, radius: 0,
                 maxRadius: 50, damage: 0, hasDamaged: true, alpha: 0.8,
                 perfectStand: true
             });
+            sfxPerfect();
         }
     }
     if (player.perfectStandTimer > 0) player.perfectStandTimer--;
@@ -2741,24 +2738,13 @@ function gameLoop() {
     // V2: 远程攻击（站定射击机制）
     rangedAttack(isMoving);
     
-    // 🔥 JUICE #5: 节奏波浪刷怪 — 30秒一个周期
-    // 0-10s: 压力递增, 10-20s: 高压, 20-25s: 大波, 25-30s: 喘息
-    const waveCycle = gameTime % 30;
-    let spawnRateMod = 1.0;
-    if (waveCycle < 10) { spawnRateMod = 0.8 + waveCycle * 0.05; } // 渐增
-    else if (waveCycle < 20) { spawnRateMod = 1.3; } // 高压
-    else if (waveCycle < 25) { spawnRateMod = 2.0; } // 大波
-    else { spawnRateMod = 0.3; } // 喘息——清场后的安静
-    
+    // 刷怪 — V4: Boss 存在时减半
     const baseRate = Math.max(6, 40 - Math.floor(gameTime/6));
-    const rate = boss ? baseRate * 2 : Math.max(4, Math.floor(baseRate / spawnRateMod));
+    const rate = boss ? baseRate * 2 : baseRate;
     if (frameCount % rate === 0) spawnEnemy();
-    // 大波次 — Boss 存在时不刷 + 🔥 波浪高潮时额外加波
+    // 大波次 — Boss 存在时不刷
     if (!boss && gameTime > 0 && gameTime % 30 === 0 && frameCount % 60 === 0) {
-        const waveSize = 10 + gameTime/10;
-        for (let i = 0; i < waveSize; i++) spawnEnemy();
-        // 大波来袭提示
-        showKillstreakBanner('⚠️ WAVE!', '#ff6600');
+        for (let i = 0; i < 10 + gameTime/10; i++) spawnEnemy();
     }
     
     // 拾取范围
@@ -2797,7 +2783,7 @@ function gameLoop() {
             const a = Math.atan2(player.y-g.y, player.x-g.x);
             g.x += Math.cos(a)*8; g.y += Math.sin(a)*8;
         }
-        if (d < player.radius+5) { gainExp(g.val); gems.splice(i,1); sfxPickup(); continue; }
+        if (d < player.radius+5) { gainExp(g.val); sfxPickup(); gems.splice(i,1); continue; }
         ctx.beginPath(); ctx.arc(g.x,g.y,5,0,Math.PI*2);
         ctx.fillStyle = '#00ffaa'; ctx.shadowBlur = 8; ctx.shadowColor = '#00ffaa';
         ctx.fill(); ctx.shadowBlur = 0;
@@ -2819,6 +2805,7 @@ function gameLoop() {
         // 拾取
         if (dd < player.radius + 8) {
             def.onPickup();
+            sfxPickup();
             drops.splice(i, 1);
             continue;
         }
@@ -2877,33 +2864,23 @@ function gameLoop() {
         
         drawEnemy(e);
         
-        // 死亡 — 爆裂特效 + 🔥 JUICE 爽感系统
+        // 死亡 — 爆裂特效
         if (e.hp <= 0) {
             spawnDeathEffect(e.x, e.y, e.color, e.radius);
             gems.push({ x: e.x, y: e.y, val: e.expDrop });
             // 连杀计数
             player.killStreak++;
             player.killStreakDecay = 120; // 2秒内再击杀则维持连杀
-            
-            // 🔥 JUICE #1: 多杀慢动作 — 1.5秒内杀3+个触发
-            if (player.killStreak >= 3 && player.killStreak % 3 === 0) {
-                setSlowMo(0.25, 8 + Math.min(player.killStreak, 15));
-                triggerFlash(0.15 + Math.min(player.killStreak * 0.02, 0.3));
-                screenShake = Math.max(screenShake, 6 + player.killStreak * 0.5);
-            }
-            
-            // 🔥 JUICE #2: 连杀里程碑奖励
-            const milestone = STREAK_MILESTONES[player.killStreak];
-            if (milestone && player.killStreak > lastStreakMilestone) {
+            // === Juice: 连杀里程碑奖励 ===
+            if (STREAK_MILESTONES[player.killStreak] && player.killStreak > lastStreakMilestone) {
+                const ms = STREAK_MILESTONES[player.killStreak];
                 lastStreakMilestone = player.killStreak;
-                showKillstreakBanner(milestone.label, milestone.color);
-                applyStreakReward(milestone.reward);
-                sfxStreak(player.killStreak);
+                showKillstreakBanner(ms.label, ms.color);
+                sfxStreak();
+                applyStreakReward(ms.reward);
+            } else if (player.killStreak >= 3 && player.killStreak % 5 !== 0) {
+                sfxMultiKill();
             }
-            
-            // 🔥 JUICE #6: 击杀音效
-            sfxKill();
-            
             // V14: 低概率掉落回血道具
             if (Math.random() < DROP_TYPES.heal.dropChance) {
                 drops.push({
@@ -2913,8 +2890,9 @@ function gameLoop() {
             }
             enemies.splice(i,1);
             score++; scoreEl.innerText = score;
-            // 击杀震动（连杀越高越强）
-            screenShake = Math.max(screenShake, 2 + Math.min(player.killStreak * 0.3, 6));
+            sfxKill();
+            // 击杀震动（小）
+            screenShake = Math.max(screenShake, 2);
             continue;
         }
         

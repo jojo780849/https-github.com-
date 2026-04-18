@@ -237,6 +237,10 @@
 </div>
 
 <script>
+window.onerror = function(msg, url, line, col, err) {
+    alert('JS Error: ' + msg + '\nLine: ' + line + '\nCol: ' + col);
+    return false;
+};
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const hpEl = document.getElementById('hp');

@@ -8,7 +8,7 @@
 
 ## 当前技术栈
 - 纯 HTML5 Canvas + 原生 JavaScript
-- 核心文件：`game.html`
+- 多个单文件原型并行推进：`demo_melee.html` / `demo_ranged_juice.html` / `game.html`
 - 无需构建工具，双击即可运行
 
 ## 跨电脑协作结构
@@ -18,15 +18,19 @@
 
 ## 当前关键文件
 - `demo_melee.html`：**近战版主力开发线（当前最新 V15）**
-- `game.html`：远程射击版（功能完整但已非主力）
+- `demo_ranged_juice.html`：**远程爽感实验线（V3，6 套 JUICE 系统）**
+- `demo_ranged.html`：远程版基础验证线
+- `game.html`：远程射击正式版旧主线
 - `割一波_玩法设计进度表.xlsx`：项目进度表
 - `docs/当前任务框架.md`：当前待办框架与优先级
 - `.workbuddy/memory/MEMORY.md`：长期项目记忆
 - `.workbuddy/memory/YYYY-MM-DD.md`：每日推进记录
 
+
 ## 在线体验
 - **近战版（主力）**：https://jojo780849.github.io/https-github.com-/demo_melee.html
-- **远程版**：https://jojo780849.github.io/https-github.com-/game.html
+- **远程爽感实验线**：https://jojo780849.github.io/https-github.com-/demo_ranged_juice.html
+- **远程版旧主线**：https://jojo780849.github.io/https-github.com-/game.html
 
 ## 近战版当前功能 (V15)
 - 三把主武器：匕首(45°/55px) / 长剑(110°/85px) / 巨斧(150°/110px)
@@ -38,7 +42,14 @@
 - 弧形血条跟随玩家 + 顶部精简UI
 - 回血道具掉落（5%概率+磁铁吸引）
 
+## 远程爽感实验线 (demo_ranged_juice V3)
+- 三把远程主武器：弹射枪 / 散弹枪 / 激光笔，强调“移动 vs 站定”姿态差
+- 6 套 JUICE 系统：慢动作、连杀里程碑奖励、大字幕与白闪、暴击数字强化、子弹/冲刺拖尾、Web Audio SFX
+- 连杀奖励会触发脉冲清场、短时极速射击、清屏核爆、短暂无敌等反馈峰值
+- 保留手机竖版布局、Boss 战与升级面板，用作爽感模块回灌前的独立对照样机
+
 ## 自动同步
+
 - **代码改完自动推送**：每次修改代码后自动 git push 到 GitHub + 同步更新本地文档（README/MEMORY/当前任务框架），确保 OpenClaw 等外部工具能读到最新状态
 - 已配置每日 22:00 的"游戏项目每日收尾同步"自动任务
 - 目标：更新项目记忆、必要进度文档，并将有价值的成果同步到当前 GitHub 仓库

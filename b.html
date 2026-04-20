@@ -131,7 +131,7 @@
     </div>
   </div>
 
-  <div id="hint">左下區域按住即出現虛擬搖桿｜隊友自動開火｜3碎片自動升隊伍</div>
+  <div id="hint">主角專職開寶箱｜隊員自動清怪｜同類碎片集滿3個升級</div>
 
   <div id="pick">
     <div class="pickCard">
@@ -256,13 +256,20 @@
   window.addEventListener('keydown', (e) => input.keys.add(e.key.toLowerCase()));
   window.addEventListener('keyup', (e) => input.keys.delete(e.key.toLowerCase()));
 
+  const ROLE_CFG = {
+    blade: { name: '斬擊手', icon: '⚔', color: '#8ef2c3', range: 118, fireGap: 0.34, dmg: 10, bulletR: 4, pierce: 0, speedMul: 1.02 },
+    gunner: { name: '射手', icon: '✦', color: '#9bceff', range: 260, fireGap: 0.26, dmg: 8, bulletR: 4, pierce: 1, speedMul: 1 },
+    bomber: { name: '爆破手', icon: '✹', color: '#ffc680', range: 230, fireGap: 0.58, dmg: 15, bulletR: 6, pierce: 2, speedMul: 0.9 }
+  };
+  const ROLE_KEYS = ['blade', 'gunner', 'bomber'];
+
   function makeState() {
     return {
       time: 0,
       pausePick: false,
       gameOver: false,
-      player: { x: world.w / 2, y: world.h / 2, r: 14, hp: 100, maxHp: 100, speed: 210, hurtCD: 0 },
-      squad: [{ angleBase: 0, fireCD: 0 }],
+      player: { x: world.w / 2, y: world.h / 2, r: 14, hp: 100, maxHp: 100, speed: 210, hurtCD: 0, openRange: 74, openPower: 20 },
+      squad: [{ role: 'gunner', level: 1, angleBase: 0, fireCD: 0 }],
       enemies: [],
       bullets: [],
       crates: [],
@@ -271,13 +278,13 @@
       spawnEnemyCD: 0,
       spawnCrateCD: 0,
       kills: 0,
-      shards: 0,
+      fragments: { blade: 0, gunner: 0, bomber: 0 },
       score: 0,
       level: 1,
       nextLevelKills: 20,
-      buffs: { dmg: 1, rate: 1, speed: 1, pierce: 0, magnet: 1, move: 1 },
+      buffs: { dmg: 1, rate: 1, speed: 1, pierce: 0, magnet: 1, move: 1, open: 1 },
       logCD: 0,
-      logText: '清怪、打箱、撿碎片，3碎片自動升隊伍'
+      logText: '主角開箱拿同類碎片，集滿3個升級對應隊員'
     };
   }
 
@@ -287,15 +294,28 @@
     state.fx.push({ x, y, text, c, life: 0.8 });
   }
 
-  function addSquadMember() {
-    if (state.squad.length >= 5) {
-      state.score += 25;
-      addFx(state.player.x, state.player.y - 30, '+25', '#ffd27b');
+  function shardLabel(role) {
+    return ROLE_CFG[role].name + '碎片';
+  }
+
+  function grantRoleUpgrade(role) {
+    const cfg = ROLE_CFG[role];
+    let unit = state.squad.find((u) => u.role === role);
+    if (!unit) {
+      if (state.squad.length >= 5) {
+        state.score += 28;
+        addFx(state.player.x, state.player.y - 30, '+28', '#ffd27b');
+        return;
+      }
+      unit = { role, level: 1, angleBase: Math.random() * Math.PI * 2, fireCD: 0 };
+      state.squad.push(unit);
+      addFx(state.player.x, state.player.y - 28, cfg.icon + ' ' + cfg.name + '入隊', cfg.color);
       return;
     }
-    state.squad.push({ angleBase: Math.random() * Math.PI * 2, fireCD: 0 });
-    addFx(state.player.x, state.player.y - 28, '隊伍+1', '#8ef2c3');
+    unit.level = Math.min(5, unit.level + 1);
+    addFx(state.player.x, state.player.y - 28, cfg.icon + ' ' + cfg.name + ' Lv' + unit.level, cfg.color);
   }
+
 
   function spawnEnemy(elite = false) {
     const side = Math.floor(Math.random() * 4);
@@ -312,27 +332,36 @@
     let spd = 55 + Math.min(85, state.time * 0.14);
     let r = 10;
     let color = '#ff6f7f';
+    let kind = 'grunt';
+    let icon = '●';
 
     if (t > 0.86) {
       hp *= 2.8;
       spd *= 0.78;
       r = 15;
       color = '#ffad5e';
+      kind = 'tank';
+      icon = '🛡';
     } else if (t < 0.26) {
       hp *= 0.75;
       spd *= 1.28;
       r = 8;
       color = '#ff7be1';
+      kind = 'runner';
+      icon = '⚡';
     }
 
     if (elite) {
       hp *= 3.2;
       r += 4;
       color = '#c88dff';
+      kind = 'elite';
+      icon = '☠';
     }
 
-    state.enemies.push({ x, y, r, hp, maxHp: hp, spd, color, hitCD: 0 });
+    state.enemies.push({ x, y, r, hp, maxHp: hp, spd, color, kind, icon, hitCD: 0 });
   }
+
 
   function spawnCrate() {
     if (state.crates.length >= 8) return;
@@ -340,13 +369,14 @@
     const a = rand(0, Math.PI * 2);
     const x = clamp(state.player.x + Math.cos(a) * d, 80, world.w - 80);
     const y = clamp(state.player.y + Math.sin(a) * d, 80, world.h - 80);
-    state.crates.push({ x, y, r: 17, hp: 36 + state.time * 0.25 });
+    const hp = 36 + state.time * 0.25;
+    state.crates.push({ x, y, r: 17, hp, maxHp: hp });
   }
 
-  function nearestTarget(x, y) {
-    let best = null;
-    let bestD2 = Infinity;
 
+  function nearestEnemy(x, y, range) {
+    let best = null;
+    let bestD2 = range * range;
     for (const e of state.enemies) {
       const dx = e.x - x;
       const dy = e.y - y;
@@ -356,9 +386,12 @@
         bestD2 = d2;
       }
     }
+    return best;
+  }
 
-    if (best && bestD2 < 360 * 360) return best;
-
+  function nearestCrate(x, y, range) {
+    let best = null;
+    let bestD2 = range * range;
     for (const c of state.crates) {
       const dx = c.x - x;
       const dy = c.y - y;
@@ -368,26 +401,29 @@
         bestD2 = d2;
       }
     }
-    if (best && bestD2 < 280 * 280) return best;
-    return null;
+    return best;
   }
 
-  function shoot(fromX, fromY, tx, ty, scale = 1) {
+
+  function shoot(fromX, fromY, tx, ty, spec) {
     const dx = tx - fromX;
     const dy = ty - fromY;
     const len = Math.hypot(dx, dy) || 1;
-    const speed = 470;
+    const speed = 470 * (spec.speedMul || 1);
     state.bullets.push({
       x: fromX,
       y: fromY,
       vx: dx / len * speed,
       vy: dy / len * speed,
-      r: 4,
-      dmg: (8 + state.time * 0.03) * state.buffs.dmg * scale,
-      pierce: 1 + state.buffs.pierce,
+      r: spec.r,
+      color: spec.color,
+      icon: spec.icon,
+      dmg: spec.dmg,
+      pierce: spec.pierce,
       life: 1.1
     });
   }
+
 
   function updatePlayer(dt) {
     const p = state.player;
@@ -417,14 +453,35 @@
   }
 
 
+  function updateCrateOpening(dt) {
+    const p = state.player;
+    const c = nearestCrate(p.x, p.y, p.openRange);
+    if (!c) return;
+    const dmg = p.openPower * state.buffs.open * dt;
+    c.hp -= dmg;
+    if (Math.random() < 0.22) addFx(c.x, c.y - 16, '開箱', '#9bceff');
+    if (c.hp <= 0) {
+      const reward = 2 + (Math.random() < 0.45 ? 1 : 0);
+      for (let k = 0; k < reward; k++) {
+        const role = ROLE_KEYS[Math.floor(Math.random() * ROLE_KEYS.length)];
+        const cfg = ROLE_CFG[role];
+        state.drops.push({ x: c.x + rand(-12, 12), y: c.y + rand(-12, 12), t: 'frag', role, v: 1, r: 9, color: cfg.color, icon: cfg.icon });
+      }
+      addFx(c.x, c.y - 18, '寶箱打開+' + reward, '#8ef2c3');
+      const idx = state.crates.indexOf(c);
+      if (idx >= 0) state.crates.splice(idx, 1);
+    }
+  }
+
   function updateSquad(dt) {
     const p = state.player;
     const n = state.squad.length;
-    const baseR = 40 + n * 2;
+    const baseR = 44 + n * 2;
 
     for (let i = 0; i < n; i++) {
       const u = state.squad[i];
-      const ang = state.time * (0.95 + i * 0.05) + u.angleBase + i * (Math.PI * 2 / n);
+      const cfg = ROLE_CFG[u.role];
+      const ang = state.time * (0.86 + i * 0.07) + u.angleBase + i * (Math.PI * 2 / n);
       const ux = p.x + Math.cos(ang) * baseR;
       const uy = p.y + Math.sin(ang) * baseR;
       u.x = ux;
@@ -432,15 +489,24 @@
 
       u.fireCD -= dt;
       if (u.fireCD <= 0) {
-        const t = nearestTarget(ux, uy);
-        if (t) {
-          shoot(ux, uy, t.x, t.y, 1 + i * 0.04);
-          const fireBase = 0.34 / state.buffs.rate;
-          u.fireCD = Math.max(0.08, fireBase + rand(-0.03, 0.03));
+        const target = nearestEnemy(ux, uy, cfg.range + u.level * 14);
+        if (target) {
+          const lvMul = 1 + (u.level - 1) * 0.35;
+          shoot(ux, uy, target.x, target.y, {
+            r: cfg.bulletR + Math.min(2, u.level - 1),
+            color: cfg.color,
+            icon: cfg.icon,
+            dmg: (cfg.dmg + state.time * 0.03) * state.buffs.dmg * lvMul,
+            pierce: cfg.pierce + state.buffs.pierce,
+            speedMul: cfg.speedMul
+          });
+          const fireBase = (cfg.fireGap / state.buffs.rate) * (1 - (u.level - 1) * 0.06);
+          u.fireCD = Math.max(0.07, fireBase + rand(-0.03, 0.03));
         }
       }
     }
   }
+
 
   function updateEnemies(dt) {
     const p = state.player;
@@ -485,38 +551,17 @@
           if (e.hp <= 0) {
             state.kills++;
             state.score += 1;
-            if (Math.random() < 0.15) {
-              state.drops.push({ x: e.x, y: e.y, t: 'shard', v: 1, r: 8 });
-            }
             if (Math.random() < 0.45) {
-              state.drops.push({ x: e.x + rand(-8, 8), y: e.y + rand(-8, 8), t: 'score', v: 1, r: 6 });
+              state.drops.push({ x: e.x + rand(-8, 8), y: e.y + rand(-8, 8), t: 'score', v: 1, r: 6, color: '#ffe078', icon: '✶' });
             }
             addFx(e.x, e.y - 16, '+1', '#ffd27b');
             state.enemies.splice(j, 1);
           }
         }
       }
-
-      for (let j = state.crates.length - 1; j >= 0 && b.pierce > 0; j--) {
-        const c = state.crates[j];
-        const dx = b.x - c.x;
-        const dy = b.y - c.y;
-        const hit = b.r + c.r;
-        if (dx * dx + dy * dy <= hit * hit) {
-          c.hp -= b.dmg;
-          b.pierce--;
-          if (c.hp <= 0) {
-            const reward = 2 + (Math.random() < 0.4 ? 1 : 0);
-            for (let k = 0; k < reward; k++) {
-              state.drops.push({ x: c.x + rand(-12, 12), y: c.y + rand(-12, 12), t: 'shard', v: 1, r: 8 });
-            }
-            addFx(c.x, c.y - 18, '爆箱+' + reward, '#8ef2c3');
-            state.crates.splice(j, 1);
-          }
-        }
-      }
     }
   }
+
 
   function updateDrops(dt) {
     const p = state.player;
@@ -535,17 +580,25 @@
         d.y += dy / len * pull * dt;
       }
       if (d2 < (p.r + d.r + 8) * (p.r + d.r + 8)) {
-        if (d.t === 'shard') state.shards += d.v;
-        else state.score += d.v;
+        if (d.t === 'frag') {
+          state.fragments[d.role] += d.v;
+          const cfg = ROLE_CFG[d.role];
+          addFx(p.x, p.y - 18, cfg.icon + ' +' + d.v, cfg.color);
+        } else {
+          state.score += d.v;
+        }
         state.drops.splice(i, 1);
       }
     }
 
-    while (state.shards >= 3) {
-      state.shards -= 3;
-      addSquadMember();
+    for (const role of ROLE_KEYS) {
+      while (state.fragments[role] >= 3) {
+        state.fragments[role] -= 3;
+        grantRoleUpgrade(role);
+      }
     }
   }
+
 
   function maybeLevelUp() {
     if (state.kills < state.nextLevelKills || state.pausePick) return;
@@ -555,9 +608,10 @@
   }
 
   const allBuffs = [
-    { key: 'dmg', name: '火力強化', desc: '子彈傷害 +25%', apply: () => state.buffs.dmg *= 1.25 },
-    { key: 'rate', name: '急速射擊', desc: '射速 +20%', apply: () => state.buffs.rate *= 1.2 },
+    { key: 'dmg', name: '火力強化', desc: '隊員輸出 +25%', apply: () => state.buffs.dmg *= 1.25 },
+    { key: 'rate', name: '急速射擊', desc: '隊員射速 +20%', apply: () => state.buffs.rate *= 1.2 },
     { key: 'move', name: '疾走', desc: '移動速度 +12%', apply: () => state.buffs.move *= 1.12 },
+    { key: 'open', name: '拆箱專精', desc: '主角開箱效率 +28%', apply: () => state.buffs.open *= 1.28 },
     { key: 'pierce', name: '穿透彈', desc: '子彈穿透 +1', apply: () => state.buffs.pierce += 1 },
     { key: 'magnet', name: '磁吸', desc: '撿取範圍 +20%', apply: () => state.buffs.magnet *= 1.2 },
     { key: 'heal', name: '急救', desc: '立即回復 18 HP', apply: () => { state.player.hp = Math.min(state.player.maxHp, state.player.hp + 18); } },
@@ -660,7 +714,6 @@
     drawGrid(camX, camY);
 
     for (const c of state.crates) {
-
       const sx = toScreenX(c.x);
       const sy = toScreenY(c.y);
       ctx.fillStyle = '#6a5b42';
@@ -668,39 +721,88 @@
       ctx.strokeStyle = '#b99768';
       ctx.lineWidth = 2;
       ctx.strokeRect(sx - c.r, sy - c.r, c.r * 2, c.r * 2);
-      const hpw = (c.hp / (36 + state.time * 0.25)) * c.r * 2;
+      ctx.fillStyle = '#ffe5b0';
+      ctx.font = 'bold 13px -apple-system,Segoe UI,Roboto';
+      ctx.textAlign = 'center';
+      ctx.fillText('📦', sx, sy + 4);
+      const hpw = (c.hp / c.maxHp) * c.r * 2;
       ctx.fillStyle = '#ffd58a';
       ctx.fillRect(sx - c.r, sy - c.r - 7, Math.max(0, hpw), 3);
     }
 
+
     for (const d of state.drops) {
       const sx = toScreenX(d.x);
       const sy = toScreenY(d.y);
-      drawCircle(sx, sy, d.r, d.t === 'shard' ? '#7fffd4' : '#ffe078');
+      drawCircle(sx, sy, d.r, d.color || '#ffe078');
+      ctx.fillStyle = '#0b1220';
+      ctx.font = 'bold 11px -apple-system,Segoe UI,Roboto';
+      ctx.textAlign = 'center';
+      ctx.fillText(d.icon || '•', sx, sy + 4);
     }
 
+
     for (const b of state.bullets) {
-      drawCircle(toScreenX(b.x), toScreenY(b.y), b.r, '#fff39b');
+      const sx = toScreenX(b.x);
+      const sy = toScreenY(b.y);
+      drawCircle(sx, sy, b.r, b.color || '#fff39b');
+      ctx.fillStyle = 'rgba(10,16,26,0.6)';
+      ctx.font = 'bold 10px -apple-system,Segoe UI,Roboto';
+      ctx.textAlign = 'center';
+      ctx.fillText(b.icon || '•', sx, sy + 3);
     }
+
 
     for (const e of state.enemies) {
       const sx = toScreenX(e.x);
       const sy = toScreenY(e.y);
       drawCircle(sx, sy, e.r, e.color);
+      ctx.fillStyle = '#fff1f6';
+      ctx.font = 'bold 12px -apple-system,Segoe UI,Roboto';
+      ctx.textAlign = 'center';
+      ctx.fillText(e.icon || '●', sx, sy + 4);
       ctx.fillStyle = 'rgba(0,0,0,0.35)';
       ctx.fillRect(sx - e.r, sy - e.r - 6, e.r * 2, 3);
       ctx.fillStyle = '#ffd1d1';
       ctx.fillRect(sx - e.r, sy - e.r - 6, (e.hp / e.maxHp) * e.r * 2, 3);
     }
 
+
     for (const u of state.squad) {
-      drawCircle(toScreenX(u.x), toScreenY(u.y), 8, '#8ef2c3');
+      const cfg = ROLE_CFG[u.role];
+      const sx = toScreenX(u.x);
+      const sy = toScreenY(u.y);
+      drawCircle(sx, sy, 8 + Math.min(3, u.level - 1), cfg.color);
+      ctx.fillStyle = '#0c1528';
+      ctx.font = 'bold 11px -apple-system,Segoe UI,Roboto';
+      ctx.textAlign = 'center';
+      ctx.fillText(cfg.icon, sx, sy + 4);
+      ctx.fillStyle = '#e9f1ff';
+      ctx.font = 'bold 9px -apple-system,Segoe UI,Roboto';
+      ctx.fillText('L' + u.level, sx, sy - 10);
     }
 
     const p = state.player;
-    drawCircle(toScreenX(p.x), toScreenY(p.y), p.r, p.hurtCD > 0 ? '#ff9fa8' : '#d7e7ff');
+    const psx = toScreenX(p.x);
+    const psy = toScreenY(p.y);
+    drawCircle(psx, psy, p.r, p.hurtCD > 0 ? '#ff9fa8' : '#d7e7ff');
+    ctx.fillStyle = '#1b2946';
+    ctx.font = 'bold 12px -apple-system,Segoe UI,Roboto';
+    ctx.textAlign = 'center';
+    ctx.fillText('🔓', psx, psy + 4);
+
+    const opening = nearestCrate(state.player.x, state.player.y, state.player.openRange);
+    if (opening) {
+      ctx.strokeStyle = 'rgba(140, 210, 255, 0.55)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(psx, psy);
+      ctx.lineTo(toScreenX(opening.x), toScreenY(opening.y));
+      ctx.stroke();
+    }
 
     for (const f of state.fx) {
+
       const sx = toScreenX(f.x);
       const sy = toScreenY(f.y - (1 - f.life) * 32);
       ctx.fillStyle = f.c;
@@ -718,8 +820,9 @@
   function updateHud() {
     hpEl.textContent = 'HP ' + Math.max(0, Math.round(state.player.hp));
     hpEl.className = 'chip ' + (state.player.hp > 45 ? 'good' : (state.player.hp > 20 ? 'warn' : 'bad'));
-    squadEl.textContent = '隊伍 ' + state.squad.length;
-    shardEl.textContent = '碎片 ' + state.shards + '/3';
+    const teamPower = state.squad.reduce((s, u) => s + u.level, 0);
+    squadEl.textContent = '隊伍 ' + state.squad.length + '人 / 力量' + teamPower;
+    shardEl.textContent = '碎片 ⚔' + state.fragments.blade + ' ✦' + state.fragments.gunner + ' ✹' + state.fragments.bomber;
     killsEl.textContent = '擊殺 ' + state.kills;
     const t = Math.floor(state.time);
     const mm = String(Math.floor(t / 60)).padStart(2, '0');
@@ -727,6 +830,7 @@
     timerEl.textContent = mm + ':' + ss;
     nextLvEl.textContent = Math.max(0, state.nextLevelKills - state.kills);
   }
+
 
   function showGameOver() {
     state.gameOver = true;
@@ -768,11 +872,13 @@
       }
 
       updatePlayer(dt);
+      updateCrateOpening(dt);
       updateSquad(dt);
       updateEnemies(dt);
       updateBullets(dt);
       updateDrops(dt);
       updateFx(dt);
+
 
       maybeLevelUp();
 

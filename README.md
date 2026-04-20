@@ -30,10 +30,11 @@
 
 
 ## 在线体验
-- **近战版（主力）**：https://jojo780849.github.io/https-github.com-/demo_melee.html
-- **远程爽感实验线**：https://jojo780849.github.io/https-github.com-/demo_ranged_juice.html
-- **远程爽感短路径**：https://jojo780849.github.io/https-github.com-/juice.html
-- **远程版旧主线**：https://jojo780849.github.io/https-github.com-/game.html
+- **近战版（主力）**：https://jojo780849.github.io/cut-them-all/demo_melee.html
+- **纸扎夜市验证线**：https://jojo780849.github.io/cut-them-all/demo_ranged_bazaar.html
+- **远程爽感实验线**：https://jojo780849.github.io/cut-them-all/demo_ranged_juice.html
+- **远程爽感短路径**：https://jojo780849.github.io/cut-them-all/juice.html
+- **远程版旧主线**：https://jojo780849.github.io/cut-them-all/game.html
 
 ## 近战版当前功能 (V15)
 - 三把主武器：匕首(45°/55px) / 长剑(110°/85px) / 巨斧(150°/110px)

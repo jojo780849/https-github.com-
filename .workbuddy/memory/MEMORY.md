@@ -54,11 +54,12 @@
 
 ### 部署信息
 - **GitHub 用户名**：jojo780849
-- **GitHub 仓库**：`jojo780849/https-github.com-`
-- **在线游戏链接（远程版旧主线）**：https://jojo780849.github.io/https-github.com-/game.html
-- **在线游戏链接（近战版主线）**：https://jojo780849.github.io/https-github.com-/demo_melee.html
-- **在线游戏链接（远程爽感实验线）**：https://jojo780849.github.io/https-github.com-/demo_ranged_juice.html
-- **在线游戏链接（远程爽感短路径）**：https://jojo780849.github.io/https-github.com-/juice.html
+- **GitHub 仓库**：`jojo780849/cut-them-all`
+- **在线游戏链接（远程版旧主线）**：https://jojo780849.github.io/cut-them-all/game.html
+- **在线游戏链接（近战版主线）**：https://jojo780849.github.io/cut-them-all/demo_melee.html
+- **在线游戏链接（纸扎夜市验证线）**：https://jojo780849.github.io/cut-them-all/demo_ranged_bazaar.html
+- **在线游戏链接（远程爽感实验线）**：https://jojo780849.github.io/cut-them-all/demo_ranged_juice.html
+- **在线游戏链接（远程爽感短路径）**：https://jojo780849.github.io/cut-them-all/juice.html
 
 
 ### 协作与跨设备同步约定

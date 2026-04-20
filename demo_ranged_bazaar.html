@@ -177,6 +177,7 @@
             <span style="font-size:13px;">💴 <span id="gold" style="color:#FFB300;font-weight:bold;">0</span> 金纸</span>
             <span style="font-size:11px;color:#aaa;">🏛️ 功德箱 <span id="bank" style="color:#FFB300;">0</span></span>
             <span id="wave-progress-label" style="font-size:11px;color:#00ff88;">准备战斗</span>
+            <span id="tester-state" style="font-size:11px;color:#6aa9ff;">🧪 手动</span>
         </div>
         <div id="exp-bar-container"><div id="exp-bar"></div></div>
         <div id="weapons-display">⚔️ <span id="weapon-name">-</span> | <span id="skill-list"></span> | <span id="stance-state" style="color:#666">-</span></div>
@@ -203,6 +204,9 @@
     <div id="weapon-select">
         <h2>🔫 选择主武器</h2>
         <p>每把武器有专属升级路线</p>
+        <button onclick="startPlaytester('pistol')" style="margin:6px 0 10px 0;padding:8px 14px;border:none;border-radius:8px;background:#1e3f7a;color:#dfe9ff;font-weight:bold;cursor:pointer;">
+            🧪 测试员自动跑局（方案2）
+        </button>
         <div class="weapon-card" onclick="selectWeapon('pistol')">
             <div class="weapon-icon">🔫</div>
             <div class="weapon-info">
@@ -308,6 +312,7 @@ const upgradeOptions = document.getElementById('upgrade-options');
 const killCounterEl = document.getElementById('kill-counter');
 const joystickContainer = document.getElementById('joystick-container');
 const joystickStick = document.getElementById('joystick-stick');
+const testerStateEl = document.getElementById('tester-state');
 
 // ========================================
 //  远程武器定义
@@ -496,6 +501,376 @@ const WEAPON_UPGRADES = {
 let gameStarted = false, isGameOver = false, isPaused = false;
 let frameCount = 0, gameTime = 0, score = 0;
 let screenShake = 0, hitPauseFrames = 0;
+
+// ========================================
+//  游戏测试员（方案2+：墙体感知 + 自我迭代）
+// ========================================
+const PLAYTESTER_STORAGE_KEY = 'bazaar_playtester_v2';
+const PLAYTESTER_AUTOLOOP_KEY = 'bazaar_playtester_autoloop';
+
+
+function clamp(v, min, max) {
+    return Math.max(min, Math.min(max, v));
+}
+
+function defaultPlaytesterParams() {
+    return {
+        threatAvoidance: 1.0,
+        wallRepulsion: 1.2,
+        farmBias: 1.0,
+        strafeBias: 0.85,
+        dodgeBias: 1.15,
+        stuckSensitivity: 1.0,
+        edgeMargin: 60
+    };
+}
+
+function loadPlaytesterState() {
+    try {
+        const raw = localStorage.getItem(PLAYTESTER_STORAGE_KEY);
+        if (!raw) return { params: defaultPlaytesterParams(), iteration: 0 };
+        const parsed = JSON.parse(raw);
+        return {
+            params: { ...defaultPlaytesterParams(), ...(parsed.params || {}) },
+            iteration: parsed.iteration || 0
+        };
+    } catch (_) {
+        return { params: defaultPlaytesterParams(), iteration: 0 };
+    }
+}
+
+function savePlaytesterState() {
+    try {
+        localStorage.setItem(PLAYTESTER_STORAGE_KEY, JSON.stringify({
+            iteration: playtester.iteration,
+            params: playtester.params
+        }));
+    } catch (_) {}
+}
+
+function loadPlaytesterAutoLoop() {
+    try {
+        return localStorage.getItem(PLAYTESTER_AUTOLOOP_KEY) === '1';
+    } catch (_) {
+        return false;
+    }
+}
+
+function savePlaytesterAutoLoop(v) {
+    try {
+        localStorage.setItem(PLAYTESTER_AUTOLOOP_KEY, v ? '1' : '0');
+    } catch (_) {}
+}
+
+const __ptState = loadPlaytesterState();
+const playtester = {
+    enabled: false,
+    autoLoop: loadPlaytesterAutoLoop(),
+    runStartedAt: 0,
+    nearThreatFrames: 0,
+    wallTouchFrames: 0,
+    stuckFrames: 0,
+    damageTaken: 0,
+    wallDamageTaken: 0,
+    kills: 0,
+    dodgeEvents: 0,
+    funScore: 0,
+    lastThreatLevel: 0,
+    uniqueEnemyTypes: new Set(),
+    lastX: 225,
+    lastY: 300,
+    stuckChain: 0,
+    prevIntentMag: 0,
+    finalized: false,
+    iteration: __ptState.iteration || 0,
+    params: __ptState.params || defaultPlaytesterParams()
+};
+
+function resetPlaytesterStats() {
+    playtester.runStartedAt = gameTime;
+    playtester.nearThreatFrames = 0;
+    playtester.wallTouchFrames = 0;
+    playtester.stuckFrames = 0;
+    playtester.damageTaken = 0;
+    playtester.wallDamageTaken = 0;
+    playtester.kills = 0;
+    playtester.dodgeEvents = 0;
+    playtester.funScore = 0;
+    playtester.lastThreatLevel = 0;
+    playtester.uniqueEnemyTypes = new Set();
+    playtester.lastX = player.x;
+    playtester.lastY = player.y;
+    playtester.stuckChain = 0;
+    playtester.prevIntentMag = 0;
+    playtester.finalized = false;
+}
+
+function updatePlaytesterUI() {
+    if (!testerStateEl) return;
+    const loopTag = playtester.autoLoop ? '♻连跑' : '单局';
+    testerStateEl.innerText = playtester.enabled
+        ? `🧪 测试员 ON(${loopTag}) | 趣味 ${Math.round(playtester.funScore)} | 迭代 ${playtester.iteration}`
+        : '🧪 手动';
+    testerStateEl.style.color = playtester.enabled ? '#7cc2ff' : '#6aa9ff';
+}
+
+function togglePlaytester(force) {
+    playtester.enabled = (typeof force === 'boolean') ? force : !playtester.enabled;
+    if (playtester.enabled) {
+        resetPlaytesterStats();
+    } else {
+        playtester.autoLoop = false;
+        savePlaytesterAutoLoop(false);
+    }
+    updatePlaytesterUI();
+}
+
+function startPlaytester(weaponId) {
+    playtester.autoLoop = true;
+    savePlaytesterAutoLoop(true);
+    togglePlaytester(true);
+    selectWeapon(weaponId || 'pistol');
+}
+window.startPlaytester = startPlaytester;
+
+function getWallRepulsion(x, y, margin) {
+    let vx = 0, vy = 0;
+    const left = x - player.radius;
+    const right = (canvas.width - player.radius) - x;
+    const top = y - player.radius;
+    const bottom = (canvas.height - player.radius) - y;
+
+    if (left < margin) vx += (margin - left) / margin;
+    if (right < margin) vx -= (margin - right) / margin;
+    if (top < margin) vy += (margin - top) / margin;
+    if (bottom < margin) vy -= (margin - bottom) / margin;
+
+    const minEdge = Math.min(left, right, top, bottom);
+    return { vx, vy, minEdge, wallTouch: minEdge < margin * 0.5 };
+}
+
+function evaluateDirection(nx, ny, step) {
+    const nextX = player.x + nx * step;
+    const nextY = player.y + ny * step;
+    const margin = playtester.params.edgeMargin;
+
+    const blocked = (nextX <= player.radius + 1 || nextX >= canvas.width - player.radius - 1 || nextY <= player.radius + 1 || nextY >= canvas.height - player.radius - 1) ? 1 : 0;
+    const wall = getWallRepulsion(nextX, nextY, margin);
+    const wallPenalty = Math.hypot(wall.vx, wall.vy);
+
+    let dangerPenalty = 0;
+    for (const e of enemies) {
+        const d = dist(nextX, nextY, e.x, e.y);
+        if (d < 180) dangerPenalty += (180 - d) / 180;
+    }
+    for (const b of enemyBullets) {
+        const d = dist(nextX, nextY, b.x + (b.vx || 0) * 2, b.y + (b.vy || 0) * 2);
+        if (d < 110) dangerPenalty += ((110 - d) / 110) * 1.4;
+    }
+    for (const b of bossBullets) {
+        const d = dist(nextX, nextY, b.x + (b.vx || 0) * 2, b.y + (b.vy || 0) * 2);
+        if (d < 130) dangerPenalty += ((130 - d) / 130) * 1.7;
+    }
+
+    return blocked * 9 + wallPenalty * playtester.params.wallRepulsion + dangerPenalty * playtester.params.threatAvoidance;
+}
+
+function findBestDirection(vx, vy, threat) {
+    const mag = Math.hypot(vx, vy);
+    if (mag < 0.08) return { x: 0, y: 0 };
+
+    const dx = vx / mag, dy = vy / mag;
+    const baseAngle = Math.atan2(dy, dx);
+    const turn = 0.45 * playtester.params.stuckSensitivity;
+    const angles = [0, turn, -turn, turn * 2, -turn * 2, Math.PI];
+    const weaponSpeedMod = player.rangedWeapon ? (player.rangedWeapon.speedBonus || 1.0) : 1.0;
+    const step = player.speed * weaponSpeedMod * 1.4;
+
+    let best = { x: dx, y: dy, score: Infinity };
+    for (const a of angles) {
+        const tx = Math.cos(baseAngle + a), ty = Math.sin(baseAngle + a);
+        const score = evaluateDirection(tx, ty, step) + Math.abs(a) * (threat > 1.2 ? 0.1 : 0.25);
+        if (score < best.score) best = { x: tx, y: ty, score };
+    }
+    return best;
+}
+
+function computePlaytesterInput() {
+    let vx = 0, vy = 0;
+    let threat = 0;
+
+    const P = playtester.params;
+
+    for (const e of enemies) {
+        const dx = e.x - player.x, dy = e.y - player.y;
+        const d = Math.hypot(dx, dy) || 1;
+        if (d < 230) {
+            const w = (230 - d) / 230;
+            vx -= (dx / d) * (0.7 + w * 1.7) * P.threatAvoidance;
+            vy -= (dy / d) * (0.7 + w * 1.7) * P.threatAvoidance;
+            threat += w;
+        }
+    }
+
+    const hostileBullets = [...enemyBullets, ...bossBullets];
+    for (const b of hostileBullets) {
+        const dx = b.x - player.x, dy = b.y - player.y;
+        const d = Math.hypot(dx, dy) || 1;
+        if (d < 135) {
+            const w = (135 - d) / 135;
+            vx -= (dx / d) * (1.25 + w * 2.3) * P.dodgeBias;
+            vy -= (dy / d) * (1.25 + w * 2.3) * P.dodgeBias;
+            threat += w * 1.35;
+        }
+    }
+
+    let target = null;
+    if (player.hp < player.maxHp * 0.6) {
+        for (const dr of drops) {
+            if (dr.type !== 'heal') continue;
+            const d = dist(player.x, player.y, dr.x, dr.y);
+            if (!target || d < target.d) target = { x: dr.x, y: dr.y, d };
+        }
+    }
+    if (!target && threat < 2.0) {
+        for (const g of gems) {
+            const d = dist(player.x, player.y, g.x, g.y);
+            if (d < 280 && (!target || d < target.d)) target = { x: g.x, y: g.y, d };
+        }
+    }
+
+    if (target) {
+        const dx = target.x - player.x, dy = target.y - player.y;
+        const d = Math.hypot(dx, dy) || 1;
+        vx += (dx / d) * P.farmBias;
+        vy += (dy / d) * P.farmBias;
+    } else if (enemies.length > 0) {
+        let nearest = null;
+        for (const e of enemies) {
+            const d = dist(player.x, player.y, e.x, e.y);
+            if (!nearest || d < nearest.d) nearest = { e, d };
+        }
+        if (nearest) {
+            const dx = nearest.e.x - player.x, dy = nearest.e.y - player.y;
+            const d = Math.hypot(dx, dy) || 1;
+            vx += (-dy / d) * P.strafeBias;
+            vy += (dx / d) * P.strafeBias;
+        }
+    }
+
+    const wall = getWallRepulsion(player.x, player.y, P.edgeMargin);
+    vx += wall.vx * P.wallRepulsion;
+    vy += wall.vy * P.wallRepulsion;
+
+    const movedDist = Math.hypot(player.x - playtester.lastX, player.y - playtester.lastY);
+    const intentMag = Math.hypot(vx, vy);
+    if (playtester.prevIntentMag > 0.55 && movedDist < 0.28) {
+        playtester.stuckChain++;
+    } else {
+        playtester.stuckChain = Math.max(0, playtester.stuckChain - 1);
+    }
+
+    let stuck = false;
+    if (playtester.stuckChain > Math.floor(24 * P.stuckSensitivity)) {
+        stuck = true;
+        const toCenterX = (canvas.width * 0.5) - player.x;
+        const toCenterY = (canvas.height * 0.5) - player.y;
+        const c = Math.hypot(toCenterX, toCenterY) || 1;
+        vx = (toCenterX / c) * 1.6 + (Math.random() - 0.5) * 0.4;
+        vy = (toCenterY / c) * 1.6 + (Math.random() - 0.5) * 0.4;
+    }
+
+    const best = findBestDirection(vx, vy, threat);
+    const bestMag = Math.hypot(best.x, best.y);
+
+    playtester.lastX = player.x;
+    playtester.lastY = player.y;
+    playtester.prevIntentMag = intentMag;
+
+    if (threat < 0.35 && enemies.length > 0 && frameCount % 90 < 30) {
+        return { x: 0, y: 0, threat, wallTouch: wall.wallTouch, stuck };
+    }
+    if (bestMag < 0.08) return { x: 0, y: 0, threat, wallTouch: wall.wallTouch, stuck };
+
+    return { x: best.x / bestMag, y: best.y / bestMag, threat, wallTouch: wall.wallTouch, stuck };
+}
+
+function updatePlaytesterMetrics(info) {
+    if (!playtester.enabled) return;
+
+    const threatLevel = typeof info === 'number' ? info : (info?.threat || 0);
+    if (threatLevel > 0.65) playtester.nearThreatFrames++;
+    if (info && info.wallTouch) playtester.wallTouchFrames++;
+    if (info && info.stuck) playtester.stuckFrames++;
+    if (playtester.lastThreatLevel > 0.8 && threatLevel < 0.2) playtester.dodgeEvents++;
+    playtester.lastThreatLevel = threatLevel;
+
+    const elapsed = Math.max(1, gameTime - playtester.runStartedAt + 1);
+    const pressure = Math.min(28, playtester.nearThreatFrames / (elapsed * 60) * 155);
+    const pace = Math.min(28, (playtester.kills / elapsed) * 3.8);
+    const progress = Math.min(25, ((currentWave - 1) / TOTAL_WAVES) * 25);
+    const variety = Math.min(14, playtester.uniqueEnemyTypes.size * 2.2);
+    const hpPenalty = Math.min(14, (playtester.damageTaken / Math.max(1, player.maxHp)) * 7.5);
+    const wallPenalty = Math.min(12, playtester.wallTouchFrames / (elapsed * 60) * 120);
+    const stuckPenalty = Math.min(10, playtester.stuckFrames / (elapsed * 60) * 260);
+
+    playtester.funScore = Math.max(0, Math.min(100, pressure + pace + progress + variety - hpPenalty - wallPenalty - stuckPenalty));
+
+    if (frameCount % 30 === 0) updatePlaytesterUI();
+}
+
+function finalizePlaytesterRun(reason) {
+    if (!playtester.enabled || playtester.finalized) return;
+    playtester.finalized = true;
+
+    const elapsed = Math.max(1, gameTime - playtester.runStartedAt + 1);
+    const wallRate = playtester.wallTouchFrames / (elapsed * 60);
+    const stuckRate = playtester.stuckFrames / (elapsed * 60);
+    const wallDamageRate = playtester.damageTaken > 0 ? (playtester.wallDamageTaken / playtester.damageTaken) : 0;
+
+    // 失败反馈 → 微调参数（局间学习）
+    if (wallRate > 0.18 || wallDamageRate > 0.45) {
+        playtester.params.wallRepulsion *= 1.10;
+        playtester.params.edgeMargin *= 1.06;
+    } else {
+        playtester.params.wallRepulsion *= 0.99;
+    }
+
+    if (stuckRate > 0.04) {
+        playtester.params.stuckSensitivity *= 1.10;
+        playtester.params.strafeBias *= 0.95;
+    } else {
+        playtester.params.stuckSensitivity *= 0.995;
+        playtester.params.strafeBias *= 1.01;
+    }
+
+    if (reason === 'death' && currentWave <= 8) {
+        playtester.params.dodgeBias *= 1.05;
+        playtester.params.farmBias *= 0.96;
+    } else if (reason === 'victory') {
+        playtester.params.farmBias *= 1.02;
+    }
+
+    playtester.params.threatAvoidance = clamp(playtester.params.threatAvoidance, 0.75, 1.8);
+    playtester.params.wallRepulsion = clamp(playtester.params.wallRepulsion, 0.9, 2.8);
+    playtester.params.farmBias = clamp(playtester.params.farmBias, 0.6, 1.4);
+    playtester.params.strafeBias = clamp(playtester.params.strafeBias, 0.45, 1.35);
+    playtester.params.dodgeBias = clamp(playtester.params.dodgeBias, 0.8, 1.8);
+    playtester.params.stuckSensitivity = clamp(playtester.params.stuckSensitivity, 0.7, 1.9);
+    playtester.params.edgeMargin = clamp(playtester.params.edgeMargin, 42, 120);
+
+    playtester.iteration++;
+    savePlaytesterState();
+    updatePlaytesterUI();
+}
+
+function getPlaytesterReport(reason) {
+    const elapsed = Math.max(1, gameTime - playtester.runStartedAt + 1);
+    const wallRate = ((playtester.wallTouchFrames / (elapsed * 60)) * 100).toFixed(1);
+    return `测试员报告(${reason}) | 波次 ${currentWave}/${TOTAL_WAVES} | 击杀 ${playtester.kills} | 闪避 ${playtester.dodgeEvents} | 承伤 ${Math.round(playtester.damageTaken)} | 贴墙率 ${wallRate}% | 趣味分 ${Math.round(playtester.funScore)} | 迭代 ${playtester.iteration}`;
+}
+
+
 
 // ========================================
 // JUICE SYSTEM #1: Time Scale (慢动作)
@@ -823,12 +1198,17 @@ function endWave() {
 function showFinalVictory() {
     waveState = 'gameover';
     isPaused = true;
+    if (playtester.enabled) finalizePlaytesterRun('victory');
     if (bossVictoryEl) {
         bossVictoryEl.style.display = 'flex';
         const h2 = bossVictoryEl.querySelector('h2');
         const p = bossVictoryEl.querySelector('#victory-stats');
         if (h2) h2.innerText = '🏆 通关！20 波全清';
-        if (p) p.innerText = `总金纸 ${gold + bank} | 击杀 ${score} | 用时 ${formatTime(gameTime)}`;
+        if (p) {
+            let text = `总金纸 ${gold + bank} | 击杀 ${score} | 用时 ${formatTime(gameTime)}`;
+            if (playtester.enabled) text += `\n${getPlaytesterReport('通关')}`;
+            p.innerText = text;
+        }
     }
 }
 
@@ -960,6 +1340,45 @@ function openBazaar() {
     isPaused = true;
     rollBazaar();
     if (bazaarPanel) bazaarPanel.style.display = 'flex';
+
+    // 测试员自动购物 + 自动开下一波
+    if (playtester.enabled) {
+        setTimeout(autoBuyBazaarForTester, 250);
+        setTimeout(() => {
+            if (waveState === 'shop') closeBazaar();
+        }, 750);
+    }
+}
+
+function autoBuyBazaarForTester() {
+    if (!playtester.enabled || waveState !== 'shop') return;
+    let bestIdx = -1;
+    let bestScore = -999;
+    currentBazaarOffers.forEach((item, idx) => {
+        if (!item) return;
+        const cost = item.cost();
+        const affordable = item.canAfford ? item.canAfford() : (gold >= cost);
+        if (!affordable) return;
+
+        let value = 10;
+        const hpRatio = player.hp / Math.max(1, player.maxHp);
+        if (item.id === 'hp+' || item.id === 'heal') value += hpRatio < 0.6 ? 26 : 8;
+        if (item.id === 'atk+' || item.id === 'atkBig') value += 22;
+        if (item.id === 'atkspd+' || item.id === 'multishot') value += 20;
+        if (item.id === 'speed+') value += 14;
+        if (item.id === 'range+' || item.id === 'pickup+') value += 8;
+        if (item.id === 'deposit') value += (gold >= 18 ? 16 : 4);
+        if (item.id === 'reroll') value += (gold < 10 ? 12 : 2);
+        if (item.rarity === 'rare') value += 6;
+        value -= Math.floor(cost * 0.25);
+
+        if (value > bestScore) {
+            bestScore = value;
+            bestIdx = idx;
+        }
+    });
+
+    if (bestIdx >= 0) buyBazaarItem(bestIdx);
 }
 
 function closeBazaar() {
@@ -969,12 +1388,22 @@ function closeBazaar() {
     requestAnimationFrame(gameLoop);
 }
 
+
 // ====== /纸扎夜市系统 ======
 
 
 
 const keys = { w: false, a: false, s: false, d: false };
-window.addEventListener('keydown', e => { const k = e.key.toLowerCase(); if (k in keys) keys[k] = true; });
+window.addEventListener('keydown', e => {
+    const k = e.key.toLowerCase();
+    if (k in keys) keys[k] = true;
+    if (k === 't') togglePlaytester();
+    if (k === 'r' && playtester.enabled) {
+        playtester.autoLoop = !playtester.autoLoop;
+        savePlaytesterAutoLoop(playtester.autoLoop);
+        updatePlaytesterUI();
+    }
+});
 window.addEventListener('keyup', e => { const k = e.key.toLowerCase(); if (k in keys) keys[k] = false; });
 
 // === 虚拟摇杆 V2：手感优化 ===
@@ -1121,6 +1550,7 @@ function selectWeapon(id) {
     // 方案 B：启动第 1 波
     startWave(1);
     updateGoldUI();
+    updatePlaytesterUI();
     requestAnimationFrame(gameLoop);
 }
 window.selectWeapon = selectWeapon;
@@ -2833,6 +3263,33 @@ function gainExp(val) {
     expBar.style.width = (player.exp/player.maxExp*100)+'%';
 }
 
+function chooseUpgradeForTester(opts) {
+    if (!opts || opts.length === 0) return null;
+    let best = null;
+    let bestScore = -999;
+    const hpRatio = player.hp / Math.max(1, player.maxHp);
+
+    opts.forEach(opt => {
+        let score = 10;
+        if (opt.tagClass === 'tag-weapon') score += 22;
+        if (opt.tagClass === 'tag-skill') score += 18;
+        if (opt.tagClass === 'tag-stat') score += 10;
+
+        const txt = `${opt.name || ''} ${opt.desc || ''}`;
+        if (/伤害|攻击|暴击|连锁|过载|多弹|分身/.test(txt)) score += 12;
+        if (/攻速|冷却|射速/.test(txt)) score += 10;
+        if (/生命|回复|急救|HP/.test(txt)) score += (hpRatio < 0.6 ? 16 : 4);
+        if (/移速|动力鞋/.test(txt)) score += 5;
+        if (/拾取|磁铁/.test(txt)) score += 3;
+
+        if (score > bestScore) {
+            bestScore = score;
+            best = opt;
+        }
+    });
+    return best || opts[0];
+}
+
 function showUpgradePanel() {
     isPaused = true; upgradePanel.style.display = 'flex';
     setSlowMo(0.3, 15);
@@ -2855,7 +3312,21 @@ function showUpgradePanel() {
         };
         upgradeOptions.appendChild(card);
     });
+
+    // 测试员自动选择升级
+    if (playtester.enabled) {
+        setTimeout(() => {
+            const pick = chooseUpgradeForTester(opts);
+            if (!pick) return;
+            pick.apply();
+            upgradePanel.style.display = 'none';
+            isPaused = false;
+            updateDisplays();
+            requestAnimationFrame(gameLoop);
+        }, 180);
+    }
 }
+
 
 function generateUpgradeOptions() {
     const pool = [];
@@ -2936,7 +3407,12 @@ function generateUpgradeOptions() {
 function damagePlayer(dmg, knockbackFromX, knockbackFromY, knockbackForce) {
     // 无敌帧期间免疫所有伤害
     if (player.iframeTimer > 0) return false;
-    
+
+    if (playtester.enabled) {
+        playtester.damageTaken += dmg;
+        const edgeDist = Math.min(player.x - player.radius, canvas.width - player.radius - player.x, player.y - player.radius, canvas.height - player.radius - player.y);
+        if (edgeDist < (playtester.params.edgeMargin || 60) * 0.55) playtester.wallDamageTaken += dmg;
+    }
     player.hp -= dmg;
     hpEl.innerText = Math.max(0, Math.floor(player.hp));
     
@@ -2965,10 +3441,25 @@ function damagePlayer(dmg, knockbackFromX, knockbackFromY, knockbackForce) {
     // 死亡检查
     if (player.hp <= 0) {
         isGameOver = true;
-        alert(`💀 被击溃！\n存活: ${formatTime(gameTime)} | Lv.${player.level} | 击杀: ${score}`);
-        location.reload();
+        waveState = 'gameover';
+        const baseMsg = `💀 被击溃！\n存活: ${formatTime(gameTime)} | Lv.${player.level} | 击杀: ${score}`;
+        if (playtester.enabled) {
+            finalizePlaytesterRun('death');
+            if (playtester.autoLoop) {
+                if (waveProgressEl) {
+                    waveProgressEl.innerText = '♻ 测试员自动重开中... (按 T 可取消)';
+                    waveProgressEl.style.color = '#7cc2ff';
+                }
+                setTimeout(() => location.reload(), 700);
+            } else {
+                alert(baseMsg + `\n${getPlaytesterReport('死亡')}`);
+            }
+        } else {
+            alert(baseMsg);
+            location.reload();
+        }
     }
-    
+
     return true; // 成功造成伤害
 }
 
@@ -3092,11 +3583,17 @@ function gameLoop() {
     // 移动 — V2: 站定射击机制
     smoothJoystickInput(); // 每帧平滑摇杆输入
     let mx = 0, my = 0;
+    let testerInfo = null;
     {
         if (keys.w) my -= 1; if (keys.s) my += 1;
         if (keys.a) mx -= 1; if (keys.d) mx += 1;
         if (Math.abs(joystickInput.x) > 0.02 || Math.abs(joystickInput.y) > 0.02) {
             mx = joystickInput.x; my = joystickInput.y;
+        }
+        if (playtester.enabled) {
+            const ai = computePlaytesterInput();
+            mx = ai.x; my = ai.y;
+            testerInfo = ai;
         }
     }
     const ml = Math.hypot(mx,my);
@@ -3177,6 +3674,7 @@ function gameLoop() {
     
     // V2: 远程攻击（站定射击机制）
     rangedAttack(isMoving);
+    updatePlaytesterMetrics(testerInfo);
     
     // 刷怪 — 方案 B: 受波次预算约束
     if (waveState === 'battle') {
@@ -3327,6 +3825,10 @@ function gameLoop() {
             gems.push({ x: e.x, y: e.y, val: e.expDrop });
             // === 方案 B: 金纸掉落 + 波次击杀统计 ===
             waveKills++;
+            if (playtester.enabled) {
+                playtester.kills++;
+                playtester.uniqueEnemyTypes.add(e.aiType || 'chase');
+            }
             const killGold = BASE_KILL_GOLD + (e.radius > 12 ? 1 : 0); // 石蛋 +1
             addGold(killGold);
             // 连杀计数
@@ -3378,7 +3880,16 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
+function initPlaytesterAutoLoop() {
+    // 若上局开启了连跑，刷新后自动继续开局；手动按 T 关闭即可中断
+    if (playtester.autoLoop && !gameStarted && weaponSelect && weaponSelect.style.display !== 'none') {
+        setTimeout(() => startPlaytester('pistol'), 240);
+    }
+}
+
 updateDisplays();
+updatePlaytesterUI();
+initPlaytesterAutoLoop();
 </script>
 </body>
 </html>

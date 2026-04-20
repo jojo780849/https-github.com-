@@ -8,7 +8,7 @@
 
 ## 当前技术栈
 - 纯 HTML5 Canvas + 原生 JavaScript
-- 多个单文件原型并行推进：`demo_melee.html` / `demo_ranged_juice.html` / `juice.html` / `demo_ranged.html` / `game.html`
+- 多个单文件原型并行推进：`demo_melee.html` / `demo_ranged_bazaar.html` / `demo_ranged_juice.html` / `juice.html` / `demo_ranged.html` / `game.html`
 - 无需构建工具，双击即可运行
 
 ## 跨电脑协作结构
@@ -18,6 +18,7 @@
 
 ## 当前关键文件
 - `demo_melee.html`：**近战版主力开发线（当前最新 V15）**
+- `demo_ranged_bazaar.html`：**纸扎夜市验证线（方案B，含夜市商店/功德箱循环与内建自动测试员）**
 - `demo_ranged_juice.html`：**远程爽感实验线（V3，6 套 JUICE 系统 + 画面内错误诊断 overlay）**
 - `juice.html`：`demo_ranged_juice.html` 的短路径镜像，方便外部分享与试玩
 - `demo_ranged.html`：远程版基础验证线
@@ -51,7 +52,14 @@
 - 保留手机竖版布局、Boss 战与升级面板，用作爽感模块回灌前的独立对照样机
 - 当前构建保留画面内错误诊断 overlay，且同步提供 `juice.html` 短路径镜像，方便手机端试玩排错与外部分享
 
+## 纸扎夜市验证线 (demo_ranged_bazaar)
+- 远程武器 + 20 波战斗 + 波间夜市商店/功德箱循环的经济验证样机，用来观察“成长靠商店、不靠系统白送”的节奏是否成立
+- 新增内建游戏测试员（方案2+）：可从开局面板直接自动跑局，顶部 HUD 会显示测试员状态、趣味分与当前迭代次数
+- 测试员具备墙体排斥、卡墙脱困、敌人与子弹威胁评估、残血寻治疗/低压捡资源等行为，并会在局间按贴墙率、卡住率、承伤表现做参数微调
+- 支持自动连跑重开，便于持续观察波次、商店与资源循环是否稳定；键盘 `T` 可切换测试员，`R` 可在启用后切换单局/连跑
+
 ## 自动同步
+
 
 - **代码改完自动推送**：每次修改代码后自动 git push 到 GitHub + 同步更新本地文档（README/MEMORY/当前任务框架），确保 OpenClaw 等外部工具能读到最新状态
 - 已配置每日 22:00 的"游戏项目每日收尾同步"自动任务

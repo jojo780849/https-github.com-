@@ -131,7 +131,7 @@
     </div>
   </div>
 
-  <div id="hint">主角專職開寶箱｜隊員自動清怪｜同類碎片集滿3個升級</div>
+  <div id="hint">主角開箱｜隊員清怪｜碎片需求隨等級提高｜血量歸零先掉隊員</div>
 
   <div id="pick">
     <div class="pickCard">
@@ -278,6 +278,18 @@
     }
   };
   const ROLE_KEYS = ['blade', 'gunner', 'bomber'];
+  const MAX_UNIT_LEVEL = 9;
+
+  function getRoleUnit(role) {
+    return state.squad.find((u) => u.role === role) || null;
+  }
+
+  function needFragmentsFor(role) {
+    const u = getRoleUnit(role);
+    if (!u) return 3;
+    return Math.min(8, 3 + Math.floor(u.level / 2));
+  }
+
 
   function makeState() {
     return {
@@ -300,7 +312,7 @@
       nextLevelKills: 20,
       buffs: { dmg: 1, rate: 0.78, speed: 1, pierce: 0, magnet: 1, move: 1, open: 1 },
       logCD: 0,
-      logText: '主角開箱拿同類碎片，集滿3個升級對應隊員'
+      logText: '碎片需求會隨等級提高；血量歸零先失去1名隊員'
     };
   }
 
@@ -316,11 +328,11 @@
 
   function grantRoleUpgrade(role) {
     const cfg = ROLE_CFG[role];
-    let unit = state.squad.find((u) => u.role === role);
+    let unit = getRoleUnit(role);
     if (!unit) {
       if (state.squad.length >= 5) {
-        state.score += 28;
-        addFx(state.player.x, state.player.y - 30, '+28', '#ffd27b');
+        state.score += 22;
+        addFx(state.player.x, state.player.y - 30, '+22', '#ffd27b');
         return;
       }
       unit = { role, level: 1, angleBase: Math.random() * Math.PI * 2, fireCD: 0 };
@@ -328,9 +340,17 @@
       addFx(state.player.x, state.player.y - 28, cfg.icon + ' ' + cfg.name + '入隊', cfg.color);
       return;
     }
-    unit.level = Math.min(5, unit.level + 1);
+
+    if (unit.level >= MAX_UNIT_LEVEL) {
+      state.buffs.dmg *= 1.03;
+      addFx(state.player.x, state.player.y - 28, cfg.icon + ' 滿級轉火力+', cfg.color);
+      return;
+    }
+
+    unit.level += 1;
     addFx(state.player.x, state.player.y - 28, cfg.icon + ' ' + cfg.name + ' Lv' + unit.level, cfg.color);
   }
+
 
 
   function spawnEnemy(elite = false) {
@@ -506,8 +526,9 @@
     c.hp -= dmg;
     if (Math.random() < 0.22) addFx(c.x, c.y - 16, '開箱', '#9bceff');
     if (c.hp <= 0) {
-      const reward = 2 + (Math.random() < 0.45 ? 1 : 0);
+      const reward = 1 + (Math.random() < 0.38 ? 1 : 0);
       for (let k = 0; k < reward; k++) {
+
         const role = ROLE_KEYS[Math.floor(Math.random() * ROLE_KEYS.length)];
         const cfg = ROLE_CFG[role];
         state.drops.push({ x: c.x + rand(-12, 12), y: c.y + rand(-12, 12), t: 'frag', role, v: 1, r: 9, color: cfg.color, icon: cfg.icon });
@@ -653,12 +674,15 @@
     }
 
     for (const role of ROLE_KEYS) {
-      while (state.fragments[role] >= 3) {
-        state.fragments[role] -= 3;
+      let need = needFragmentsFor(role);
+      while (state.fragments[role] >= need) {
+        state.fragments[role] -= need;
         grantRoleUpgrade(role);
+        need = needFragmentsFor(role);
       }
     }
   }
+
 
 
   function maybeLevelUp() {
@@ -883,7 +907,10 @@
     hpEl.className = 'chip ' + (state.player.hp > 45 ? 'good' : (state.player.hp > 20 ? 'warn' : 'bad'));
     const teamPower = state.squad.reduce((s, u) => s + u.level, 0);
     squadEl.textContent = '隊伍 ' + state.squad.length + '人 / 力量' + teamPower;
-    shardEl.textContent = '碎片 ⚔' + state.fragments.blade + ' ✦' + state.fragments.gunner + ' ✹' + state.fragments.bomber;
+    shardEl.textContent =
+      '碎片 ⚔' + state.fragments.blade + '/' + needFragmentsFor('blade') +
+      ' ✦' + state.fragments.gunner + '/' + needFragmentsFor('gunner') +
+      ' ✹' + state.fragments.bomber + '/' + needFragmentsFor('bomber');
     killsEl.textContent = '擊殺 ' + state.kills;
     const t = Math.floor(state.time);
     const mm = String(Math.floor(t / 60)).padStart(2, '0');
@@ -893,7 +920,39 @@
   }
 
 
+
+
+
+  function handleDownByLosingMember() {
+    if (state.squad.length <= 1) {
+      showGameOver();
+      return;
+    }
+
+    let removeIdx = 0;
+    let minLv = Infinity;
+    for (let i = 0; i < state.squad.length; i++) {
+      const lv = state.squad[i].level;
+      if (lv < minLv) {
+        minLv = lv;
+        removeIdx = i;
+      }
+    }
+
+    const lost = state.squad.splice(removeIdx, 1)[0];
+    state.player.hp = Math.max(state.player.maxHp * 0.56, 36);
+    state.player.hurtCD = 1.2;
+
+    for (const role of ROLE_KEYS) {
+      if (state.fragments[role] > 0) state.fragments[role] -= 1;
+    }
+
+    const cfg = ROLE_CFG[lost.role];
+    addFx(state.player.x, state.player.y - 24, '失去 ' + cfg.icon + cfg.name, '#ffb0b0');
+  }
+
   function showGameOver() {
+
     state.gameOver = true;
     goStatsEl.innerHTML =
       '生存時間：<b>' + timerEl.textContent + '</b><br>' +
@@ -929,8 +988,9 @@
       state.spawnCrateCD -= dt;
       if (state.spawnCrateCD <= 0) {
         spawnCrate();
-        state.spawnCrateCD = 1.1;
+        state.spawnCrateCD = 1.45;
       }
+
 
       updatePlayer(dt);
       updateCrateOpening(dt);
@@ -943,7 +1003,7 @@
 
       maybeLevelUp();
 
-      if (state.player.hp <= 0) showGameOver();
+      if (state.player.hp <= 0) handleDownByLosingMember();
       if (state.time > 0.8 && hintEl.style.opacity !== '0') {
         const alpha = Math.max(0, 1 - state.time / 9);
         hintEl.style.opacity = String(alpha);

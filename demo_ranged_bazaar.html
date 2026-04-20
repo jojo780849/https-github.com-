@@ -250,11 +250,12 @@
             background:#C62828;color:#FFFDE7;border:none;border-radius:8px;cursor:pointer;
             box-shadow:0 0 10px rgba(198,40,40,0.5);">继续下一波 ➡</button>
     </div>
-    <!-- 波次开始横幅 -->
-    <div id="wave-banner" style="position:absolute;top:30%;left:50%;
-        transform:translate(-50%,-50%);font-size:38px;font-weight:900;
-        color:#FFB300;text-shadow:0 0 20px #C62828,0 0 40px #C62828;
-        z-index:65;pointer-events:none;opacity:0;font-family:Impact,sans-serif;letter-spacing:3px;"></div>
+    <!-- 波次开始横幅（方案B 弱化版） -->
+    <div id="wave-banner" style="position:absolute;top:15%;left:50%;
+        transform:translate(-50%,-50%);font-size:18px;font-weight:700;
+        color:#FFB300;text-shadow:0 0 6px rgba(0,0,0,0.8);
+        z-index:65;pointer-events:none;opacity:0;
+        background:rgba(0,0,0,0.5);padding:4px 14px;border-radius:12px;"></div>
     <div id="controls">
         <div id="joystick-container">
             <div id="joystick-base"></div>
@@ -507,13 +508,12 @@ const flashOverlay = document.getElementById('flash-overlay');
 const killstreakBanner = document.getElementById('killstreak-banner');
 
 function setSlowMo(scale, durationFrames) {
-    timeScaleTarget = scale;
-    timeScale = scale;
-    timeScaleTimer = durationFrames;
+    // 方案B：关闭慢动作（用户反馈头顶特效太亮眼）
+    return;
 }
 function triggerFlash(alpha) {
-    screenFlashAlpha = alpha;
-    flashOverlay.style.opacity = alpha;
+    // 方案B：关闭白闪
+    return;
 }
 
 // ========================================
@@ -531,11 +531,8 @@ let streakInvincibleTimer = 0;
 let lastStreakMilestone = 0;
 
 function showKillstreakBanner(text, color) {
-    killstreakBanner.innerText = text;
-    killstreakBanner.style.color = color;
-    killstreakBanner.style.animation = 'none';
-    killstreakBanner.offsetHeight;
-    killstreakBanner.style.animation = 'bannerPop 1.2s ease-out forwards';
+    // 方案B：关闭连杀大字幕（用户反馈头顶特效太亮眼）
+    return;
 }
 
 function applyStreakReward(type) {
@@ -713,7 +710,7 @@ let bossBullets = [];
 //  纸扎夜市 · 波次 + 经济系统 (方案 B MVP)
 // ========================================
 const TOTAL_WAVES = 20;
-const WAVE_DURATION = 25; // 每波 25 秒
+const WAVE_DURATION = 15; // 每波 15 秒（原 25 秒太长）
 const BOSS_WAVES = [10, 20]; // 第10、20波是 Boss 波
 const INTEREST_RATE = 0.10; // 功德箱每波利息 10%
 const INTEREST_CAP = 50; // 单波最高利息 50 金纸
@@ -754,18 +751,21 @@ function formatWaveInfo() {
 }
 
 function getWaveBudget(wave) {
-    // 每波敌人总量（越后越多）
-    if (BOSS_WAVES.includes(wave)) return Math.floor(20 + wave * 3);
-    return Math.floor(15 + wave * 2.5);
+    // 每波敌人总量（越后越多）— 提高难度
+    if (BOSS_WAVES.includes(wave)) return Math.floor(35 + wave * 5);
+    return Math.floor(25 + wave * 4.5);
 }
 
 function showWaveBanner(text, color) {
     if (!waveBannerEl) return;
     waveBannerEl.innerText = text;
     waveBannerEl.style.color = color || '#FFB300';
-    waveBannerEl.style.animation = 'none';
+    waveBannerEl.style.transition = 'none';
+    waveBannerEl.style.opacity = '0';
     waveBannerEl.offsetHeight; // reflow
-    waveBannerEl.style.animation = 'bannerPop 1.6s ease-out';
+    waveBannerEl.style.transition = 'opacity 0.3s';
+    waveBannerEl.style.opacity = '1';
+    setTimeout(() => { if (waveBannerEl) waveBannerEl.style.opacity = '0'; }, 900);
 }
 
 function startWave(n) {
@@ -1120,8 +1120,8 @@ function spawnEnemy() {
     let x, y;
     if (Math.random() < 0.5) { x = Math.random()<0.5 ? -20 : canvas.width+20; y = Math.random()*canvas.height; }
     else { x = Math.random()*canvas.width; y = Math.random()<0.5 ? -20 : canvas.height+20; }
-    const hpM = 1 + gameTime*0.008 + player.level*0.08;
-    const spM = 1 + gameTime*0.002;
+    const hpM = 1 + gameTime*0.008 + player.level*0.08 + (currentWave||1)*0.25;
+    const spM = 1 + gameTime*0.002 + (currentWave||1)*0.04;
     enemies.push({
         x, y, radius: chosen.radius, speed: chosen.baseSpeed*spM,
         hp: chosen.baseHp*hpM, maxHp: chosen.baseHp*hpM,
@@ -3041,17 +3041,18 @@ function gameLoop() {
     if (waveState === 'battle') {
         const waveElapsed = gameTime - waveStartTime;
         const isBossWave = BOSS_WAVES.includes(currentWave);
-        // Boss 波：只刷少量杂兵，靠 Boss 扛戏
-        const baseRate = Math.max(6, 40 - currentWave * 1.5);
-        const rate = boss ? baseRate * 2.5 : baseRate;
+        // 刷怪更密集：第1波每 0.4 秒 1 只，到 20 波每 0.1 秒 1 只
+        const baseRate = Math.max(4, 24 - currentWave * 1.0);
+        const rate = boss ? baseRate * 2 : baseRate;
         // 仅在预算未耗尽 & 敌人数未爆炸时刷
-        if (waveEnemyBudget > 0 && enemies.length < 40 && frameCount % Math.floor(rate) === 0) {
+        if (waveEnemyBudget > 0 && enemies.length < 60 && frameCount % Math.floor(rate) === 0) {
             spawnEnemy();
             waveEnemyBudget--;
         }
-        // 小波次节奏（非 boss 波次里 15 秒时冲一波）
-        if (!boss && !isBossWave && waveElapsed === 15 && frameCount % 60 === 0 && waveEnemyBudget >= 5) {
-            for (let i = 0; i < 5; i++) { spawnEnemy(); waveEnemyBudget--; }
+        // 每 6 秒冲一波小高潮（施压点）
+        if (!boss && !isBossWave && waveElapsed > 0 && waveElapsed % 6 === 0 && frameCount % 60 === 0 && waveEnemyBudget >= 6) {
+            const burst = 6 + Math.floor(currentWave/3);
+            for (let i = 0; i < burst; i++) { spawnEnemy(); waveEnemyBudget--; }
         }
         // === 波次结束条件 ===
         // 1) 普通波次：时间到 + 场上敌人清完

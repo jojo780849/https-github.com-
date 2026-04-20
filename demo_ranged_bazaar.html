@@ -315,7 +315,7 @@ const joystickStick = document.getElementById('joystick-stick');
 const RANGED_WEAPONS = {
     pistol: {
         name: '弹射枪', icon: '🔫',
-        cooldown: 25,
+        cooldown: 45,           // 原 25 → 45（-44% 射速）
         damage: 18,
         bulletSpeed: 8,
         bulletRadius: 4,
@@ -332,7 +332,7 @@ const RANGED_WEAPONS = {
     },
     shotgun: {
         name: '散弹枪', icon: '💥',
-        cooldown: 45,
+        cooldown: 75,           // 原 45 → 75（-40% 射速）
         damage: 10,
         bulletSpeed: 7,
         bulletRadius: 3,
@@ -351,7 +351,7 @@ const RANGED_WEAPONS = {
     },
     laser: {
         name: '激光笔', icon: '⚡',
-        cooldown: 4,            // 每4帧一次=极快
+        cooldown: 8,            // 原 4 → 8（-50% 射速）
         damage: 3,              // 单次低伤害，DPS靠频率
         bulletSpeed: 0,         // 激光是射线，不是子弹
         bulletRadius: 0,

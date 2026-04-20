@@ -67,6 +67,7 @@
     pointer: { down: false, x: 0, y: 0 },
     player: { x: 0, y: 0, r: 14, shootCd: 0, aiming: false, aimX: 0, aimY: 0 },
     colorBag: ['r','b','g','r','b','g'],
+    nextShotColor: 'r',
     queue: [],
     queueCount: { r: 0, b: 0, g: 0 },
     skillToast: '',
@@ -92,11 +93,19 @@
   function pick(arr) { return arr[(Math.random() * arr.length) | 0]; }
   function dist(ax, ay, bx, by) { return Math.hypot(ax - bx, ay - by); }
 
-  function nextColor() {
+  function pullRandomColor() {
     if (state.colorBag.length === 0) state.colorBag = ['r','b','g','r','b','g'];
     const i = (Math.random() * state.colorBag.length) | 0;
     return state.colorBag.splice(i, 1)[0];
   }
+
+  function nextColor() {
+    if (!state.nextShotColor) state.nextShotColor = pullRandomColor();
+    const c = state.nextShotColor;
+    state.nextShotColor = pullRandomColor();
+    return c;
+  }
+
 
   function spawnEnemy() {
     const x = rand(24, state.w - 24);
@@ -217,8 +226,9 @@
     else if (e.type === 'shield' && b.c !== 'b') dmg *= 0.35;
 
     e.hp -= dmg;
-    addQueue(b.c);
+    if (b.c === e.weak) addQueue(b.c);
     for (let i = 0; i < 5; i++) {
+
       state.particles.push({ x: b.x, y: b.y, vx: rand(-90, 90), vy: rand(-90, 90), life: 0.4, c: C[b.c] });
     }
 
@@ -381,9 +391,10 @@
     ctx.arc(state.player.x, state.player.y, state.player.r, 0, Math.PI * 2);
     ctx.fill();
 
-    const next = state.colorBag[state.colorBag.length - 1] || 'r';
+    const next = state.nextShotColor || 'r';
     ctx.beginPath();
     ctx.fillStyle = C[next];
+
     ctx.arc(state.player.x, state.player.y - 22, 6, 0, Math.PI * 2);
     ctx.fill();
 
@@ -433,9 +444,12 @@
     state.queue = [];
     state.queueCount = { r: 0, b: 0, g: 0 };
     state.colorBag = ['r','b','g','r','b','g'];
-    rightHud.textContent = '技能: -';
+    state.nextShotColor = pullRandomColor();
+    rightHud.textContent = '技能: -（命中同色弱点才充能）';
+
     renderQueue();
   }
+
 
   let last = performance.now();
   function loop(now) {
@@ -482,9 +496,10 @@
 
   window.addEventListener('resize', resize);
   resize();
-  renderQueue();
+  resetGame();
   requestAnimationFrame(loop);
 })();
+
 </script>
 </body>
 </html>

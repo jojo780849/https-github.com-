@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-  <title>幽塔·术士 v0.4（饥荒式空间构图）</title>
+  <title>幽塔·术士 v0.5（单屏手机布局）</title>
   <style>
     :root {
       --bg: #15110e;
@@ -32,8 +32,8 @@
 
     html, body {
       margin: 0;
-      min-height: 100%;
-      overflow-x: hidden;
+      height: 100%;
+      overflow: hidden;
       background:
         radial-gradient(circle at 50% 0%, rgba(255, 244, 219, 0.06) 0%, rgba(0,0,0,0) 28%),
         radial-gradient(circle at 18% 16%, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0) 18%),
@@ -72,11 +72,13 @@
       position: relative;
       z-index: 1;
       width: min(100%, 430px);
+      height: 100dvh;
       margin: 0 auto;
-      padding: max(10px, env(safe-area-inset-top)) 10px max(12px, env(safe-area-inset-bottom));
+      padding: max(8px, env(safe-area-inset-top)) 10px max(8px, env(safe-area-inset-bottom));
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
+      overflow: hidden;
     }
 
     .topbar {
@@ -133,6 +135,8 @@
 
     .battle-shell {
       position: relative;
+      flex: 1;
+      min-height: 0;
       overflow: hidden;
       border-radius: 28px;
       border: 1px solid rgba(255,255,255,0.08);
@@ -153,8 +157,9 @@
 
     .battle-stage {
       position: relative;
-      min-height: 562px;
-      padding: 12px 10px 12px;
+      height: 100%;
+      min-height: 0;
+      padding: 10px 8px 12px;
       overflow: hidden;
     }
 
@@ -435,28 +440,28 @@
       position: absolute;
       left: 0;
       right: 0;
-      top: 172px;
+      top: 146px;
       z-index: 3;
-      min-height: 144px;
+      min-height: 132px;
       display: flex;
-      justify-content: center;
+      justify-content: flex-end;
       align-items: flex-end;
-      gap: 12px;
-      padding: 0 10px;
+      gap: 10px;
+      padding: 0 18px 0 148px;
     }
 
     .ally-zone {
       position: absolute;
       left: 0;
       right: 0;
-      bottom: 92px;
+      bottom: 194px;
       z-index: 3;
-      min-height: 220px;
+      min-height: 184px;
       display: flex;
-      justify-content: center;
+      justify-content: flex-start;
       align-items: flex-end;
-      gap: 10px;
-      padding: 0 8px;
+      gap: 2px;
+      padding: 0 138px 0 12px;
       transition: filter 180ms ease;
     }
 
@@ -498,18 +503,23 @@
     }
 
     .enemy.actor {
-      width: 122px;
-      height: 154px;
+      width: 112px;
+      height: 148px;
+      margin-left: auto;
     }
 
     .hero.actor {
-      width: 156px;
-      height: 224px;
+      order: 1;
+      width: 142px;
+      height: 206px;
+      margin-right: -2px;
     }
 
     .summon.actor {
-      width: 88px;
-      height: 136px;
+      order: 2;
+      width: 76px;
+      height: 118px;
+      margin: 0 -4px;
     }
 
     .figure {
@@ -847,7 +857,7 @@
     }
 
     .hero .meta-plate {
-      min-width: 118px;
+      min-width: 110px;
       margin-top: -2px;
     }
 
@@ -944,15 +954,15 @@
     .hint-banner {
       position: absolute;
       left: 50%;
-      bottom: 32px;
+      bottom: 214px;
       transform: translateX(-50%);
       z-index: 4;
-      max-width: calc(100% - 24px);
-      padding: 9px 14px;
+      max-width: calc(100% - 32px);
+      padding: 8px 12px;
       color: rgba(247, 235, 212, 0.76);
-      font-size: 10px;
+      font-size: 9px;
       text-align: center;
-      letter-spacing: 1.4px;
+      letter-spacing: 1.2px;
     }
 
     .hint-banner.hot {
@@ -968,6 +978,22 @@
       border: 1px solid rgba(255,255,255,0.08);
       background: rgba(30, 24, 20, 0.84);
       box-shadow: var(--shadow);
+    }
+
+    .hand-shell {
+      position: fixed;
+      left: 50%;
+      bottom: calc(env(safe-area-inset-bottom) + 58px);
+      transform: translateX(-50%);
+      z-index: 8;
+      width: min(calc(100vw - 18px), 410px);
+      border-radius: 26px;
+      background: linear-gradient(180deg, rgba(39, 31, 26, 0.78) 0%, rgba(24, 19, 16, 0.92) 100%);
+      backdrop-filter: blur(10px);
+    }
+
+    .log-shell {
+      display: none;
     }
 
     .hand-shell::before,
@@ -987,28 +1013,28 @@
       justify-content: space-between;
       align-items: center;
       gap: 8px;
-      padding: 10px 12px 8px;
-      font-size: 10px;
-      letter-spacing: 2px;
+      padding: 8px 12px 4px;
+      font-size: 9px;
+      letter-spacing: 1.4px;
       color: rgba(247, 235, 212, 0.68);
-      border-bottom: 1px solid rgba(255,255,255,0.05);
+      border-bottom: none;
     }
 
     .hand-container {
       position: relative;
       z-index: 2;
-      min-height: 214px;
+      min-height: 166px;
       display: flex;
       align-items: flex-end;
       justify-content: center;
-      padding: 8px 0 6px;
+      padding: 2px 0 0;
     }
 
     .hand-fan {
       position: relative;
       width: 100%;
-      max-width: 420px;
-      height: 194px;
+      max-width: 400px;
+      height: 150px;
       display: flex;
       justify-content: center;
       align-items: flex-end;
@@ -1017,8 +1043,8 @@
     .card {
       position: absolute;
       bottom: 0;
-      width: 96px;
-      height: 148px;
+      width: 84px;
+      height: 130px;
       border-radius: 16px;
       cursor: pointer;
       touch-action: none;
@@ -1028,7 +1054,7 @@
 
     .card:hover,
     .card.lifted {
-      transform: translateY(-24px) scale(1.08) rotate(0deg) !important;
+      transform: translateY(-18px) scale(1.06) rotate(0deg) !important;
       z-index: 100 !important;
       filter: drop-shadow(0 16px 22px rgba(0,0,0,0.44));
     }
@@ -1151,14 +1177,20 @@
     .drag-ghost {
       position: fixed;
       z-index: 999;
-      width: 96px;
-      height: 148px;
+      width: 84px;
+      height: 130px;
       pointer-events: none;
       transform: translate(-50%, -50%) scale(1.08);
       filter: drop-shadow(0 18px 22px rgba(0,0,0,0.4));
     }
 
     .control-row {
+      position: fixed;
+      left: 50%;
+      bottom: calc(env(safe-area-inset-bottom) + 8px);
+      transform: translateX(-50%);
+      z-index: 9;
+      width: min(calc(100vw - 18px), 410px);
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
@@ -1167,13 +1199,13 @@
     .btn {
       appearance: none;
       border: 2px solid #53402f;
-      border-radius: 18px;
-      padding: 12px 10px;
+      border-radius: 16px;
+      padding: 11px 8px;
       background: linear-gradient(180deg, #dbc39b 0%, #c4a678 100%);
       color: #241d16;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 900;
-      letter-spacing: 1.6px;
+      letter-spacing: 1.4px;
       box-shadow: 0 8px 14px rgba(0,0,0,0.26), inset 0 0 0 1px rgba(255,255,255,0.16);
     }
 
@@ -1293,7 +1325,7 @@
     <div class="topbar">
       <div class="brand">
         <div class="brand-title">幽塔 · 术士</div>
-        <div class="brand-sub">v0.4 · 饥荒式空间构图 / 手机体验版</div>
+        <div class="brand-sub">v0.5 · 单屏手机布局 / 左右站位版</div>
       </div>
       <div class="top-pills">
         <div class="pill">牌库<b id="deckCount">0</b></div>
@@ -1342,8 +1374,8 @@
 
     <section class="hand-shell">
       <div class="hand-head">
-        <span>手牌</span>
-        <span>按住拖到敌人 / 我方</span>
+        <span>手牌浮层</span>
+        <span>按住拖到左侧我方 / 右侧敌人</span>
       </div>
       <div class="hand-container">
         <div class="hand-fan" id="handFan"></div>
@@ -1358,7 +1390,7 @@
     <section class="log-shell">
       <div class="log-head">
         <span>战斗记录</span>
-        <span>v0.4</span>
+        <span>v0.5</span>
       </div>
       <div class="log" id="log"></div>
     </section>
@@ -1900,8 +1932,8 @@
     function renderAllies() {
       const zone = document.getElementById("allyZone");
       zone.innerHTML = "";
-      if (state.summons[0]) zone.appendChild(buildSummonEl(state.summons[0]));
       zone.appendChild(buildHeroEl(state.hero));
+      if (state.summons[0]) zone.appendChild(buildSummonEl(state.summons[0]));
       if (state.summons[1]) zone.appendChild(buildSummonEl(state.summons[1]));
     }
 
@@ -1983,9 +2015,9 @@
       const n = state.hand.length;
       if (n === 0) return;
 
-      const maxAngle = 16;
-      const spread = Math.min(88, 274 / Math.max(n, 3));
-      const arcDepth = n > 2 ? 16 : 6;
+      const maxAngle = 13;
+      const spread = Math.min(70, 226 / Math.max(n, 3));
+      const arcDepth = n > 2 ? 12 : 4;
 
       state.hand.forEach((c, i) => {
         const card = document.createElement("div");

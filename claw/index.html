@@ -1,0 +1,2260 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <title>幽塔·术士 v0.4（饥荒式空间构图）</title>
+  <style>
+    :root {
+      --bg: #15110e;
+      --paper: #dcc7a3;
+      --paper-2: #cdb58d;
+      --ink: #1a1714;
+      --ink-soft: #463a2b;
+      --moon: #f4e7c3;
+      --moon-halo: rgba(244, 231, 195, 0.24);
+      --fog: rgba(222, 234, 214, 0.08);
+      --line: rgba(255, 244, 220, 0.08);
+      --gold: #e7cb7a;
+      --hero: #e3ddd1;
+      --enemy: #ffb699;
+      --buff: #cdb7ff;
+      --good: #9de6a9;
+      --danger: #ff8e77;
+      --shadow: 0 18px 38px rgba(0, 0, 0, 0.42);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255, 244, 219, 0.06) 0%, rgba(0,0,0,0) 28%),
+        radial-gradient(circle at 18% 16%, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0) 18%),
+        linear-gradient(180deg, #16110f 0%, #110e0c 100%);
+      color: #f7f0e4;
+      font-family: "Georgia", "Times New Roman", "PingFang TC", serif;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::before {
+      background-image:
+        radial-gradient(circle, rgba(255,255,255,0.18) 0 1px, transparent 1.6px),
+        radial-gradient(circle, rgba(255,255,255,0.08) 0 1px, transparent 1.8px);
+      background-size: 84px 84px, 132px 132px;
+      background-position: 0 0, 32px 28px;
+      opacity: 0.15;
+    }
+
+    body::after {
+      background:
+        linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.08) 44%, rgba(0,0,0,0.22) 100%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.01) 0 2px, transparent 2px 16px);
+      mix-blend-mode: soft-light;
+      opacity: 0.5;
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      width: min(100%, 430px);
+      margin: 0 auto;
+      padding: max(10px, env(safe-area-inset-top)) 10px max(12px, env(safe-area-inset-bottom));
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 2px 2px 0;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .brand-title {
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      color: #f7ebd4;
+      text-shadow: 0 0 16px rgba(255, 244, 220, 0.08);
+    }
+
+    .brand-sub {
+      font-size: 10px;
+      color: rgba(247, 235, 212, 0.72);
+      letter-spacing: 1.2px;
+    }
+
+    .top-pills {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 6px;
+      max-width: 168px;
+    }
+
+    .pill {
+      padding: 5px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(26, 21, 18, 0.64);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+      color: rgba(247, 235, 212, 0.7);
+      font-size: 10px;
+      line-height: 1;
+    }
+
+    .pill b {
+      color: #fff1d8;
+      margin-left: 4px;
+    }
+
+    .battle-shell {
+      position: relative;
+      overflow: hidden;
+      border-radius: 28px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background:
+        radial-gradient(circle at 50% 6%, rgba(244, 231, 195, 0.08) 0%, rgba(0,0,0,0) 24%),
+        linear-gradient(180deg, #1d1712 0%, #15110e 100%);
+      box-shadow: var(--shadow);
+    }
+
+    .battle-shell::before {
+      content: "";
+      position: absolute;
+      inset: 6px;
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,0.04);
+      pointer-events: none;
+    }
+
+    .battle-stage {
+      position: relative;
+      min-height: 562px;
+      padding: 12px 10px 12px;
+      overflow: hidden;
+    }
+
+    .battle-stage::before {
+      content: "";
+      position: absolute;
+      left: -8%;
+      right: -8%;
+      bottom: 88px;
+      height: 134px;
+      border-radius: 50%;
+      background: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0.48) 0%, rgba(0,0,0,0) 72%);
+      filter: blur(8px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .battle-head {
+      position: relative;
+      z-index: 4;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      padding: 0 4px;
+    }
+
+    .stage-label {
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: #efe1bf;
+      text-transform: uppercase;
+    }
+
+    .threat-tag {
+      font-size: 10px;
+      color: rgba(247, 235, 212, 0.65);
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(12, 10, 9, 0.34);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .backdrop {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .moon {
+      position: absolute;
+      top: 46px;
+      left: 50%;
+      width: 166px;
+      height: 166px;
+      transform: translateX(-50%);
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 50% 50%, var(--moon) 0%, rgba(244, 231, 195, 0.74) 26%, rgba(244, 231, 195, 0.22) 46%, rgba(0,0,0,0) 72%);
+      opacity: 0.92;
+      filter: blur(0.5px);
+    }
+
+    .moon::after {
+      content: "";
+      position: absolute;
+      inset: 28px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 30%, rgba(94, 74, 44, 0.16) 0 8px, rgba(0,0,0,0) 10px);
+      opacity: 0.38;
+    }
+
+    .tree,
+    .tree.small,
+    .tree.right,
+    .mist,
+    .firefly,
+    .ridge,
+    .ground {
+      position: absolute;
+      pointer-events: none;
+    }
+
+    .tree {
+      left: -26px;
+      bottom: 172px;
+      width: 146px;
+      height: 286px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(7,5,4,0.94) 26%, rgba(7,5,4,1) 100%);
+      clip-path: polygon(44% 100%, 48% 46%, 36% 26%, 42% 20%, 32% 0, 48% 14%, 58% 6%, 54% 22%, 72% 18%, 60% 34%, 84% 38%, 62% 46%, 72% 58%, 54% 58%, 60% 76%, 48% 68%, 50% 100%);
+      opacity: 0.94;
+    }
+
+    .tree.right {
+      left: auto;
+      right: -24px;
+      bottom: 184px;
+      width: 132px;
+      height: 258px;
+      transform: scaleX(-1) rotate(-4deg);
+      opacity: 0.82;
+    }
+
+    .tree.small {
+      left: 50px;
+      bottom: 196px;
+      width: 82px;
+      height: 182px;
+      opacity: 0.56;
+      transform: scale(0.8);
+    }
+
+    .mist {
+      left: -6%;
+      right: -6%;
+      bottom: 210px;
+      height: 120px;
+      background:
+        radial-gradient(circle at 20% 50%, rgba(217, 229, 210, 0.08) 0%, rgba(0,0,0,0) 30%),
+        radial-gradient(circle at 70% 40%, rgba(217, 229, 210, 0.07) 0%, rgba(0,0,0,0) 34%),
+        radial-gradient(circle at 50% 50%, rgba(217, 229, 210, 0.05) 0%, rgba(0,0,0,0) 42%);
+      filter: blur(12px);
+      opacity: 0.9;
+    }
+
+    .firefly {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #fff6cd;
+      box-shadow: 0 0 10px rgba(255, 246, 205, 0.5);
+      opacity: 0.72;
+      animation: flicker 3s ease-in-out infinite;
+    }
+
+    .firefly.f1 { left: 18%; top: 112px; animation-delay: 0s; }
+    .firefly.f2 { right: 22%; top: 164px; animation-delay: 1s; }
+    .firefly.f3 { left: 62%; top: 96px; width: 4px; height: 4px; animation-delay: 2s; }
+
+    @keyframes flicker {
+      0%, 100% { opacity: 0.22; transform: translateY(0); }
+      50% { opacity: 0.82; transform: translateY(-4px); }
+    }
+
+    .ridge {
+      left: -10%;
+      right: -10%;
+      top: 166px;
+      height: 154px;
+      background:
+        linear-gradient(180deg, rgba(0,0,0,0.08) 0%, rgba(14, 11, 9, 0.82) 36%, rgba(8, 6, 5, 0.98) 100%);
+      clip-path: polygon(0 74%, 10% 66%, 20% 70%, 28% 58%, 40% 64%, 48% 54%, 58% 64%, 68% 56%, 79% 68%, 88% 62%, 100% 76%, 100% 100%, 0 100%);
+      opacity: 0.9;
+    }
+
+    .ground {
+      left: -6%;
+      right: -6%;
+      bottom: 52px;
+      height: 230px;
+      background:
+        radial-gradient(ellipse at 50% 18%, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0) 28%),
+        linear-gradient(180deg, #30271f 0%, #211b16 38%, #16110e 100%);
+      border-top: 2px solid rgba(255, 245, 222, 0.08);
+      clip-path: ellipse(66% 58% at 50% 58%);
+      filter: drop-shadow(0 -10px 18px rgba(0,0,0,0.24));
+    }
+
+    .ground::before {
+      content: "";
+      position: absolute;
+      inset: 18px 24px 40px;
+      border-radius: 50%;
+      background:
+        repeating-radial-gradient(circle at 50% 50%, rgba(255,255,255,0.035) 0 2px, rgba(0,0,0,0) 2px 14px),
+        repeating-linear-gradient(115deg, rgba(255,255,255,0.03) 0 1px, rgba(0,0,0,0) 1px 18px);
+      opacity: 0.16;
+      transform: rotate(-7deg);
+    }
+
+    .hud-row {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      top: 44px;
+      z-index: 4;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 6px;
+      align-items: start;
+    }
+
+    .hud-card,
+    .turn-badge,
+    .hint-banner {
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(18, 14, 12, 0.56);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+      backdrop-filter: blur(8px);
+    }
+
+    .hud-card {
+      padding: 8px 10px;
+    }
+
+    .hud-label {
+      font-size: 9px;
+      letter-spacing: 1.5px;
+      color: rgba(247, 235, 212, 0.58);
+    }
+
+    .hero-hp-value {
+      margin-top: 3px;
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+      font-size: 22px;
+      font-weight: 900;
+      color: #ffe5d9;
+      line-height: 1;
+    }
+
+    .hero-hp-value small {
+      font-size: 11px;
+      color: rgba(247, 235, 212, 0.56);
+    }
+
+    .mana-card {
+      text-align: right;
+    }
+
+    .mana-pool {
+      margin-top: 4px;
+      display: flex;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 4px;
+      min-height: 20px;
+    }
+
+    .crystal {
+      width: 18px;
+      height: 20px;
+      clip-path: polygon(50% 0%, 100% 38%, 88% 100%, 12% 100%, 0% 38%);
+      background: linear-gradient(180deg, #d7f1ff 0%, #83c3ff 56%, #4c74ff 100%);
+      box-shadow: 0 0 10px rgba(124, 174, 255, 0.28), inset 0 0 4px rgba(255,255,255,0.38);
+      transition: transform 180ms ease;
+    }
+
+    .crystal.empty {
+      background: linear-gradient(180deg, rgba(119,124,144,0.32) 0%, rgba(58,60,72,0.66) 100%);
+      box-shadow: inset 0 0 6px rgba(0,0,0,0.5);
+      opacity: 0.45;
+    }
+
+    .crystal.pulse { animation: crystalPulse 320ms ease; }
+
+    @keyframes crystalPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+    }
+
+    .turn-badge {
+      align-self: center;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #f8ecd6;
+      font-size: 11px;
+      letter-spacing: 1.4px;
+      white-space: nowrap;
+    }
+
+    .enemy-zone {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 172px;
+      z-index: 3;
+      min-height: 144px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 12px;
+      padding: 0 10px;
+    }
+
+    .ally-zone {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 92px;
+      z-index: 3;
+      min-height: 220px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 10px;
+      padding: 0 8px;
+      transition: filter 180ms ease;
+    }
+
+    .ally-zone.drop-ready {
+      filter: brightness(1.04);
+    }
+
+    .actor {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      cursor: pointer;
+      transition: transform 180ms ease, filter 180ms ease;
+    }
+
+    .actor.drop-ready {
+      transform: translateY(-6px) scale(1.02);
+      filter: drop-shadow(0 0 12px rgba(244, 231, 195, 0.18));
+    }
+
+    .ground-ring {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 12px;
+      width: 74%;
+      height: 24px;
+      border-radius: 50%;
+      background: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0.58) 0%, rgba(0,0,0,0) 74%);
+      z-index: 0;
+      transition: all 180ms ease;
+    }
+
+    .actor.drop-ready .ground-ring {
+      background: radial-gradient(ellipse at 50% 50%, rgba(245, 224, 175, 0.3) 0%, rgba(0,0,0,0) 72%);
+      transform: translateX(-50%) scale(1.08);
+    }
+
+    .enemy.actor {
+      width: 122px;
+      height: 154px;
+    }
+
+    .hero.actor {
+      width: 156px;
+      height: 224px;
+    }
+
+    .summon.actor {
+      width: 88px;
+      height: 136px;
+    }
+
+    .figure {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 1;
+    }
+
+    .figure span {
+      position: absolute;
+      display: block;
+      background: #060504;
+      box-shadow: none;
+    }
+
+    .figure .aura {
+      background: radial-gradient(circle, rgba(255,255,255,0.14) 0%, rgba(0,0,0,0) 68%);
+      filter: blur(10px);
+      opacity: 0.5;
+      z-index: -1;
+    }
+
+    .figure .head,
+    .figure .body,
+    .figure .cape,
+    .figure .arm,
+    .figure .weapon,
+    .figure .extra,
+    .figure .hat,
+    .figure .horn,
+    .figure .tail,
+    .figure .jaw,
+    .figure .muzzle,
+    .figure .ear,
+    .figure .eye {
+      background: #060504;
+    }
+
+    .hero-figure .aura {
+      width: 160px;
+      height: 160px;
+      bottom: 52px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .hero-figure .head {
+      width: 34px;
+      height: 38px;
+      border-radius: 46% 46% 48% 48%;
+      left: 50%;
+      top: 44px;
+      transform: translateX(-50%);
+    }
+
+    .hero-figure .hat {
+      width: 64px;
+      height: 20px;
+      border-radius: 50% 50% 38% 38%;
+      left: 50%;
+      top: 30px;
+      transform: translateX(-50%);
+    }
+
+    .hero-figure .hat::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: -22px;
+      width: 30px;
+      height: 32px;
+      transform: translateX(-50%);
+      border-radius: 44% 44% 18% 18%;
+      background: #060504;
+    }
+
+    .hero-figure .body {
+      width: 56px;
+      height: 94px;
+      left: 50%;
+      top: 74px;
+      transform: translateX(-50%);
+      border-radius: 30% 30% 16% 16%;
+    }
+
+    .hero-figure .cape {
+      width: 104px;
+      height: 118px;
+      left: 50%;
+      top: 70px;
+      transform: translateX(-50%);
+      clip-path: polygon(48% 0%, 66% 8%, 86% 28%, 100% 100%, 0 100%, 12% 32%, 32% 8%);
+      border-radius: 0 0 30% 30%;
+    }
+
+    .hero-figure .arm {
+      width: 14px;
+      height: 72px;
+      left: calc(50% + 18px);
+      top: 88px;
+      transform: rotate(18deg);
+      border-radius: 20px;
+    }
+
+    .hero-figure .weapon {
+      width: 10px;
+      height: 118px;
+      left: calc(50% + 46px);
+      top: 72px;
+      transform: rotate(8deg);
+      border-radius: 8px;
+    }
+
+    .hero-figure .weapon::after {
+      content: "";
+      position: absolute;
+      left: -12px;
+      top: -4px;
+      width: 34px;
+      height: 26px;
+      border-radius: 46% 54% 48% 52%;
+      background: #060504;
+      transform: rotate(18deg);
+    }
+
+    .hero-figure .extra {
+      width: 52px;
+      height: 18px;
+      left: 50%;
+      bottom: 30px;
+      transform: translateX(-50%);
+      clip-path: polygon(0 40%, 20% 0, 80% 0, 100% 40%, 74% 100%, 26% 100%);
+    }
+
+    .enemy-figure .aura {
+      width: 120px;
+      height: 100px;
+      left: 50%;
+      top: 30px;
+      transform: translateX(-50%);
+      opacity: 0.3;
+    }
+
+    .enemy-figure .head {
+      width: 38px;
+      height: 42px;
+      left: 50%;
+      top: 40px;
+      transform: translateX(-50%);
+      border-radius: 42% 42% 48% 48%;
+    }
+
+    .enemy-figure .body {
+      width: 60px;
+      height: 74px;
+      left: 50%;
+      top: 76px;
+      transform: translateX(-50%);
+      border-radius: 34% 34% 12% 12%;
+    }
+
+    .enemy-figure .cape {
+      width: 102px;
+      height: 88px;
+      left: 50%;
+      top: 74px;
+      transform: translateX(-50%);
+      clip-path: polygon(46% 0%, 70% 12%, 100% 100%, 0 100%, 30% 12%);
+    }
+
+    .enemy-figure .horn.h1 {
+      width: 18px;
+      height: 48px;
+      left: calc(50% - 26px);
+      top: 20px;
+      transform: rotate(-34deg);
+      border-radius: 18px;
+    }
+
+    .enemy-figure .horn.h2 {
+      width: 18px;
+      height: 48px;
+      left: calc(50% + 8px);
+      top: 20px;
+      transform: rotate(34deg);
+      border-radius: 18px;
+    }
+
+    .enemy-figure .weapon {
+      width: 12px;
+      height: 84px;
+      left: calc(50% + 34px);
+      top: 70px;
+      transform: rotate(32deg);
+      border-radius: 10px;
+    }
+
+    .enemy-figure .weapon::after {
+      content: "";
+      position: absolute;
+      left: -8px;
+      top: -2px;
+      width: 28px;
+      height: 12px;
+      border-radius: 12px;
+      background: #060504;
+    }
+
+    .summon.imp .figure .aura,
+    .summon.hound .figure .aura {
+      width: 90px;
+      height: 62px;
+      left: 50%;
+      top: 44px;
+      transform: translateX(-50%);
+      opacity: 0.22;
+    }
+
+    .summon.imp .figure .head {
+      width: 24px;
+      height: 24px;
+      left: 50%;
+      top: 54px;
+      transform: translateX(-50%);
+      border-radius: 48%;
+    }
+
+    .summon.imp .figure .body {
+      width: 34px;
+      height: 42px;
+      left: 50%;
+      top: 74px;
+      transform: translateX(-50%);
+      border-radius: 40% 40% 18% 18%;
+    }
+
+    .summon.imp .figure .horn.h1 {
+      width: 10px;
+      height: 24px;
+      left: calc(50% - 14px);
+      top: 42px;
+      transform: rotate(-34deg);
+      border-radius: 10px;
+    }
+
+    .summon.imp .figure .horn.h2 {
+      width: 10px;
+      height: 24px;
+      left: calc(50% + 4px);
+      top: 42px;
+      transform: rotate(34deg);
+      border-radius: 10px;
+    }
+
+    .summon.imp .figure .tail {
+      width: 12px;
+      height: 36px;
+      left: calc(50% + 12px);
+      top: 88px;
+      transform: rotate(26deg);
+      border-radius: 12px;
+    }
+
+    .summon.hound .figure .head {
+      width: 28px;
+      height: 22px;
+      left: calc(50% - 8px);
+      top: 62px;
+      border-radius: 48% 48% 42% 42%;
+      transform: rotate(-8deg);
+    }
+
+    .summon.hound .figure .muzzle {
+      width: 20px;
+      height: 14px;
+      left: calc(50% + 8px);
+      top: 68px;
+      transform: rotate(8deg);
+      border-radius: 42% 58% 48% 48%;
+    }
+
+    .summon.hound .figure .body {
+      width: 52px;
+      height: 28px;
+      left: 50%;
+      top: 84px;
+      transform: translateX(-50%);
+      border-radius: 46% 42% 24% 24%;
+    }
+
+    .summon.hound .figure .tail {
+      width: 10px;
+      height: 28px;
+      left: calc(50% - 26px);
+      top: 76px;
+      transform: rotate(-34deg);
+      border-radius: 10px;
+    }
+
+    .summon.hound .figure .ear {
+      width: 10px;
+      height: 16px;
+      left: calc(50% - 6px);
+      top: 52px;
+      transform: rotate(-20deg);
+      border-radius: 10px;
+    }
+
+    .summon.hound .figure .arm {
+      width: 8px;
+      height: 24px;
+      left: calc(50% - 10px);
+      top: 100px;
+      border-radius: 8px;
+      box-shadow: 24px 0 0 #060504;
+      background: #060504;
+    }
+
+    .meta-plate {
+      position: relative;
+      z-index: 2;
+      margin-top: -6px;
+      padding: 8px 10px 10px;
+      min-width: 76px;
+      border-radius: 18px;
+      background: rgba(25, 20, 17, 0.66);
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+      text-align: center;
+      backdrop-filter: blur(6px);
+    }
+
+    .hero .meta-plate {
+      min-width: 118px;
+      margin-top: -2px;
+    }
+
+    .name-line {
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      color: #f7eed8;
+    }
+
+    .sub-line {
+      margin-top: 2px;
+      font-size: 9px;
+      color: rgba(247, 235, 212, 0.58);
+      letter-spacing: 1px;
+    }
+
+    .hp-line {
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      font-size: 10px;
+      color: rgba(255, 233, 224, 0.92);
+    }
+
+    .hp-line b {
+      font-size: 14px;
+      color: #ffe0d4;
+    }
+
+    .stat-row {
+      margin-top: 6px;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .stat-chip {
+      padding: 3px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(8, 7, 6, 0.42);
+      font-size: 9px;
+      font-weight: 900;
+      line-height: 1;
+      color: #f4ead5;
+    }
+
+    .stat-chip.atk { color: #f5d58d; }
+    .stat-chip.blk { color: #b7deff; }
+
+    .enemy-intent {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 3;
+      min-width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 8px;
+      background: rgba(22, 17, 14, 0.84);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: #fff1d8;
+      font-size: 11px;
+      font-weight: 900;
+      box-shadow: 0 0 12px rgba(0,0,0,0.24);
+    }
+
+    .enemy .tags {
+      margin-top: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 4px;
+      min-height: 16px;
+    }
+
+    .tag-bit {
+      padding: 2px 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(7, 6, 5, 0.42);
+      font-size: 9px;
+      color: #f5d0ff;
+      line-height: 1;
+    }
+
+    .hint-banner {
+      position: absolute;
+      left: 50%;
+      bottom: 32px;
+      transform: translateX(-50%);
+      z-index: 4;
+      max-width: calc(100% - 24px);
+      padding: 9px 14px;
+      color: rgba(247, 235, 212, 0.76);
+      font-size: 10px;
+      text-align: center;
+      letter-spacing: 1.4px;
+    }
+
+    .hint-banner.hot {
+      color: #fff3d9;
+      box-shadow: 0 0 22px rgba(244, 231, 195, 0.08), inset 0 0 0 1px rgba(255,255,255,0.02);
+    }
+
+    .hand-shell,
+    .log-shell {
+      position: relative;
+      overflow: hidden;
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(30, 24, 20, 0.84);
+      box-shadow: var(--shadow);
+    }
+
+    .hand-shell::before,
+    .log-shell::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0));
+      pointer-events: none;
+    }
+
+    .hand-head,
+    .log-head {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px 8px;
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: rgba(247, 235, 212, 0.68);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .hand-container {
+      position: relative;
+      z-index: 2;
+      min-height: 214px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 8px 0 6px;
+    }
+
+    .hand-fan {
+      position: relative;
+      width: 100%;
+      max-width: 420px;
+      height: 194px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+    }
+
+    .card {
+      position: absolute;
+      bottom: 0;
+      width: 96px;
+      height: 148px;
+      border-radius: 16px;
+      cursor: pointer;
+      touch-action: none;
+      transform-origin: bottom center;
+      transition: transform 220ms cubic-bezier(0.22, 1.15, 0.36, 1), filter 180ms ease;
+    }
+
+    .card:hover,
+    .card.lifted {
+      transform: translateY(-24px) scale(1.08) rotate(0deg) !important;
+      z-index: 100 !important;
+      filter: drop-shadow(0 16px 22px rgba(0,0,0,0.44));
+    }
+
+    .card.dragging { opacity: 0; }
+
+    .card.disabled {
+      filter: grayscale(0.62) brightness(0.7);
+    }
+
+    .card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      border-radius: 16px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      border: 2px solid #4f402d;
+      background:
+        linear-gradient(180deg, rgba(238, 222, 190, 0.98) 0%, rgba(207, 183, 143, 0.98) 100%);
+      color: #241d16;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.16), 0 14px 22px rgba(0,0,0,0.28);
+    }
+
+    .card-inner::before {
+      content: "";
+      position: absolute;
+      inset: 4px;
+      border-radius: 12px;
+      border: 1px solid rgba(53, 39, 27, 0.16);
+      pointer-events: none;
+    }
+
+    .card.type-hero .card-inner {
+      background: linear-gradient(180deg, #e7dcc8 0%, #ccbfa1 100%);
+    }
+
+    .card.type-summon .card-inner {
+      background: linear-gradient(180deg, #e2d4b3 0%, #c3ae83 100%);
+    }
+
+    .card.type-spell .card-inner {
+      background: linear-gradient(180deg, #e7d1bd 0%, #cbad8f 100%);
+    }
+
+    .card.type-link .card-inner {
+      background: linear-gradient(180deg, #d9d0b6 0%, #b4a682 100%);
+    }
+
+    .cost-gem {
+      position: absolute;
+      left: 8px;
+      top: 8px;
+      z-index: 3;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #231d16;
+      color: #f4e6c6;
+      border: 2px solid rgba(255,255,255,0.08);
+      font-size: 14px;
+      font-weight: 900;
+      box-shadow: 0 3px 0 rgba(0,0,0,0.2);
+    }
+
+    .card-link-mark {
+      position: absolute;
+      right: 8px;
+      top: 8px;
+      z-index: 3;
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: rgba(29, 45, 26, 0.84);
+      color: #d2ffd8;
+      border: 1px solid rgba(255,255,255,0.08);
+      font-size: 9px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .card-art {
+      position: relative;
+      margin-top: 26px;
+      height: 58px;
+      border-radius: 12px;
+      border: 2px solid rgba(58, 45, 31, 0.18);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 34px;
+      background:
+        radial-gradient(circle at 50% 30%, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.04) 24%, rgba(0,0,0,0) 60%),
+        linear-gradient(180deg, rgba(60, 48, 35, 0.08), rgba(0,0,0,0.04));
+    }
+
+    .card-name {
+      margin-top: 7px;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      min-height: 24px;
+    }
+
+    .card-desc {
+      margin-top: 6px;
+      flex: 1;
+      text-align: center;
+      font-size: 9px;
+      line-height: 1.38;
+      color: #3f3224;
+      padding: 0 2px;
+    }
+
+    .drag-ghost {
+      position: fixed;
+      z-index: 999;
+      width: 96px;
+      height: 148px;
+      pointer-events: none;
+      transform: translate(-50%, -50%) scale(1.08);
+      filter: drop-shadow(0 18px 22px rgba(0,0,0,0.4));
+    }
+
+    .control-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .btn {
+      appearance: none;
+      border: 2px solid #53402f;
+      border-radius: 18px;
+      padding: 12px 10px;
+      background: linear-gradient(180deg, #dbc39b 0%, #c4a678 100%);
+      color: #241d16;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 1.6px;
+      box-shadow: 0 8px 14px rgba(0,0,0,0.26), inset 0 0 0 1px rgba(255,255,255,0.16);
+    }
+
+    .btn.primary {
+      background: linear-gradient(180deg, #f0d79f 0%, #d5b06d 100%);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .log {
+      position: relative;
+      z-index: 2;
+      max-height: 104px;
+      overflow: auto;
+      padding: 8px 12px 10px;
+      font-size: 10px;
+      line-height: 1.6;
+      color: #e8dcc4;
+    }
+
+    .log::-webkit-scrollbar { width: 4px; }
+    .log::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.18);
+      border-radius: 999px;
+    }
+
+    .log-hit { color: #ffb7a2; }
+    .log-summon { color: #e8ddb2; }
+    .log-buff { color: #d9c9ff; }
+    .log-inject { color: #c6f3c0; }
+
+    .float-num {
+      position: fixed;
+      z-index: 80;
+      font-weight: 900;
+      font-size: 30px;
+      pointer-events: none;
+      text-shadow: 0 3px 8px rgba(0,0,0,0.8);
+      animation: floatNum 950ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    .float-num.dmg { color: var(--danger); }
+    .float-num.heal { color: var(--good); }
+    .float-num.buff { color: var(--buff); }
+    .float-num.link { color: #d9f4b7; }
+
+    @keyframes floatNum {
+      0% { transform: translate(-50%, 0) scale(0.4); opacity: 0; }
+      18% { transform: translate(-50%, -10px) scale(1.2); opacity: 1; }
+      42% { transform: translate(-50%, -18px) scale(1); opacity: 1; }
+      100% { transform: translate(-50%, -72px) scale(0.9); opacity: 0; }
+    }
+
+    .strike-flash {
+      position: fixed;
+      z-index: 70;
+      pointer-events: none;
+      animation: strikeFlash 280ms ease forwards;
+    }
+
+    @keyframes strikeFlash {
+      0% { opacity: 0; transform: scale(0.4); }
+      22% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(1.42); }
+    }
+
+    .screen-flash {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      pointer-events: none;
+      background: radial-gradient(circle at 50% 50%, rgba(255, 244, 220, 0.12) 0%, rgba(0,0,0,0) 52%);
+      animation: screenFlash 240ms ease forwards;
+    }
+
+    @keyframes screenFlash {
+      0% { opacity: 0; }
+      30% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    .unit-hit {
+      animation: actorHit 280ms ease;
+    }
+
+    @keyframes actorHit {
+      0%, 100% { transform: translate3d(0,0,0); }
+      30% { transform: translate3d(-6px, 2px, 0); }
+      60% { transform: translate3d(6px, -2px, 0); }
+    }
+
+    .just-acted {
+      animation: actedPulse 300ms ease;
+    }
+
+    @keyframes actedPulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.04); filter: brightness(1.08); }
+      100% { transform: scale(1); }
+    }
+
+    .enter-anim {
+      animation: summonEnter 360ms ease;
+    }
+
+    @keyframes summonEnter {
+      0% { opacity: 0; transform: translateY(24px) scale(0.88); }
+      70% { opacity: 1; transform: translateY(-4px) scale(1.02); }
+      100% { transform: translateY(0) scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-title">幽塔 · 术士</div>
+        <div class="brand-sub">v0.4 · 饥荒式空间构图 / 手机体验版</div>
+      </div>
+      <div class="top-pills">
+        <div class="pill">牌库<b id="deckCount">0</b></div>
+        <div class="pill">弃牌<b id="discardCount">0</b></div>
+        <div class="pill">手牌<b id="handCount">0</b></div>
+      </div>
+    </div>
+
+    <section class="battle-shell">
+      <div class="battle-stage">
+        <div class="backdrop">
+          <div class="moon"></div>
+          <div class="tree"></div>
+          <div class="tree right"></div>
+          <div class="tree small"></div>
+          <div class="mist"></div>
+          <div class="firefly f1"></div>
+          <div class="firefly f2"></div>
+          <div class="firefly f3"></div>
+          <div class="ridge"></div>
+          <div class="ground"></div>
+        </div>
+
+        <div class="battle-head">
+          <div class="stage-label">黑林前庭 · 月下试炼</div>
+          <div class="threat-tag">风格化空间版</div>
+        </div>
+
+        <div class="hud-row">
+          <div class="hud-card">
+            <div class="hud-label">术士生命</div>
+            <div class="hero-hp-value"><span id="selfHpVal">50</span><small>/ <span id="selfMaxVal">50</span></small></div>
+          </div>
+          <div class="turn-badge" id="turnBadge">第 1 回合</div>
+          <div class="hud-card mana-card">
+            <div class="hud-label">能量</div>
+            <div class="mana-pool" id="manaPool"></div>
+          </div>
+        </div>
+
+        <div class="enemy-zone" id="enemyZone"></div>
+        <div class="ally-zone" id="allyZone"></div>
+        <div class="hint-banner" id="hintBar">拖牌到目标释放</div>
+      </div>
+    </section>
+
+    <section class="hand-shell">
+      <div class="hand-head">
+        <span>手牌</span>
+        <span>按住拖到敌人 / 我方</span>
+      </div>
+      <div class="hand-container">
+        <div class="hand-fan" id="handFan"></div>
+      </div>
+    </section>
+
+    <div class="control-row">
+      <button class="btn" id="restartBtn">重开本关</button>
+      <button class="btn primary" id="endTurnBtn">结束回合</button>
+    </div>
+
+    <section class="log-shell">
+      <div class="log-head">
+        <span>战斗记录</span>
+        <span>v0.4</span>
+      </div>
+      <div class="log" id="log"></div>
+    </section>
+  </div>
+
+  <script>
+    function makeHero() {
+      return {
+        uid: "hero",
+        isHero: true,
+        name: "术士",
+        face: "✦",
+        hp: 50,
+        maxHp: 50,
+        atk: 2,
+        block: 0,
+        passive: "阴影汲取"
+      };
+    }
+
+    const SUMMONS = {
+      imp:   { name: "小鬼", face: "✶", hp: 5, atk: 2, linkCards: ["lk_imp_claw", "lk_imp_sac", "lk_imp_boom"] },
+      hound: { name: "猎犬", face: "✹", hp: 9, atk: 4, linkCards: ["lk_hound_bite", "lk_hound_guard", "lk_hound_rage"] }
+    };
+
+    const CARDS = {
+      ho_cast:    { id: "ho_cast",    type: "hero",   name: "施法",     cost: 1, target: "enemy", action: "hero_cast",       art: "✦", text: "术士施放法术，造成 5 伤害" },
+      ho_curse:   { id: "ho_curse",   type: "hero",   name: "蚀骨诅咒", cost: 1, target: "enemy", action: "hero_curse",      art: "☾", text: "对敌人 +3 蚀骨（回合末扣血）" },
+      ho_drain:   { id: "ho_drain",   type: "hero",   name: "魂之吸取", cost: 1, target: "enemy", action: "hero_drain",      art: "✧", text: "造成 4 伤害，术士回 3 HP" },
+      ho_guard:   { id: "ho_guard",   type: "hero",   name: "暗盾",     cost: 1, target: "hero",  action: "hero_guard",      art: "⬡", text: "术士 +5 护甲" },
+
+      s_imp:      { id: "s_imp",      type: "summon", name: "召唤小鬼", cost: 1, target: "any_ally", action: "summon_imp",   art: "✶", text: "召唤小鬼(5/2)，注入 3 张小鬼联动卡" },
+      s_hound:    { id: "s_hound",    type: "summon", name: "地狱猎犬", cost: 2, target: "any_ally", action: "summon_hound", art: "✹", text: "召唤猎犬(9/4)，注入 3 张猎犬联动卡" },
+
+      sp_bolt:    { id: "sp_bolt",    type: "spell",  name: "暗影箭",   cost: 1, target: "enemy", action: "spell_bolt",     art: "◈", text: "造成 6 伤害" },
+      sp_blast:   { id: "sp_blast",   type: "spell",  name: "腐朽爆发", cost: 2, target: "enemy", action: "spell_blast",    art: "◆", text: "造成 10 伤害" },
+
+      lk_imp_claw:    { id: "lk_imp_claw",    type: "link", linkTo: "imp",   name: "小鬼挥爪", cost: 1, target: "enemy", action: "link_imp_attack",   art: "✢", text: "让小鬼攻击一次", isLink: true },
+      lk_imp_sac:     { id: "lk_imp_sac",     type: "link", linkTo: "imp",   name: "小鬼献祭", cost: 0, target: "none",  action: "link_imp_sac",      art: "🩸", text: "消耗小鬼，抽 2 张", isLink: true },
+      lk_imp_boom:    { id: "lk_imp_boom",    type: "link", linkTo: "imp",   name: "小鬼爆破", cost: 1, target: "enemy", action: "link_imp_boom",     art: "✺", text: "消耗小鬼，造成 小鬼HP 的伤害", isLink: true },
+      lk_hound_bite:  { id: "lk_hound_bite",  type: "link", linkTo: "hound", name: "猎犬撕咬", cost: 1, target: "enemy", action: "link_hound_attack", art: "✢", text: "让猎犬攻击一次", isLink: true },
+      lk_hound_guard: { id: "lk_hound_guard", type: "link", linkTo: "hound", name: "猎犬守卫", cost: 1, target: "hero",  action: "link_hound_guard",  art: "⬢", text: "猎犬+3甲，术士+2甲", isLink: true },
+      lk_hound_rage:  { id: "lk_hound_rage",  type: "link", linkTo: "hound", name: "激怒猎犬", cost: 1, target: "enemy", action: "link_hound_rage",   art: "✸", text: "猎犬+3ATK并立即攻击", isLink: true }
+    };
+
+    const STARTER_DECK_IDS = [
+      "ho_cast", "ho_cast",
+      "ho_curse", "ho_drain", "ho_guard",
+      "s_imp", "s_imp",
+      "s_hound",
+      "sp_bolt", "sp_bolt",
+      "sp_blast"
+    ];
+
+    function makeEnemy() {
+      return {
+        uid: "e_" + Math.random().toString(36).slice(2),
+        name: "断罪骑士",
+        face: "✠",
+        hp: 32,
+        maxHp: 32,
+        block: 0,
+        curse: 0,
+        intent: null
+      };
+    }
+
+    let state;
+
+    const drag = {
+      active: false,
+      uid: null,
+      pointerId: null,
+      cardEl: null,
+      ghostEl: null,
+      overTarget: null,
+      overKey: null,
+      startX: 0,
+      startY: 0,
+      moved: false
+    };
+
+    function newGame() {
+      state = {
+        hero: makeHero(),
+        summons: [],
+        enemies: [makeEnemy()],
+        deck: [],
+        discard: [],
+        hand: [],
+        energy: 2,
+        maxEnergy: 2,
+        handSize: 4,
+        turn: 1,
+        ended: false
+      };
+
+      state.deck = STARTER_DECK_IDS.map(id => ({ ...CARDS[id], uid: uid() }));
+      shuffle(state.deck);
+      state.enemies.forEach(pickEnemyIntent);
+      draw(state.handSize);
+      logClear();
+      log("战斗开始 · 月下黑林中现身断罪骑士", "summon");
+      render();
+    }
+
+    function uid() {
+      return Math.random().toString(36).slice(2, 9);
+    }
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function draw(n) {
+      for (let i = 0; i < n; i++) {
+        if (state.deck.length === 0) {
+          state.deck = shuffle(state.discard);
+          state.discard = [];
+        }
+        if (state.deck.length === 0) break;
+        state.hand.push(state.deck.pop());
+      }
+    }
+
+    function pickEnemyIntent(e) {
+      const r = Math.random();
+      if (r < 0.6) e.intent = { type: "attack", value: 7, icon: "⚔7" };
+      else if (r < 0.85) e.intent = { type: "guard", value: 6, icon: "🛡6" };
+      else e.intent = { type: "aoe", value: 3, icon: "✺3" };
+    }
+
+    function injectLinkCards(summonTpl) {
+      const tpl = SUMMONS[summonTpl];
+      tpl.linkCards.forEach(cid => state.deck.push({ ...CARDS[cid], uid: uid() }));
+      shuffle(state.deck);
+      log(`注入 ${tpl.name} 联动卡 x${tpl.linkCards.length}`, "inject");
+    }
+
+    function purgeLinkCards(summonTpl) {
+      const filter = c => !(c.isLink && c.linkTo === summonTpl);
+      state.deck = state.deck.filter(filter);
+      state.discard = state.discard.filter(filter);
+      state.hand = state.hand.filter(filter);
+      log(`清除 ${SUMMONS[summonTpl].name} 联动卡`, "inject");
+    }
+
+    function canPlay(c) {
+      if (!c || state.ended) return false;
+      if (c.cost > state.energy) return false;
+      if (c.isLink && !state.summons.some(s => s.tpl === c.linkTo)) return false;
+      if (c.type === "summon") return state.summons.length < 2;
+      if (c.target === "hero") return true;
+      if (c.target === "any_ally") return state.summons.length < 2 || state.summons.length > 0;
+      if (c.target === "summon") return state.summons.length > 0;
+      if (c.target === "enemy") return state.enemies.length > 0;
+      return true;
+    }
+
+    function tryPlay(cardUid, targetType, key) {
+      const idx = state.hand.findIndex(c => c.uid === cardUid);
+      if (idx < 0) return false;
+      const card = state.hand[idx];
+      if (!canPlay(card)) return false;
+
+      if (card.isLink && !state.summons.some(s => s.tpl === card.linkTo)) {
+        log(`${card.name} 失效：对应召唤物已离场`, "hit");
+        state.discard.push(card);
+        state.hand.splice(idx, 1);
+        state.energy -= card.cost;
+        pulseCrystals();
+        render();
+        return true;
+      }
+
+      const ok = execAction(card, targetType, key);
+      if (!ok) return false;
+
+      state.energy -= card.cost;
+      pulseCrystals();
+      state.discard.push(card);
+      state.hand.splice(idx, 1);
+
+      cleanupDead();
+      checkEnd();
+      render();
+      return true;
+    }
+
+    function execAction(card, targetType, key) {
+      switch (card.action) {
+        case "hero_cast": {
+          const e = findEnemyOrFirst(key, targetType);
+          if (!e) return false;
+          dealEnemyDmg(e, 5, getHeroEl());
+          flashUnit(state.hero.uid);
+          return true;
+        }
+        case "hero_curse": {
+          const e = findEnemyOrFirst(key, targetType);
+          if (!e) return false;
+          e.curse += 3;
+          floatOn(getEnemyEl(e.uid), "+3 蚀骨", "buff");
+          flashUnit(state.hero.uid);
+          log("诅咒缠上敌人", "buff");
+          return true;
+        }
+        case "hero_drain": {
+          const e = findEnemyOrFirst(key, targetType);
+          if (!e) return false;
+          dealEnemyDmg(e, 4, getHeroEl());
+          const heal = Math.min(3, state.hero.maxHp - state.hero.hp);
+          state.hero.hp += heal;
+          floatOn(getHeroEl(), `+${heal}`, "heal");
+          flashUnit(state.hero.uid);
+          return true;
+        }
+        case "hero_guard": {
+          state.hero.block += 5;
+          floatOn(getHeroEl(), "+5 护甲", "buff");
+          return true;
+        }
+
+        case "summon_imp": {
+          if (state.summons.length >= 2) return false;
+          const s = makeSummon("imp");
+          state.summons.push(s);
+          injectLinkCards("imp");
+          log(`召唤 ${s.name}`, "summon");
+          screenFlash();
+          return true;
+        }
+        case "summon_hound": {
+          if (state.summons.length >= 2) return false;
+          const s = makeSummon("hound");
+          state.summons.push(s);
+          injectLinkCards("hound");
+          log(`召唤 ${s.name}`, "summon");
+          screenFlash();
+          return true;
+        }
+
+        case "spell_bolt": {
+          const e = findEnemyOrFirst(key, targetType);
+          if (!e) return false;
+          dealEnemyDmg(e, 6, getHeroEl());
+          return true;
+        }
+        case "spell_blast": {
+          const e = findEnemyOrFirst(key, targetType);
+          if (!e) return false;
+          dealEnemyDmg(e, 10, getHeroEl());
+          return true;
+        }
+
+        case "link_imp_attack": {
+          const imp = state.summons.find(s => s.tpl === "imp");
+          if (!imp) return false;
+          const e = findEnemyOrFirst(key, targetType);
+          if (!e) return false;
+          dealEnemyDmg(e, imp.atk, getSummonEl(imp.uid));
+          flashUnit(imp.uid);
+          return true;
+        }
+        case "link_imp_sac": {
+          const imp = state.summons.find(s => s.tpl === "imp");
+          if (!imp) return false;
+          imp.hp = 0;
+          imp.dead = true;
+          draw(2);
+          floatOn(getSummonEl(imp.uid), "+2 抽牌", "link");
+          log("献祭小鬼，抽 2 张", "inject");
+          return true;
+        }
+        case "link_imp_boom": {
+          const imp = state.summons.find(s => s.tpl === "imp");
+          if (!imp) return false;
+          const e = findEnemyOrFirst(key, targetType);
+          if (!e) return false;
+          const dmg = imp.hp;
+          dealEnemyDmg(e, dmg, getSummonEl(imp.uid));
+          imp.hp = 0;
+          imp.dead = true;
+          log(`小鬼爆破，造成 ${dmg} 伤害`, "hit");
+          return true;
+        }
+
+        case "link_hound_attack": {
+          const h = state.summons.find(s => s.tpl === "hound");
+          if (!h) return false;
+          const e = findEnemyOrFirst(key, targetType);
+          if (!e) return false;
+          const dmg = h.atk + (h.buff || 0);
+          dealEnemyDmg(e, dmg, getSummonEl(h.uid));
+          flashUnit(h.uid);
+          return true;
+        }
+        case "link_hound_guard": {
+          const h = state.summons.find(s => s.tpl === "hound");
+          if (!h) return false;
+          h.block += 3;
+          state.hero.block += 2;
+          floatOn(getSummonEl(h.uid), "+3 甲", "buff");
+          floatOn(getHeroEl(), "+2 甲", "buff");
+          return true;
+        }
+        case "link_hound_rage": {
+          const h = state.summons.find(s => s.tpl === "hound");
+          if (!h) return false;
+          h.buff = (h.buff || 0) + 3;
+          floatOn(getSummonEl(h.uid), "+3 ATK", "buff");
+          const e = findEnemyOrFirst(key, targetType);
+          if (!e) return false;
+          const dmg = h.atk + h.buff;
+          dealEnemyDmg(e, dmg, getSummonEl(h.uid));
+          flashUnit(h.uid);
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function makeSummon(tplName) {
+      const tpl = SUMMONS[tplName];
+      return {
+        uid: "s_" + uid(),
+        tpl: tplName,
+        name: tpl.name,
+        face: tpl.face,
+        hp: tpl.hp,
+        maxHp: tpl.hp,
+        atk: tpl.atk,
+        block: 0,
+        buff: 0,
+        dead: false
+      };
+    }
+
+    function findEnemyOrFirst(key, targetType) {
+      if (targetType === "enemy" && key) {
+        const e = state.enemies.find(x => x.uid === key && x.hp > 0);
+        if (e) return e;
+      }
+      return state.enemies.find(e => e.hp > 0) || null;
+    }
+
+    function dealEnemyDmg(e, n, sourceEl) {
+      const el = getEnemyEl(e.uid);
+      if (sourceEl && el) flyLine(sourceEl, el);
+      const blocked = Math.min(e.block, n);
+      const dealt = Math.max(0, n - blocked);
+      e.block -= blocked;
+      e.hp = Math.max(0, e.hp - dealt);
+      floatOn(el, `-${dealt}`, "dmg");
+      shake(el);
+      screenFlash();
+      log(`造成 ${dealt} 伤害`, "hit");
+    }
+
+    function dealHeroDmg(n) {
+      const blocked = Math.min(state.hero.block, n);
+      const dealt = Math.max(0, n - blocked);
+      state.hero.block -= blocked;
+      state.hero.hp = Math.max(0, state.hero.hp - dealt);
+      floatOn(getHeroEl(), `-${dealt}`, "dmg");
+      shake(getHeroEl());
+    }
+
+    function dealSummonDmg(s, n) {
+      const blocked = Math.min(s.block, n);
+      const dealt = Math.max(0, n - blocked);
+      s.block -= blocked;
+      s.hp = Math.max(0, s.hp - dealt);
+      floatOn(getSummonEl(s.uid), `-${dealt}`, "dmg");
+      shake(getSummonEl(s.uid));
+      if (s.hp <= 0) s.dead = true;
+    }
+
+    function cleanupDead() {
+      const deadSummons = state.summons.filter(s => s.dead);
+      deadSummons.forEach(s => {
+        log(`${s.name} 陨落`, "hit");
+        purgeLinkCards(s.tpl);
+      });
+      state.summons = state.summons.filter(s => !s.dead);
+      state.enemies = state.enemies.filter(e => e.hp > 0);
+    }
+
+    function endTurn() {
+      if (state.ended) return;
+
+      state.discard.push(...state.hand);
+      state.hand = [];
+
+      state.enemies.forEach(e => {
+        if (e.hp <= 0) return;
+        const it = e.intent;
+        if (!it) return;
+
+        if (it.type === "attack") {
+          if (state.summons.length > 0) {
+            const t = state.summons[0];
+            dealSummonDmg(t, it.value);
+            log(`敌人攻击 ${t.name}`, "hit");
+          } else {
+            dealHeroDmg(it.value);
+            log("敌人攻击术士", "hit");
+          }
+        } else if (it.type === "guard") {
+          e.block += it.value;
+          log(`敌人获得 ${it.value} 护甲`);
+        } else if (it.type === "aoe") {
+          state.summons.forEach(s => dealSummonDmg(s, it.value));
+          dealHeroDmg(it.value);
+          log(`敌人横扫 ${it.value}`, "hit");
+        }
+
+        if (e.curse > 0 && e.hp > 0) {
+          const d = e.curse;
+          e.hp = Math.max(0, e.hp - d);
+          floatOn(getEnemyEl(e.uid), `蚀骨-${d}`, "buff");
+          log(`蚀骨扣 ${d}`, "buff");
+        }
+      });
+
+      cleanupDead();
+      checkEnd();
+      if (state.ended) return render();
+
+      const hasCurse = state.enemies.some(e => e.curse > 0);
+      state.turn += 1;
+      state.energy = state.maxEnergy + (hasCurse ? 1 : 0);
+      state.hero.block = 0;
+      state.summons.forEach(s => {
+        s.block = 0;
+        s.buff = 0;
+      });
+      state.enemies.forEach(pickEnemyIntent);
+      draw(state.handSize);
+      if (hasCurse) log("阴影汲取 +1 能量", "buff");
+      render();
+    }
+
+    function checkEnd() {
+      if (state.enemies.length === 0) {
+        state.ended = true;
+        log("✦ 胜利 ✦", "summon");
+      } else if (state.hero.hp <= 0) {
+        state.ended = true;
+        log("✧ 败北 ✧", "hit");
+      }
+    }
+
+    function getHeroEl() {
+      return document.querySelector('.hero.actor');
+    }
+
+    function getSummonEl(id) {
+      return document.querySelector(`.summon.actor[data-uid="${id}"]`);
+    }
+
+    function getEnemyEl(id) {
+      return document.querySelector(`.enemy.actor[data-uid="${id}"]`);
+    }
+
+    function render() {
+      document.getElementById("selfHpVal").textContent = state.hero.hp;
+      document.getElementById("selfMaxVal").textContent = state.hero.maxHp;
+      document.getElementById("turnBadge").textContent = `第 ${state.turn} 回合`;
+      document.getElementById("deckCount").textContent = state.deck.length;
+      document.getElementById("discardCount").textContent = state.discard.length;
+      document.getElementById("handCount").textContent = state.hand.length;
+
+      renderMana();
+      renderEnemies();
+      renderAllies();
+      renderHand();
+
+      document.getElementById("endTurnBtn").textContent = state.ended ? "战斗结束" : "结束回合";
+      setHint("拖牌到目标释放", false);
+    }
+
+    function renderMana() {
+      const pool = document.getElementById("manaPool");
+      pool.innerHTML = "";
+      const displayMax = Math.max(state.maxEnergy, state.energy);
+      for (let i = 0; i < displayMax; i++) {
+        const c = document.createElement("div");
+        c.className = "crystal" + (i >= state.energy ? " empty" : "");
+        pool.appendChild(c);
+      }
+    }
+
+    function pulseCrystals() {
+      document.querySelectorAll(".crystal").forEach(c => {
+        c.classList.remove("pulse");
+        void c.offsetWidth;
+        c.classList.add("pulse");
+      });
+    }
+
+    function renderEnemies() {
+      const zone = document.getElementById("enemyZone");
+      zone.innerHTML = "";
+      state.enemies.forEach(e => {
+        const el = document.createElement("div");
+        el.className = "enemy actor";
+        el.dataset.uid = e.uid;
+        const tags = [];
+        if (e.curse > 0) tags.push(`<span class="tag-bit">蚀骨 ${e.curse}</span>`);
+        if (e.block > 0) tags.push(`<span class="tag-bit" style="color:#b7deff;">护甲 ${e.block}</span>`);
+        el.innerHTML = `
+          <div class="ground-ring"></div>
+          <div class="enemy-intent">${e.intent ? e.intent.icon : ""}</div>
+          <div class="figure enemy-figure">
+            <span class="aura"></span>
+            <span class="horn h1"></span>
+            <span class="horn h2"></span>
+            <span class="head"></span>
+            <span class="body"></span>
+            <span class="cape"></span>
+            <span class="weapon"></span>
+          </div>
+          <div class="meta-plate">
+            <div class="name-line">${e.name}</div>
+            <div class="sub-line">背坡上的压迫者</div>
+            <div class="hp-line"><b>${e.hp}</b><span> / ${e.maxHp}</span></div>
+            <div class="tags">${tags.join("")}</div>
+          </div>
+        `;
+        zone.appendChild(el);
+      });
+    }
+
+    function renderAllies() {
+      const zone = document.getElementById("allyZone");
+      zone.innerHTML = "";
+      if (state.summons[0]) zone.appendChild(buildSummonEl(state.summons[0]));
+      zone.appendChild(buildHeroEl(state.hero));
+      if (state.summons[1]) zone.appendChild(buildSummonEl(state.summons[1]));
+    }
+
+    function buildHeroEl(h) {
+      const el = document.createElement("div");
+      el.className = "hero actor";
+      el.dataset.uid = h.uid;
+      el.innerHTML = `
+        <div class="ground-ring"></div>
+        <div class="figure hero-figure">
+          <span class="aura"></span>
+          <span class="hat"></span>
+          <span class="head"></span>
+          <span class="body"></span>
+          <span class="cape"></span>
+          <span class="arm"></span>
+          <span class="weapon"></span>
+          <span class="extra"></span>
+        </div>
+        <div class="meta-plate">
+          <div class="name-line">术士</div>
+          <div class="sub-line">黑月契约 / 被动：${h.passive}</div>
+          <div class="hp-line"><b>${h.hp}</b><span> / ${h.maxHp}</span>${h.block > 0 ? `<span> · 甲 ${h.block}</span>` : ""}</div>
+          <div class="stat-row">
+            <div class="stat-chip atk">ATK ${h.atk}</div>
+            ${h.block > 0 ? `<div class="stat-chip blk">BLK ${h.block}</div>` : ""}
+          </div>
+        </div>
+      `;
+      return el;
+    }
+
+    function buildSummonEl(s) {
+      const el = document.createElement("div");
+      el.className = `summon actor ${s.tpl} enter-anim`;
+      el.dataset.uid = s.uid;
+      const atkVal = s.atk + (s.buff || 0);
+      const sub = s.tpl === "imp" ? "快攻 / 献祭" : "护卫 / 撕咬";
+      const figure = s.tpl === "imp"
+        ? `
+          <div class="figure">
+            <span class="aura"></span>
+            <span class="horn h1"></span>
+            <span class="horn h2"></span>
+            <span class="head"></span>
+            <span class="body"></span>
+            <span class="tail"></span>
+          </div>`
+        : `
+          <div class="figure">
+            <span class="aura"></span>
+            <span class="ear"></span>
+            <span class="head"></span>
+            <span class="muzzle"></span>
+            <span class="body"></span>
+            <span class="tail"></span>
+            <span class="arm"></span>
+          </div>`;
+
+      el.innerHTML = `
+        <div class="ground-ring"></div>
+        ${figure}
+        <div class="meta-plate">
+          <div class="name-line">${s.name}</div>
+          <div class="sub-line">${sub}</div>
+          <div class="hp-line"><b>${s.hp}</b><span> / ${s.maxHp}</span>${s.block > 0 ? `<span> · 甲 ${s.block}</span>` : ""}</div>
+          <div class="stat-row">
+            <div class="stat-chip atk">ATK ${atkVal}</div>
+            ${s.block > 0 ? `<div class="stat-chip blk">BLK ${s.block}</div>` : ""}
+          </div>
+        </div>
+      `;
+      return el;
+    }
+
+    function renderHand() {
+      const fan = document.getElementById("handFan");
+      fan.innerHTML = "";
+      const n = state.hand.length;
+      if (n === 0) return;
+
+      const maxAngle = 16;
+      const spread = Math.min(88, 274 / Math.max(n, 3));
+      const arcDepth = n > 2 ? 16 : 6;
+
+      state.hand.forEach((c, i) => {
+        const card = document.createElement("div");
+        const ok = canPlay(c);
+        card.className = `card type-${c.type}${ok ? "" : " disabled"}`;
+        card.dataset.uid = c.uid;
+
+        const mid = (n - 1) / 2;
+        const dx = (i - mid) * spread;
+        const rot = ((i - mid) / Math.max(mid, 1)) * maxAngle;
+        const dy = Math.abs(i - mid) * arcDepth / Math.max(mid, 1);
+
+        card.style.left = `calc(50% + ${dx}px)`;
+        card.style.marginLeft = "-48px";
+        card.style.transform = `translateY(${dy}px) rotate(${rot}deg)`;
+        card.style.zIndex = 10 + i;
+
+        card.innerHTML = `
+          <div class="card-inner">
+            <div class="cost-gem">${c.cost}</div>
+            ${c.isLink ? '<div class="card-link-mark">联动</div>' : ""}
+            <div class="card-art">${c.art}</div>
+            <div class="card-name">${c.name}</div>
+            <div class="card-desc">${c.text}</div>
+          </div>
+        `;
+
+        card.addEventListener("pointerdown", ev => startDrag(ev, c.uid, card));
+        fan.appendChild(card);
+      });
+    }
+
+    function startDrag(e, uid, cardEl) {
+      const card = state.hand.find(c => c.uid === uid);
+      if (!canPlay(card)) return;
+
+      drag.active = true;
+      drag.uid = uid;
+      drag.pointerId = e.pointerId;
+      drag.cardEl = cardEl;
+      drag.overTarget = null;
+      drag.overKey = null;
+      drag.startX = e.clientX;
+      drag.startY = e.clientY;
+      drag.moved = false;
+
+      cardEl.classList.add("lifted");
+      document.addEventListener("pointermove", onDragMove);
+      document.addEventListener("pointerup", onDragEnd);
+      document.addEventListener("pointercancel", onDragEnd);
+    }
+
+    function onDragMove(e) {
+      if (!drag.active || e.pointerId !== drag.pointerId) return;
+      const dx = e.clientX - drag.startX;
+      const dy = e.clientY - drag.startY;
+
+      if (!drag.moved && Math.hypot(dx, dy) > 10) {
+        drag.moved = true;
+        drag.cardEl.classList.remove("lifted");
+        drag.cardEl.classList.add("dragging");
+        const ghost = document.createElement("div");
+        ghost.className = "drag-ghost";
+        ghost.innerHTML = `<div class="${drag.cardEl.className.replace(' dragging', '').trim()}" style="position:relative;width:100%;height:100%;">${drag.cardEl.innerHTML}</div>`;
+        document.body.appendChild(ghost);
+        drag.ghostEl = ghost;
+      }
+
+      if (drag.moved) {
+        drag.ghostEl.style.left = `${e.clientX}px`;
+        drag.ghostEl.style.top = `${e.clientY}px`;
+        refreshOver(e.clientX, e.clientY);
+      }
+    }
+
+    function onDragEnd(e) {
+      if (!drag.active || e.pointerId !== drag.pointerId) return;
+      const t = drag.overTarget;
+      const k = drag.overKey;
+      const u = drag.uid;
+      const moved = drag.moved;
+      cleanupDrag();
+      if (!moved) return;
+
+      const card = state.hand.find(c => c.uid === u);
+      if (!card) return;
+
+      if (card.type === "summon" && t === "ally-zone") tryPlay(u, "summon", null);
+      else if (card.target === "hero" && t === "hero") tryPlay(u, "hero", null);
+      else if (card.target === "enemy" && t === "enemy") tryPlay(u, "enemy", k);
+      else if (card.target === "none" && t === "ally-zone") tryPlay(u, "none", null);
+    }
+
+    function refreshOver(x, y) {
+      const card = state.hand.find(c => c.uid === drag.uid);
+      if (!card) return;
+
+      let over = null;
+      let key = null;
+
+      if (card.target === "enemy") {
+        document.querySelectorAll(".enemy.actor").forEach(el => {
+          const r = el.getBoundingClientRect();
+          if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+            over = "enemy";
+            key = el.dataset.uid;
+          }
+        });
+      } else if (card.target === "hero") {
+        const el = getHeroEl();
+        if (el) {
+          const r = el.getBoundingClientRect();
+          if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+            over = "hero";
+            key = state.hero.uid;
+          }
+        }
+      } else if (card.type === "summon" || card.target === "none" || card.target === "any_ally") {
+        const zone = document.getElementById("allyZone");
+        const r = zone.getBoundingClientRect();
+        if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+          over = "ally-zone";
+          key = null;
+        }
+      }
+
+      drag.overTarget = over;
+      drag.overKey = key;
+      updateHighlight(over, key);
+
+      if (over === "enemy") setHint("放开：命中敌人", true);
+      else if (over === "hero") setHint("放开：施加到术士", true);
+      else if (over === "ally-zone") setHint(card.type === "summon" ? "放开：召唤到前景舞台" : "放开：发动效果", true);
+      else {
+        setHint(
+          card.type === "summon" ? "拖到我方舞台召唤" :
+          card.target === "hero" ? "拖到术士" :
+          card.target === "enemy" ? "拖到敌人" :
+          "拖到我方区域发动",
+          false
+        );
+      }
+    }
+
+    function updateHighlight(over, key) {
+      document.querySelectorAll(".actor.drop-ready, #allyZone.drop-ready").forEach(el => el.classList.remove("drop-ready"));
+
+      if (over === "enemy") {
+        const el = document.querySelector(`.enemy.actor[data-uid="${key}"]`);
+        if (el) el.classList.add("drop-ready");
+      } else if (over === "hero") {
+        getHeroEl()?.classList.add("drop-ready");
+      } else if (over === "ally-zone") {
+        document.getElementById("allyZone")?.classList.add("drop-ready");
+        getHeroEl()?.classList.add("drop-ready");
+      }
+    }
+
+    function cleanupDrag() {
+      if (drag.cardEl) {
+        drag.cardEl.classList.remove("dragging");
+        drag.cardEl.classList.remove("lifted");
+      }
+      if (drag.ghostEl && drag.ghostEl.parentNode) drag.ghostEl.parentNode.removeChild(drag.ghostEl);
+      document.querySelectorAll(".actor.drop-ready, #allyZone.drop-ready").forEach(el => el.classList.remove("drop-ready"));
+
+      drag.active = false;
+      drag.uid = null;
+      drag.pointerId = null;
+      drag.cardEl = null;
+      drag.ghostEl = null;
+      drag.overTarget = null;
+      drag.overKey = null;
+      drag.moved = false;
+
+      document.removeEventListener("pointermove", onDragMove);
+      document.removeEventListener("pointerup", onDragEnd);
+      document.removeEventListener("pointercancel", onDragEnd);
+    }
+
+    function floatOn(el, text, cls = "dmg") {
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      const f = document.createElement("div");
+      f.className = `float-num ${cls}`;
+      f.textContent = text;
+      f.style.left = `${r.left + r.width / 2}px`;
+      f.style.top = `${r.top + r.height * 0.34}px`;
+      document.body.appendChild(f);
+      setTimeout(() => f.remove(), 1000);
+    }
+
+    function shake(el) {
+      if (!el) return;
+      el.classList.remove("unit-hit");
+      void el.offsetWidth;
+      el.classList.add("unit-hit");
+    }
+
+    function flashUnit(unitUid) {
+      const el = document.querySelector(`.actor[data-uid="${unitUid}"]`);
+      if (!el) return;
+      el.classList.remove("just-acted");
+      void el.offsetWidth;
+      el.classList.add("just-acted");
+    }
+
+    function screenFlash() {
+      const f = document.createElement("div");
+      f.className = "screen-flash";
+      document.body.appendChild(f);
+      setTimeout(() => f.remove(), 260);
+    }
+
+    function flyLine(fromEl, toEl) {
+      if (!fromEl || !toEl) return;
+      const f = fromEl.getBoundingClientRect();
+      const t = toEl.getBoundingClientRect();
+      const sx = f.left + f.width / 2;
+      const sy = f.top + f.height / 2;
+      const ex = t.left + t.width / 2;
+      const ey = t.top + t.height / 2;
+      const len = Math.hypot(ex - sx, ey - sy);
+      const ang = Math.atan2(ey - sy, ex - sx) * 180 / Math.PI;
+
+      const line = document.createElement("div");
+      line.className = "strike-flash";
+      line.style.cssText = `
+        left: ${sx}px;
+        top: ${sy - 2}px;
+        width: ${len}px;
+        height: 4px;
+        background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,245,213,0.86), rgba(255,162,134,0.7));
+        transform-origin: 0% 50%;
+        transform: rotate(${ang}deg);
+        border-radius: 999px;
+        box-shadow: 0 0 10px rgba(255, 238, 192, 0.22);
+      `;
+      document.body.appendChild(line);
+      setTimeout(() => line.remove(), 320);
+    }
+
+    function setHint(text, hot) {
+      const h = document.getElementById("hintBar");
+      h.textContent = text;
+      h.classList.toggle("hot", !!hot);
+    }
+
+    function log(text, cls = "") {
+      const el = document.getElementById("log");
+      const line = document.createElement("div");
+      if (cls === "hit") line.className = "log-hit";
+      else if (cls === "summon") line.className = "log-summon";
+      else if (cls === "buff") line.className = "log-buff";
+      else if (cls === "inject") line.className = "log-inject";
+      line.textContent = `• ${text}`;
+      el.prepend(line);
+      while (el.children.length > 18) el.lastChild.remove();
+    }
+
+    function logClear() {
+      document.getElementById("log").innerHTML = "";
+    }
+
+    document.getElementById("endTurnBtn").addEventListener("click", endTurn);
+    document.getElementById("restartBtn").addEventListener("click", newGame);
+    window.addEventListener("resize", () => renderHand());
+
+    newGame();
+  </script>
+</body>
+</html>

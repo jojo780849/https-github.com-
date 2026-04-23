@@ -1,0 +1,3001 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <title>幽塔·术士 v0.6（横版预览）</title>
+  <style>
+    :root {
+      --bg: #15110e;
+      --paper: #dcc7a3;
+      --paper-2: #cdb58d;
+      --ink: #1a1714;
+      --ink-soft: #463a2b;
+      --moon: #f4e7c3;
+      --moon-halo: rgba(244, 231, 195, 0.24);
+      --fog: rgba(222, 234, 214, 0.08);
+      --line: rgba(255, 244, 220, 0.08);
+      --gold: #e7cb7a;
+      --hero: #e3ddd1;
+      --enemy: #ffb699;
+      --buff: #cdb7ff;
+      --good: #9de6a9;
+      --danger: #ff8e77;
+      --shadow: 0 18px 38px rgba(0, 0, 0, 0.42);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255, 244, 219, 0.06) 0%, rgba(0,0,0,0) 28%),
+        radial-gradient(circle at 18% 16%, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0) 18%),
+        linear-gradient(180deg, #16110f 0%, #110e0c 100%);
+      color: #f7f0e4;
+      font-family: "Georgia", "Times New Roman", "PingFang TC", serif;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::before {
+      background-image:
+        radial-gradient(circle, rgba(255,255,255,0.18) 0 1px, transparent 1.6px),
+        radial-gradient(circle, rgba(255,255,255,0.08) 0 1px, transparent 1.8px);
+      background-size: 84px 84px, 132px 132px;
+      background-position: 0 0, 32px 28px;
+      opacity: 0.15;
+    }
+
+    body::after {
+      background:
+        linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.08) 44%, rgba(0,0,0,0.22) 100%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.01) 0 2px, transparent 2px 16px);
+      mix-blend-mode: soft-light;
+      opacity: 0.5;
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      width: min(100%, 430px);
+      height: 100dvh;
+      margin: 0 auto;
+      padding: max(8px, env(safe-area-inset-top)) 10px max(8px, env(safe-area-inset-bottom));
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow: hidden;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 2px 2px 0;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .brand-title {
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      color: #f7ebd4;
+      text-shadow: 0 0 16px rgba(255, 244, 220, 0.08);
+    }
+
+    .brand-sub {
+      font-size: 10px;
+      color: rgba(247, 235, 212, 0.72);
+      letter-spacing: 1.2px;
+    }
+
+    .top-pills {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 6px;
+      max-width: 168px;
+    }
+
+    .pill {
+      padding: 5px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(26, 21, 18, 0.64);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+      color: rgba(247, 235, 212, 0.7);
+      font-size: 10px;
+      line-height: 1;
+    }
+
+    .pill b {
+      color: #fff1d8;
+      margin-left: 4px;
+    }
+
+    .battle-shell {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+      border-radius: 28px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background:
+        radial-gradient(circle at 50% 6%, rgba(244, 231, 195, 0.08) 0%, rgba(0,0,0,0) 24%),
+        linear-gradient(180deg, #1d1712 0%, #15110e 100%);
+      box-shadow: var(--shadow);
+    }
+
+    .battle-shell::before {
+      content: "";
+      position: absolute;
+      inset: 6px;
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,0.04);
+      pointer-events: none;
+    }
+
+    .battle-stage {
+      position: relative;
+      height: 100%;
+      min-height: 0;
+      padding: 10px 8px 12px;
+      overflow: hidden;
+    }
+
+    .battle-stage::before {
+      content: "";
+      position: absolute;
+      left: -8%;
+      right: -8%;
+      bottom: 118px;
+      height: 156px;
+      border-radius: 50%;
+      background: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0.48) 0%, rgba(0,0,0,0) 72%);
+      filter: blur(8px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .battle-head {
+      position: relative;
+      z-index: 4;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      padding: 0 4px;
+    }
+
+    .stage-label {
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: #efe1bf;
+      text-transform: uppercase;
+    }
+
+    .threat-tag {
+      font-size: 10px;
+      color: rgba(247, 235, 212, 0.65);
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(12, 10, 9, 0.34);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .backdrop {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .moon {
+      position: absolute;
+      top: 46px;
+      left: 50%;
+      width: 166px;
+      height: 166px;
+      transform: translateX(-50%);
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 50% 50%, var(--moon) 0%, rgba(244, 231, 195, 0.74) 26%, rgba(244, 231, 195, 0.22) 46%, rgba(0,0,0,0) 72%);
+      opacity: 0.92;
+      filter: blur(0.5px);
+    }
+
+    .moon::after {
+      content: "";
+      position: absolute;
+      inset: 28px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 30%, rgba(94, 74, 44, 0.16) 0 8px, rgba(0,0,0,0) 10px);
+      opacity: 0.38;
+    }
+
+    .tree,
+    .tree.small,
+    .tree.right,
+    .mist,
+    .firefly,
+    .ridge,
+    .ground {
+      position: absolute;
+      pointer-events: none;
+    }
+
+    .tree {
+      left: -26px;
+      bottom: 172px;
+      width: 146px;
+      height: 286px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(7,5,4,0.94) 26%, rgba(7,5,4,1) 100%);
+      clip-path: polygon(44% 100%, 48% 46%, 36% 26%, 42% 20%, 32% 0, 48% 14%, 58% 6%, 54% 22%, 72% 18%, 60% 34%, 84% 38%, 62% 46%, 72% 58%, 54% 58%, 60% 76%, 48% 68%, 50% 100%);
+      opacity: 0.94;
+    }
+
+    .tree.right {
+      left: auto;
+      right: -24px;
+      bottom: 184px;
+      width: 132px;
+      height: 258px;
+      transform: scaleX(-1) rotate(-4deg);
+      opacity: 0.82;
+    }
+
+    .tree.small {
+      left: 50px;
+      bottom: 196px;
+      width: 82px;
+      height: 182px;
+      opacity: 0.56;
+      transform: scale(0.8);
+    }
+
+    .mist {
+      left: -6%;
+      right: -6%;
+      bottom: 210px;
+      height: 120px;
+      background:
+        radial-gradient(circle at 20% 50%, rgba(217, 229, 210, 0.08) 0%, rgba(0,0,0,0) 30%),
+        radial-gradient(circle at 70% 40%, rgba(217, 229, 210, 0.07) 0%, rgba(0,0,0,0) 34%),
+        radial-gradient(circle at 50% 50%, rgba(217, 229, 210, 0.05) 0%, rgba(0,0,0,0) 42%);
+      filter: blur(12px);
+      opacity: 0.9;
+    }
+
+    .firefly {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #fff6cd;
+      box-shadow: 0 0 10px rgba(255, 246, 205, 0.5);
+      opacity: 0.72;
+      animation: flicker 3s ease-in-out infinite;
+    }
+
+    .firefly.f1 { left: 18%; top: 112px; animation-delay: 0s; }
+    .firefly.f2 { right: 22%; top: 164px; animation-delay: 1s; }
+    .firefly.f3 { left: 62%; top: 96px; width: 4px; height: 4px; animation-delay: 2s; }
+
+    @keyframes flicker {
+      0%, 100% { opacity: 0.22; transform: translateY(0); }
+      50% { opacity: 0.82; transform: translateY(-4px); }
+    }
+
+    .ridge {
+      left: -10%;
+      right: -10%;
+      top: 154px;
+      height: 166px;
+      background:
+        linear-gradient(180deg, rgba(0,0,0,0.08) 0%, rgba(14, 11, 9, 0.82) 36%, rgba(8, 6, 5, 0.98) 100%);
+      clip-path: polygon(0 74%, 10% 66%, 20% 70%, 28% 58%, 40% 64%, 48% 54%, 58% 64%, 68% 56%, 79% 68%, 88% 62%, 100% 76%, 100% 100%, 0 100%);
+      opacity: 0.9;
+    }
+
+    .ground {
+      left: -6%;
+      right: -6%;
+      bottom: 86px;
+      height: 260px;
+      background:
+        radial-gradient(ellipse at 50% 18%, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0) 28%),
+        linear-gradient(180deg, #30271f 0%, #211b16 38%, #16110e 100%);
+      border-top: 2px solid rgba(255, 245, 222, 0.08);
+      clip-path: ellipse(70% 60% at 50% 58%);
+      filter: drop-shadow(0 -10px 18px rgba(0,0,0,0.24));
+    }
+
+    .ground::before {
+      content: "";
+      position: absolute;
+      inset: 18px 24px 40px;
+      border-radius: 50%;
+      background:
+        repeating-radial-gradient(circle at 50% 50%, rgba(255,255,255,0.035) 0 2px, rgba(0,0,0,0) 2px 14px),
+        repeating-linear-gradient(115deg, rgba(255,255,255,0.03) 0 1px, rgba(0,0,0,0) 1px 18px);
+      opacity: 0.16;
+      transform: rotate(-7deg);
+    }
+
+    .hud-row {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 44px;
+      z-index: 4;
+      display: flex;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .hud-card {
+      display: none;
+    }
+
+    .turn-badge {
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(18, 14, 12, 0.56);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+      backdrop-filter: blur(8px);
+      align-self: center;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #f8ecd6;
+      font-size: 11px;
+      letter-spacing: 1.4px;
+      white-space: nowrap;
+    }
+
+    .mana-pool,
+    .mana-inline {
+      margin-top: 4px;
+      display: flex;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+      gap: 4px;
+      min-height: 20px;
+      align-items: center;
+    }
+
+    .energy-count {
+      font-size: 14px;
+      font-weight: 900;
+      color: #83c3ff;
+      letter-spacing: 0.4px;
+    }
+
+    .crystal {
+      width: 18px;
+      height: 20px;
+      clip-path: polygon(50% 0%, 100% 38%, 88% 100%, 12% 100%, 0% 38%);
+      background: linear-gradient(180deg, #d7f1ff 0%, #83c3ff 56%, #4c74ff 100%);
+      box-shadow: 0 0 10px rgba(124, 174, 255, 0.28), inset 0 0 4px rgba(255,255,255,0.38);
+      transition: transform 180ms ease;
+    }
+
+    .crystal.empty {
+      background: linear-gradient(180deg, rgba(119,124,144,0.32) 0%, rgba(58,60,72,0.66) 100%);
+      box-shadow: inset 0 0 6px rgba(0,0,0,0.5);
+      opacity: 0.45;
+    }
+
+    .crystal.pulse { animation: crystalPulse 320ms ease; }
+
+    @keyframes crystalPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+    }
+
+    .enemy-zone {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 116px;
+      z-index: 3;
+      min-height: 172px;
+      display: flex;
+      justify-content: flex-end;
+      align-items: flex-end;
+      gap: 0;
+      padding: 0 12px 0 122px;
+    }
+
+    .ally-zone {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 222px;
+      z-index: 3;
+      min-height: 204px;
+      display: flex;
+      justify-content: flex-start;
+      align-items: flex-end;
+      gap: 2px;
+      padding: 0 140px 0 12px;
+      transition: filter 180ms ease;
+    }
+
+    .ally-zone.drop-ready {
+      filter: brightness(1.04);
+    }
+
+    .actor {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      cursor: pointer;
+      transition: transform 180ms ease, filter 180ms ease, opacity 180ms ease;
+    }
+
+    .actor.drop-ready {
+      transform: translateY(-6px) scale(1.02);
+      filter: drop-shadow(0 0 12px rgba(244, 231, 195, 0.18));
+    }
+
+    .ground-ring {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 12px;
+      width: 76%;
+      height: 26px;
+      border-radius: 50%;
+      background: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0.58) 0%, rgba(0,0,0,0) 74%);
+      z-index: 0;
+      transition: all 180ms ease;
+    }
+
+    .actor.drop-ready .ground-ring {
+      background: radial-gradient(ellipse at 50% 50%, rgba(245, 224, 175, 0.3) 0%, rgba(0,0,0,0) 72%);
+      transform: translateX(-50%) scale(1.08);
+    }
+
+    .enemy.actor {
+      width: 104px;
+      height: 152px;
+      margin-left: -12px;
+    }
+
+    .enemy.actor.slot-left {
+      transform: translateY(24px) scale(0.88);
+      z-index: 1;
+      opacity: 0.96;
+    }
+
+    .enemy.actor.slot-mid {
+      transform: translateY(-2px) scale(1.04);
+      z-index: 3;
+    }
+
+    .enemy.actor.slot-right {
+      transform: translateY(16px) scale(0.94);
+      z-index: 2;
+      opacity: 0.96;
+    }
+
+    .hero.actor {
+      order: 1;
+      width: 154px;
+      height: 220px;
+      margin-right: -2px;
+    }
+
+    .summon.actor {
+      order: 2;
+      width: 80px;
+      height: 122px;
+      margin: 0 -2px;
+    }
+
+    .hero.actor .ground-ring {
+      background: radial-gradient(ellipse at 50% 50%, rgba(141, 118, 255, 0.22) 0%, rgba(51,35,86,0.14) 42%, rgba(0,0,0,0) 76%);
+    }
+
+    .enemy.actor .ground-ring {
+      background: radial-gradient(ellipse at 50% 50%, rgba(255, 121, 91, 0.24) 0%, rgba(102,34,26,0.14) 42%, rgba(0,0,0,0) 76%);
+    }
+
+    .summon.actor .ground-ring {
+      background: radial-gradient(ellipse at 50% 50%, rgba(157, 230, 169, 0.18) 0%, rgba(25,60,34,0.12) 44%, rgba(0,0,0,0) 76%);
+    }
+
+
+    .figure {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 1;
+    }
+
+    .figure span {
+      position: absolute;
+      display: block;
+      background: #1b1613;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06), 0 8px 16px rgba(0,0,0,0.14);
+    }
+
+    .figure .aura {
+      background: radial-gradient(circle, rgba(255,255,255,0.18) 0%, rgba(0,0,0,0) 70%);
+      filter: blur(12px);
+      opacity: 0.68;
+      z-index: -1;
+    }
+
+    .figure .head,
+    .figure .body,
+    .figure .cape,
+    .figure .arm,
+    .figure .weapon,
+    .figure .extra,
+    .figure .hat,
+    .figure .horn,
+    .figure .tail,
+    .figure .jaw,
+    .figure .muzzle,
+    .figure .ear,
+    .figure .eye {
+      background: #1b1613;
+    }
+
+
+    .hero-figure .aura {
+      width: 160px;
+      height: 160px;
+      bottom: 52px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .hero-figure .head {
+      width: 34px;
+      height: 38px;
+      border-radius: 46% 46% 48% 48%;
+      left: 50%;
+      top: 44px;
+      transform: translateX(-50%);
+    }
+
+    .hero-figure .hat {
+      width: 64px;
+      height: 20px;
+      border-radius: 50% 50% 38% 38%;
+      left: 50%;
+      top: 30px;
+      transform: translateX(-50%);
+    }
+
+    .hero-figure .hat::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: -22px;
+      width: 30px;
+      height: 32px;
+      transform: translateX(-50%);
+      border-radius: 44% 44% 18% 18%;
+      background: #060504;
+    }
+
+    .hero-figure .body {
+      width: 56px;
+      height: 94px;
+      left: 50%;
+      top: 74px;
+      transform: translateX(-50%);
+      border-radius: 30% 30% 16% 16%;
+    }
+
+    .hero-figure .cape {
+      width: 104px;
+      height: 118px;
+      left: 50%;
+      top: 70px;
+      transform: translateX(-50%);
+      clip-path: polygon(48% 0%, 66% 8%, 86% 28%, 100% 100%, 0 100%, 12% 32%, 32% 8%);
+      border-radius: 0 0 30% 30%;
+    }
+
+    .hero-figure .arm {
+      width: 14px;
+      height: 72px;
+      left: calc(50% + 18px);
+      top: 88px;
+      transform: rotate(18deg);
+      border-radius: 20px;
+    }
+
+    .hero-figure .weapon {
+      width: 10px;
+      height: 118px;
+      left: calc(50% + 46px);
+      top: 72px;
+      transform: rotate(8deg);
+      border-radius: 8px;
+    }
+
+    .hero-figure .weapon::after {
+      content: "";
+      position: absolute;
+      left: -12px;
+      top: -4px;
+      width: 34px;
+      height: 26px;
+      border-radius: 46% 54% 48% 52%;
+      background: #060504;
+      transform: rotate(18deg);
+    }
+
+    .hero-figure .extra {
+      width: 52px;
+      height: 18px;
+      left: 50%;
+      bottom: 30px;
+      transform: translateX(-50%);
+      clip-path: polygon(0 40%, 20% 0, 80% 0, 100% 40%, 74% 100%, 26% 100%);
+    }
+
+    .hero-figure {
+      filter: drop-shadow(0 10px 18px rgba(118, 92, 255, 0.22)) drop-shadow(0 0 12px rgba(244, 231, 195, 0.12));
+    }
+
+    .hero-figure .aura {
+      background: radial-gradient(circle, rgba(146, 118, 255, 0.34) 0%, rgba(244, 231, 195, 0.16) 36%, rgba(0,0,0,0) 74%);
+      opacity: 0.9;
+    }
+
+    .hero-figure .head,
+    .hero-figure .arm {
+      background: linear-gradient(180deg, #f4efe8 0%, #d8cdbd 52%, #897a6b 100%);
+    }
+
+    .hero-figure .hat,
+    .hero-figure .body,
+    .hero-figure .weapon,
+    .hero-figure .extra {
+      background: linear-gradient(180deg, #3f3948 0%, #2a2530 56%, #151218 100%);
+    }
+
+    .hero-figure .cape {
+      background: linear-gradient(180deg, #655679 0%, #3c3348 48%, #18151d 100%);
+    }
+
+    .hero-figure .hat::after,
+    .hero-figure .weapon::after {
+      background: linear-gradient(180deg, #4c4458 0%, #27212f 60%, #141217 100%);
+    }
+
+    .hero-figure .head::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 15px;
+      width: 16px;
+      height: 6px;
+      transform: translateX(-50%);
+      background: transparent;
+      border-radius: 999px;
+      box-shadow: -5px 0 0 0 rgba(146, 118, 255, 0.9), 5px 0 0 0 rgba(146, 118, 255, 0.9), -5px 0 8px rgba(146, 118, 255, 0.45), 5px 0 8px rgba(146, 118, 255, 0.45);
+    }
+
+    .enemy-figure .aura {
+
+      width: 120px;
+      height: 100px;
+      left: 50%;
+      top: 30px;
+      transform: translateX(-50%);
+      opacity: 0.3;
+    }
+
+    .enemy-figure .head {
+      width: 38px;
+      height: 42px;
+      left: 50%;
+      top: 40px;
+      transform: translateX(-50%);
+      border-radius: 42% 42% 48% 48%;
+    }
+
+    .enemy-figure .body {
+      width: 60px;
+      height: 74px;
+      left: 50%;
+      top: 76px;
+      transform: translateX(-50%);
+      border-radius: 34% 34% 12% 12%;
+    }
+
+    .enemy-figure .cape {
+      width: 102px;
+      height: 88px;
+      left: 50%;
+      top: 74px;
+      transform: translateX(-50%);
+      clip-path: polygon(46% 0%, 70% 12%, 100% 100%, 0 100%, 30% 12%);
+    }
+
+    .enemy-figure .horn.h1 {
+      width: 18px;
+      height: 48px;
+      left: calc(50% - 26px);
+      top: 20px;
+      transform: rotate(-34deg);
+      border-radius: 18px;
+    }
+
+    .enemy-figure .horn.h2 {
+      width: 18px;
+      height: 48px;
+      left: calc(50% + 8px);
+      top: 20px;
+      transform: rotate(34deg);
+      border-radius: 18px;
+    }
+
+    .enemy-figure .weapon {
+      width: 12px;
+      height: 84px;
+      left: calc(50% + 34px);
+      top: 70px;
+      transform: rotate(32deg);
+      border-radius: 10px;
+    }
+
+    .enemy-figure .weapon::after {
+      content: "";
+      position: absolute;
+      left: -8px;
+      top: -2px;
+      width: 28px;
+      height: 12px;
+      border-radius: 12px;
+      background: #060504;
+    }
+
+    .enemy-figure {
+      filter: drop-shadow(0 10px 18px rgba(210, 88, 54, 0.24)) drop-shadow(0 0 10px rgba(255, 196, 164, 0.12));
+    }
+
+    .enemy-figure .aura {
+      background: radial-gradient(circle, rgba(255, 124, 96, 0.34) 0%, rgba(255, 204, 158, 0.12) 38%, rgba(0,0,0,0) 74%);
+      opacity: 0.74;
+    }
+
+    .enemy-figure .head,
+    .enemy-figure .body {
+      background: linear-gradient(180deg, #efe1cc 0%, #c7ab89 48%, #5a4738 100%);
+    }
+
+    .enemy-figure .cape {
+      background: linear-gradient(180deg, #8b4337 0%, #5b261f 48%, #241110 100%);
+    }
+
+    .enemy-figure .horn.h1,
+    .enemy-figure .horn.h2,
+    .enemy-figure .weapon,
+    .enemy-figure .weapon::after {
+      background: linear-gradient(180deg, #ffe8cb 0%, #d6a47c 40%, #664534 100%);
+    }
+
+    .enemy-figure .head::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 16px;
+      width: 16px;
+      height: 6px;
+      transform: translateX(-50%);
+      background: transparent;
+      border-radius: 999px;
+      box-shadow: -5px 0 0 0 rgba(255, 116, 96, 0.94), 5px 0 0 0 rgba(255, 116, 96, 0.94), -5px 0 8px rgba(255, 116, 96, 0.5), 5px 0 8px rgba(255, 116, 96, 0.5);
+    }
+
+    .summon.imp .figure .aura,
+
+    .summon.hound .figure .aura {
+      width: 90px;
+      height: 62px;
+      left: 50%;
+      top: 44px;
+      transform: translateX(-50%);
+      opacity: 0.22;
+    }
+
+    .summon.imp .figure .head {
+      width: 24px;
+      height: 24px;
+      left: 50%;
+      top: 54px;
+      transform: translateX(-50%);
+      border-radius: 48%;
+    }
+
+    .summon.imp .figure .body {
+      width: 34px;
+      height: 42px;
+      left: 50%;
+      top: 74px;
+      transform: translateX(-50%);
+      border-radius: 40% 40% 18% 18%;
+    }
+
+    .summon.imp .figure .horn.h1 {
+      width: 10px;
+      height: 24px;
+      left: calc(50% - 14px);
+      top: 42px;
+      transform: rotate(-34deg);
+      border-radius: 10px;
+    }
+
+    .summon.imp .figure .horn.h2 {
+      width: 10px;
+      height: 24px;
+      left: calc(50% + 4px);
+      top: 42px;
+      transform: rotate(34deg);
+      border-radius: 10px;
+    }
+
+    .summon.imp .figure .tail {
+      width: 12px;
+      height: 36px;
+      left: calc(50% + 12px);
+      top: 88px;
+      transform: rotate(26deg);
+      border-radius: 12px;
+    }
+
+    .summon.hound .figure .head {
+      width: 28px;
+      height: 22px;
+      left: calc(50% - 8px);
+      top: 62px;
+      border-radius: 48% 48% 42% 42%;
+      transform: rotate(-8deg);
+    }
+
+    .summon.hound .figure .muzzle {
+      width: 20px;
+      height: 14px;
+      left: calc(50% + 8px);
+      top: 68px;
+      transform: rotate(8deg);
+      border-radius: 42% 58% 48% 48%;
+    }
+
+    .summon.hound .figure .body {
+      width: 52px;
+      height: 28px;
+      left: 50%;
+      top: 84px;
+      transform: translateX(-50%);
+      border-radius: 46% 42% 24% 24%;
+    }
+
+    .summon.hound .figure .tail {
+      width: 10px;
+      height: 28px;
+      left: calc(50% - 26px);
+      top: 76px;
+      transform: rotate(-34deg);
+      border-radius: 10px;
+    }
+
+    .summon.hound .figure .ear {
+      width: 10px;
+      height: 16px;
+      left: calc(50% - 6px);
+      top: 52px;
+      transform: rotate(-20deg);
+      border-radius: 10px;
+    }
+
+    .summon.hound .figure .arm {
+      width: 8px;
+      height: 24px;
+      left: calc(50% - 10px);
+      top: 100px;
+      border-radius: 8px;
+      box-shadow: 24px 0 0 #060504;
+      background: #060504;
+    }
+
+    .health-stack {
+      position: absolute;
+      left: 50%;
+      top: 4px;
+      transform: translateX(-50%);
+      z-index: 4;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      pointer-events: none;
+    }
+
+    .hero .health-stack {
+      top: 14px;
+    }
+
+    .summon .health-stack {
+      top: 30px;
+    }
+
+    .bar-heart {
+      width: 12px;
+      height: 12px;
+      transform: rotate(-45deg);
+      background: var(--danger);
+      border-radius: 4px 0 0 4px;
+      box-shadow: 0 0 10px rgba(216,109,97,0.18);
+      position: relative;
+      flex: 0 0 auto;
+    }
+
+    .bar-heart::before,
+    .bar-heart::after {
+      content: "";
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--danger);
+    }
+
+    .bar-heart::before { top: -6px; left: 0; }
+    .bar-heart::after { left: 6px; top: 0; }
+
+    .bar-track {
+      position: relative;
+      width: 78px;
+      height: 14px;
+      border-radius: 999px;
+      background: rgba(36,25,19,0.9);
+      border: 1px solid rgba(255,255,255,0.1);
+      overflow: hidden;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.32);
+    }
+
+    .hero .bar-track {
+      width: 102px;
+      height: 16px;
+    }
+
+    .summon .bar-track {
+      width: 64px;
+      height: 12px;
+    }
+
+    .bar-fill {
+      position: absolute;
+      inset: 0 auto 0 0;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #b33e3a 0%, #d86d61 55%, #efab97 100%);
+      box-shadow: 0 0 12px rgba(216,109,97,0.2);
+    }
+
+    .bar-track::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 60%);
+      pointer-events: none;
+    }
+
+    .bar-text {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: 900;
+      color: #fff4e8;
+      letter-spacing: 0.2px;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.85);
+      z-index: 1;
+    }
+
+    .hero .bar-text {
+      font-size: 10px;
+    }
+
+    .summon .bar-text {
+      font-size: 8px;
+    }
+
+
+    .hero-energy {
+      position: absolute;
+      left: 14px;
+      bottom: 44px;
+      z-index: 4;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 8px;
+      border-radius: 999px;
+      background: rgba(18,14,12,0.46);
+      border: 1px solid rgba(255,255,255,0.08);
+      pointer-events: none;
+    }
+
+    .intent-stack {
+      position: absolute;
+      left: 50%;
+      top: 8px;
+      transform: translateX(-50%);
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      pointer-events: none;
+    }
+
+    .intent-badge,
+    .detail-intent {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      min-width: 30px;
+      height: 28px;
+      padding: 0 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      font-size: 11px;
+      font-weight: 900;
+      line-height: 1;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.26), inset 0 0 0 1px rgba(255,255,255,0.03);
+    }
+
+    .intent-badge {
+      animation: intentPulse 1.9s ease-in-out infinite;
+    }
+
+    .intent-badge.attack,
+    .detail-intent.attack {
+      background: linear-gradient(180deg, rgba(159, 74, 46, 0.96) 0%, rgba(113, 43, 29, 0.96) 100%);
+      color: #fff0e4;
+      box-shadow: 0 10px 18px rgba(115, 48, 31, 0.28), inset 0 0 0 1px rgba(255,255,255,0.05);
+    }
+
+    .intent-badge.debuff,
+    .detail-intent.debuff {
+      background: linear-gradient(180deg, rgba(170, 53, 67, 0.96) 0%, rgba(124, 32, 48, 0.96) 100%);
+      color: #ffd5d6;
+      box-shadow: 0 10px 18px rgba(130, 31, 45, 0.28), inset 0 0 0 1px rgba(255,255,255,0.05);
+    }
+
+    .intent-badge.buff,
+    .detail-intent.buff {
+      background: linear-gradient(180deg, rgba(48, 123, 77, 0.96) 0%, rgba(28, 92, 52, 0.96) 100%);
+      color: #ddffe5;
+      box-shadow: 0 10px 18px rgba(28, 88, 50, 0.26), inset 0 0 0 1px rgba(255,255,255,0.05);
+    }
+
+    .detail-intent.hero,
+    .detail-intent.summon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      padding: 0;
+      background: rgba(76, 63, 52, 0.94);
+      color: #fff0d1;
+    }
+
+    .badge-icon {
+      font-size: 13px;
+      line-height: 1;
+    }
+
+    .badge-value {
+      font-size: 11px;
+      letter-spacing: 0.2px;
+    }
+
+    @keyframes intentPulse {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-1px) scale(1.04); }
+    }
+
+    .actor.is-focused {
+      filter: drop-shadow(0 0 18px rgba(244, 231, 195, 0.28)) brightness(1.08);
+    }
+
+
+    .actor.is-focused .ground-ring {
+      background: radial-gradient(ellipse at 50% 50%, rgba(245, 224, 175, 0.34) 0%, rgba(0,0,0,0) 72%);
+      transform: translateX(-50%) scale(1.08);
+    }
+
+    .detail-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 6;
+      pointer-events: none;
+    }
+
+    .detail-layer.active::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 72% 72%, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.24) 76%);
+      pointer-events: none;
+    }
+
+    .detail-pop {
+      position: absolute;
+      right: 10px;
+      top: 72px;
+      z-index: 1;
+      width: 182px;
+      padding: 11px 12px 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,240,210,0.14);
+      background: linear-gradient(180deg, rgba(40,32,28,0.96) 0%, rgba(22,18,16,0.96) 100%);
+      box-shadow: 0 14px 28px rgba(0,0,0,0.38), inset 0 0 0 1px rgba(255,255,255,0.03);
+      backdrop-filter: blur(10px);
+    }
+
+    .detail-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .detail-flag {
+      display: none;
+    }
+
+    .detail-name {
+      margin-top: 1px;
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 0.4px;
+      color: #fff1da;
+    }
+
+    .detail-note {
+      margin-top: 5px;
+      font-size: 11px;
+      line-height: 1.45;
+      color: rgba(255,244,222,0.82);
+      letter-spacing: 0.2px;
+    }
+
+    .detail-bars,
+    .detail-row,
+    .detail-label,
+    .detail-value {
+      display: none;
+    }
+
+
+
+    .hand-shell,
+    .log-shell {
+      position: relative;
+      overflow: visible;
+    }
+
+    .hand-shell {
+      position: fixed;
+      left: 50%;
+      bottom: calc(env(safe-area-inset-bottom) + 84px);
+      transform: translateX(-50%);
+      z-index: 8;
+      width: min(calc(100vw - 14px), 410px);
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      pointer-events: none;
+    }
+
+    .log-shell {
+      display: none;
+    }
+
+    .hand-shell::before,
+    .log-shell::before,
+    .hand-head {
+      display: none;
+    }
+
+    .log-head {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px 4px;
+      font-size: 9px;
+      letter-spacing: 1.4px;
+      color: rgba(247, 235, 212, 0.68);
+      border-bottom: none;
+    }
+
+    .hand-container {
+      position: relative;
+      z-index: 2;
+      min-height: 188px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0;
+      pointer-events: none;
+    }
+
+    .hand-fan {
+      position: relative;
+      width: 100%;
+      max-width: 408px;
+      height: 180px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      pointer-events: none;
+    }
+
+    .card {
+      position: absolute;
+      bottom: 0;
+      width: 84px;
+      height: 130px;
+      border-radius: 16px;
+      cursor: pointer;
+      touch-action: none;
+      transform-origin: bottom center;
+      transition: transform 220ms cubic-bezier(0.22, 1.15, 0.36, 1), filter 180ms ease, width 180ms ease, height 180ms ease;
+      pointer-events: auto;
+    }
+
+    .card:hover,
+    .card.lifted {
+      z-index: 100 !important;
+      filter: drop-shadow(0 16px 22px rgba(0,0,0,0.44));
+    }
+
+    .card.selected {
+      z-index: 120 !important;
+      filter: drop-shadow(0 24px 30px rgba(0,0,0,0.48));
+    }
+
+    .card.dragging { opacity: 0; }
+
+    .card.disabled {
+      filter: grayscale(0.62) brightness(0.7);
+    }
+
+    .card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      border-radius: 16px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      border: 2px solid #4f402d;
+      background:
+        linear-gradient(180deg, rgba(238, 222, 190, 0.98) 0%, rgba(207, 183, 143, 0.98) 100%);
+      color: #241d16;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.16), 0 14px 22px rgba(0,0,0,0.28);
+    }
+
+    .card-inner::before {
+      content: "";
+      position: absolute;
+      inset: 4px;
+      border-radius: 12px;
+      border: 1px solid rgba(53, 39, 27, 0.16);
+      pointer-events: none;
+    }
+
+    .card.type-hero .card-inner {
+      background: linear-gradient(180deg, #e7dcc8 0%, #ccbfa1 100%);
+    }
+
+    .card.type-summon .card-inner {
+      background: linear-gradient(180deg, #e2d4b3 0%, #c3ae83 100%);
+    }
+
+    .card.type-spell .card-inner {
+      background: linear-gradient(180deg, #e7d1bd 0%, #cbad8f 100%);
+    }
+
+    .card.type-link .card-inner {
+      background: linear-gradient(180deg, #d9d0b6 0%, #b4a682 100%);
+    }
+
+    .cost-gem {
+      position: absolute;
+      left: 8px;
+      top: 8px;
+      z-index: 3;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #231d16;
+      color: #83c3ff;
+      border: 2px solid rgba(255,255,255,0.08);
+      font-size: 14px;
+      font-weight: 900;
+      text-shadow: 0 0 8px rgba(131,195,255,0.24);
+      box-shadow: 0 3px 0 rgba(0,0,0,0.2);
+    }
+
+    .card-link-mark {
+      position: absolute;
+      right: 8px;
+      top: 8px;
+      z-index: 3;
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: rgba(29, 45, 26, 0.84);
+      color: #d2ffd8;
+      border: 1px solid rgba(255,255,255,0.08);
+      font-size: 9px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .card-art {
+      position: relative;
+      margin-top: 26px;
+      height: 58px;
+      border-radius: 12px;
+      border: 2px solid rgba(58, 45, 31, 0.18);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 34px;
+      background:
+        radial-gradient(circle at 50% 30%, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.04) 24%, rgba(0,0,0,0) 60%),
+        linear-gradient(180deg, rgba(60, 48, 35, 0.08), rgba(0,0,0,0.04));
+    }
+
+    .card-name {
+      margin-top: 7px;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      min-height: 24px;
+    }
+
+    .card-desc {
+      margin-top: 6px;
+      flex: 1;
+      text-align: center;
+      font-size: 9px;
+      line-height: 1.38;
+      color: #3f3224;
+      padding: 0 2px;
+    }
+
+    .card.selected .card-inner {
+      padding: 10px;
+    }
+
+    .card.selected .card-art {
+      margin-top: 28px;
+      height: 62px;
+      font-size: 38px;
+    }
+
+    .card.selected .card-name {
+      margin-top: 9px;
+      font-size: 13px;
+      min-height: 28px;
+    }
+
+    .card.selected .card-desc {
+      font-size: 10px;
+      line-height: 1.42;
+      text-align: left;
+      padding: 0 4px;
+    }
+
+    .drag-ghost {
+      position: fixed;
+      z-index: 999;
+      width: 84px;
+      height: 130px;
+      pointer-events: none;
+      transform: translate(-50%, -50%) scale(1.08);
+      filter: drop-shadow(0 18px 22px rgba(0,0,0,0.4));
+    }
+
+    .control-row {
+      position: fixed;
+      left: 50%;
+      bottom: calc(env(safe-area-inset-bottom) + 8px);
+      transform: translateX(-50%);
+      z-index: 9;
+      width: min(calc(100vw - 20px), 410px);
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+
+    .btn {
+      appearance: none;
+      border: 2px solid #53402f;
+      border-radius: 18px;
+      padding: 16px 10px;
+      background: linear-gradient(180deg, #dbc39b 0%, #c4a678 100%);
+      color: #241d16;
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 1.8px;
+      box-shadow: 0 10px 18px rgba(0,0,0,0.26), inset 0 0 0 1px rgba(255,255,255,0.16);
+    }
+
+    .btn.primary {
+      background: linear-gradient(180deg, #f0d79f 0%, #d5b06d 100%);
+      animation: btnEdgeGlow 2.4s ease-in-out infinite;
+      box-shadow: 0 10px 18px rgba(0,0,0,0.26), inset 0 0 0 1px rgba(255,255,255,0.16), 0 0 0 1px rgba(247, 223, 162, 0.16), 0 0 10px rgba(247, 223, 162, 0.16);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    @keyframes btnEdgeGlow {
+      0%, 100% {
+        box-shadow: 0 10px 18px rgba(0,0,0,0.26), inset 0 0 0 1px rgba(255,255,255,0.16), 0 0 0 1px rgba(247, 223, 162, 0.12), 0 0 8px rgba(247, 223, 162, 0.1);
+      }
+      50% {
+        box-shadow: 0 10px 18px rgba(0,0,0,0.26), inset 0 0 0 1px rgba(255,255,255,0.16), 0 0 0 1px rgba(247, 223, 162, 0.24), 0 0 14px rgba(247, 223, 162, 0.18);
+      }
+    }
+
+
+    .log {
+      position: relative;
+      z-index: 2;
+      max-height: 104px;
+      overflow: auto;
+      padding: 8px 12px 10px;
+      font-size: 10px;
+      line-height: 1.6;
+      color: #e8dcc4;
+    }
+
+    .log::-webkit-scrollbar { width: 4px; }
+    .log::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.18);
+      border-radius: 999px;
+    }
+
+    .log-hit { color: #ffb7a2; }
+    .log-summon { color: #e8ddb2; }
+    .log-buff { color: #d9c9ff; }
+    .log-inject { color: #c6f3c0; }
+
+    .float-num {
+      position: fixed;
+      z-index: 80;
+      font-weight: 900;
+      font-size: 30px;
+      pointer-events: none;
+      text-shadow: 0 3px 8px rgba(0,0,0,0.8);
+      animation: floatNum 950ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    .float-num.dmg { color: var(--danger); }
+    .float-num.heal { color: var(--good); }
+    .float-num.buff { color: var(--buff); }
+    .float-num.link { color: #d9f4b7; }
+
+    @keyframes floatNum {
+      0% { transform: translate(-50%, 0) scale(0.4); opacity: 0; }
+      18% { transform: translate(-50%, -10px) scale(1.2); opacity: 1; }
+      42% { transform: translate(-50%, -18px) scale(1); opacity: 1; }
+      100% { transform: translate(-50%, -72px) scale(0.9); opacity: 0; }
+    }
+
+    .strike-flash {
+      position: fixed;
+      z-index: 70;
+      pointer-events: none;
+      animation: strikeFlash 280ms ease forwards;
+    }
+
+    @keyframes strikeFlash {
+      0% { opacity: 0; transform: scale(0.4); }
+      22% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(1.42); }
+    }
+
+    .screen-flash {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      pointer-events: none;
+      background: radial-gradient(circle at 50% 50%, rgba(255, 244, 220, 0.12) 0%, rgba(0,0,0,0) 52%);
+      animation: screenFlash 240ms ease forwards;
+    }
+
+    @keyframes screenFlash {
+      0% { opacity: 0; }
+      30% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    .unit-hit {
+      animation: actorHit 280ms ease;
+    }
+
+    @keyframes actorHit {
+      0%, 100% { transform: translate3d(0,0,0); }
+      30% { transform: translate3d(-6px, 2px, 0); }
+      60% { transform: translate3d(6px, -2px, 0); }
+    }
+
+    .just-acted {
+      animation: actedPulse 300ms ease;
+    }
+
+    @keyframes actedPulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.04); filter: brightness(1.08); }
+      100% { transform: scale(1); }
+    }
+
+    .enter-anim {
+      animation: summonEnter 360ms ease;
+    }
+
+    @keyframes summonEnter {
+      0% { opacity: 0; transform: translateY(24px) scale(0.88); }
+      70% { opacity: 1; transform: translateY(-4px) scale(1.02); }
+      100% { transform: translateY(0) scale(1); }
+    }
+
+    body.landscape-preview .app {
+      width: min(100vw, 932px);
+      max-width: 932px;
+      padding: max(6px, env(safe-area-inset-top)) 12px max(6px, env(safe-area-inset-bottom)) 12px;
+      gap: 6px;
+    }
+
+    body.landscape-preview .topbar {
+      align-items: center;
+      gap: 10px;
+      padding: 0 4px;
+    }
+
+    body.landscape-preview .brand-title {
+      font-size: 17px;
+      letter-spacing: 1.6px;
+    }
+
+    body.landscape-preview .brand-sub,
+    body.landscape-preview .pill,
+    body.landscape-preview .stage-label,
+    body.landscape-preview .threat-tag {
+      font-size: 9px;
+    }
+
+    body.landscape-preview .top-pills {
+      max-width: none;
+      gap: 5px;
+    }
+
+    body.landscape-preview .battle-shell {
+      border-radius: 24px;
+    }
+
+    body.landscape-preview .battle-shell::before {
+      inset: 5px;
+      border-radius: 18px;
+    }
+
+    body.landscape-preview .battle-stage {
+      padding: 8px 12px 8px;
+    }
+
+    body.landscape-preview .battle-stage::before {
+      bottom: 82px;
+      height: 108px;
+      left: -2%;
+      right: -2%;
+      filter: blur(6px);
+    }
+
+    body.landscape-preview .battle-head {
+      padding: 0 4px;
+    }
+
+    body.landscape-preview .hud-row {
+      top: 28px;
+    }
+
+    body.landscape-preview .turn-badge {
+      padding: 8px 12px;
+      font-size: 10px;
+    }
+
+    body.landscape-preview .enemy-zone {
+      top: 80px;
+      min-height: 128px;
+      justify-content: center;
+      padding: 0 170px 0 176px;
+    }
+
+    body.landscape-preview .ally-zone {
+      bottom: 118px;
+      min-height: 148px;
+      padding: 0 214px 0 24px;
+      gap: 6px;
+    }
+
+    body.landscape-preview .enemy.actor {
+      width: 86px;
+      height: 126px;
+      margin-left: -8px;
+    }
+
+    body.landscape-preview .enemy.actor.slot-left {
+      transform: translateY(14px) scale(0.82);
+    }
+
+    body.landscape-preview .enemy.actor.slot-mid {
+      transform: translateY(-2px) scale(0.96);
+    }
+
+    body.landscape-preview .enemy.actor.slot-right {
+      transform: translateY(10px) scale(0.88);
+    }
+
+    body.landscape-preview .hero.actor {
+      width: 124px;
+      height: 184px;
+    }
+
+    body.landscape-preview .summon.actor {
+      width: 68px;
+      height: 104px;
+    }
+
+    body.landscape-preview .hero .health-stack {
+      top: 10px;
+    }
+
+    body.landscape-preview .summon .health-stack {
+      top: 22px;
+    }
+
+    body.landscape-preview .hero-energy {
+      left: 10px;
+      bottom: 34px;
+      padding: 5px 7px;
+    }
+
+    body.landscape-preview .detail-pop {
+      right: 16px;
+      top: 54px;
+      width: 190px;
+    }
+
+    body.landscape-preview .hand-shell {
+      left: 50%;
+      bottom: calc(env(safe-area-inset-bottom) + 6px);
+      transform: translateX(-50%);
+      width: min(calc(100vw - 210px), 640px);
+    }
+
+    body.landscape-preview .hand-container {
+      min-height: 126px;
+    }
+
+    body.landscape-preview .hand-fan {
+      max-width: 640px;
+      height: 122px;
+    }
+
+    body.landscape-preview .card-name {
+      font-size: 10px;
+      letter-spacing: 0.6px;
+      min-height: 20px;
+    }
+
+    body.landscape-preview .card-desc {
+      font-size: 8px;
+      line-height: 1.28;
+    }
+
+    body.landscape-preview .cost-gem,
+    body.landscape-preview .card-link-mark {
+      transform: scale(0.9);
+      transform-origin: top left;
+    }
+
+    body.landscape-preview .control-row {
+      left: auto;
+      right: max(12px, env(safe-area-inset-right));
+      bottom: calc(env(safe-area-inset-bottom) + 10px);
+      transform: none;
+      width: 162px;
+    }
+
+    body.landscape-preview .btn {
+      padding: 14px 10px;
+      font-size: 15px;
+      letter-spacing: 1.4px;
+    }
+  </style>
+</head>
+<body class="landscape-preview">
+  <div class="app">
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-title">幽塔 · 术士</div>
+        <div class="brand-sub">v0.6 · 横版预览 / 当前逻辑</div>
+      </div>
+      <div class="top-pills">
+        <div class="pill">牌库<b id="deckCount">0</b></div>
+        <div class="pill">弃牌<b id="discardCount">0</b></div>
+        <div class="pill">手牌<b id="handCount">0</b></div>
+      </div>
+    </div>
+
+    <section class="battle-shell">
+      <div class="battle-stage">
+        <div class="backdrop">
+          <div class="moon"></div>
+          <div class="tree"></div>
+          <div class="tree right"></div>
+          <div class="tree small"></div>
+          <div class="mist"></div>
+          <div class="firefly f1"></div>
+          <div class="firefly f2"></div>
+          <div class="firefly f3"></div>
+          <div class="ridge"></div>
+          <div class="ground"></div>
+        </div>
+
+        <div class="battle-head">
+          <div class="stage-label">黑林前庭 · 月下试炼</div>
+          <div class="threat-tag">风格化空间版</div>
+        </div>
+
+        <div class="hud-row">
+          <div class="turn-badge" id="turnBadge">第 1 回合</div>
+        </div>
+
+        <div class="enemy-zone" id="enemyZone"></div>
+        <div class="ally-zone" id="allyZone"></div>
+        <div class="detail-layer" id="detailLayer"></div>
+      </div>
+    </section>
+
+
+    <section class="hand-shell">
+      <div class="hand-container">
+        <div class="hand-fan" id="handFan"></div>
+      </div>
+    </section>
+
+    <div class="control-row">
+      <button class="btn primary" id="endTurnBtn">结束回合</button>
+    </div>
+
+    <section class="log-shell">
+      <div class="log-head">
+        <span>战斗记录</span>
+        <span>v0.6</span>
+      </div>
+      <div class="log" id="log"></div>
+    </section>
+  </div>
+
+  <script>
+    function makeHero() {
+      return {
+        uid: "hero",
+        isHero: true,
+        name: "术士",
+        face: "✦",
+        hp: 50,
+        maxHp: 50,
+        atk: 2,
+        block: 0,
+        passive: "阴影汲取",
+        hex: 0
+      };
+
+    }
+
+    const SUMMONS = {
+      imp:   { name: "小鬼", face: "✶", hp: 5, atk: 2, linkCards: ["lk_imp_claw", "lk_imp_sac", "lk_imp_boom"] },
+      hound: { name: "猎犬", face: "✹", hp: 9, atk: 4, linkCards: ["lk_hound_bite", "lk_hound_guard", "lk_hound_rage"] }
+    };
+
+    const ENEMY_ARCHETYPES = {
+      assault: {
+        name: "哨戒鬼差",
+        hp: 20,
+        slot: "left",
+        note: "攻击手 / 专切前排",
+        roleLabel: "直伤压血",
+        tactic: "持续出刀压血线，逼你尽快处理它。",
+        pattern: [
+          { type: "attack", value: 6, note: "先手试刀，优先削前排血量" },
+          { type: "attack", value: 8, note: "第二刀最重，逼你交防御" },
+          { type: "attack", value: 7, note: "维持伤害压力，不给喘息" }
+        ]
+      },
+      hexer: {
+        name: "缚魂纸偶",
+        hp: 24,
+        slot: "mid",
+        note: "压制手 / 控能断节奏",
+        roleLabel: "控能干扰",
+        tactic: "先压制你的能量，再趁缺口补刀。",
+        pattern: [
+          { type: "weaken", value: 1, note: "下回合让你少 1 点能量" },
+          { type: "attack", value: 5, note: "趁你缺能量时补上直伤" },
+          { type: "weaken", value: 1, note: "继续压制，拖慢你的展开" }
+        ]
+      },
+      bulwark: {
+        name: "纸甲阴兵",
+        hp: 28,
+        slot: "right",
+        note: "自护手 / 叠甲拖回合",
+        roleLabel: "护甲拖场",
+        tactic: "反复给自己上甲，拖长战线保护队友。",
+        pattern: [
+          { type: "buff", value: 6, note: "先立护甲，抬高你的击杀成本" },
+          { type: "attack", value: 5, note: "顶着护甲稳定反击" },
+          { type: "buff", value: 8, note: "再次叠甲，把战线拉长" }
+        ]
+      }
+    };
+
+    const CARDS = {
+
+      ho_cast:    { id: "ho_cast",    type: "hero",   name: "施法",     cost: 1, target: "enemy", action: "hero_cast",       art: "✦", text: "术士施放法术，造成 5 伤害" },
+      ho_curse:   { id: "ho_curse",   type: "hero",   name: "蚀骨诅咒", cost: 1, target: "enemy", action: "hero_curse",      art: "☾", text: "对敌人 +3 蚀骨（回合末扣血）" },
+      ho_drain:   { id: "ho_drain",   type: "hero",   name: "魂之吸取", cost: 1, target: "enemy", action: "hero_drain",      art: "✧", text: "造成 4 伤害，术士回 3 HP" },
+      ho_guard:   { id: "ho_guard",   type: "hero",   name: "暗盾",     cost: 1, target: "hero",  action: "hero_guard",      art: "⬡", text: "术士 +5 护甲" },
+
+      s_imp:      { id: "s_imp",      type: "summon", name: "召唤小鬼", cost: 1, target: "any_ally", action: "summon_imp",   art: "✶", text: "召唤小鬼(5/2)，注入 3 张小鬼联动卡" },
+      s_hound:    { id: "s_hound",    type: "summon", name: "地狱猎犬", cost: 2, target: "any_ally", action: "summon_hound", art: "✹", text: "召唤猎犬(9/4)，注入 3 张猎犬联动卡" },
+
+      sp_bolt:    { id: "sp_bolt",    type: "spell",  name: "暗影箭",   cost: 1, target: "enemy", action: "spell_bolt",     art: "◈", text: "造成 6 伤害" },
+      sp_blast:   { id: "sp_blast",   type: "spell",  name: "腐朽爆发", cost: 2, target: "enemy", action: "spell_blast",    art: "◆", text: "造成 10 伤害" },
+
+      lk_imp_claw:    { id: "lk_imp_claw",    type: "link", linkTo: "imp",   name: "小鬼挥爪", cost: 1, target: "enemy", action: "link_imp_attack",   art: "✢", text: "让小鬼攻击一次", isLink: true },
+      lk_imp_sac:     { id: "lk_imp_sac",     type: "link", linkTo: "imp",   name: "小鬼献祭", cost: 0, target: "none",  action: "link_imp_sac",      art: "🩸", text: "消耗小鬼，抽 2 张", isLink: true },
+      lk_imp_boom:    { id: "lk_imp_boom",    type: "link", linkTo: "imp",   name: "小鬼爆破", cost: 1, target: "enemy", action: "link_imp_boom",     art: "✺", text: "消耗小鬼，造成 小鬼HP 的伤害", isLink: true },
+      lk_hound_bite:  { id: "lk_hound_bite",  type: "link", linkTo: "hound", name: "猎犬撕咬", cost: 1, target: "enemy", action: "link_hound_attack", art: "✢", text: "让猎犬攻击一次", isLink: true },
+      lk_hound_guard: { id: "lk_hound_guard", type: "link", linkTo: "hound", name: "猎犬守卫", cost: 1, target: "hero",  action: "link_hound_guard",  art: "⬢", text: "猎犬+3甲，术士+2甲", isLink: true },
+      lk_hound_rage:  { id: "lk_hound_rage",  type: "link", linkTo: "hound", name: "激怒猎犬", cost: 1, target: "enemy", action: "link_hound_rage",   art: "✸", text: "猎犬+3ATK并立即攻击", isLink: true }
+    };
+
+    const STARTER_DECK_IDS = [
+      "ho_cast", "ho_cast",
+      "ho_curse", "ho_drain", "ho_guard",
+      "s_imp", "s_imp",
+      "s_hound",
+      "sp_bolt", "sp_bolt",
+      "sp_blast"
+    ];
+
+    function makeEnemy(preset = {}) {
+      return {
+        uid: "e_" + Math.random().toString(36).slice(2),
+        name: preset.name || "断罪骑士",
+        face: preset.face || "✠",
+        hp: preset.hp ?? 32,
+        maxHp: preset.maxHp ?? preset.hp ?? 32,
+        block: preset.block || 0,
+        curse: preset.curse || 0,
+        intent: null,
+        slot: preset.slot || "mid",
+        note: preset.note || "背坡上的压迫者",
+        roleLabel: preset.roleLabel || "压迫者",
+        tactic: preset.tactic || "",
+        pattern: (preset.pattern || []).map(step => ({ ...step })),
+        patternIndex: preset.patternIndex || 0
+      };
+    }
+
+
+    let state;
+    let clearNewCardsTimer = null;
+
+    const drag = {
+      active: false,
+      uid: null,
+      pointerId: null,
+      cardEl: null,
+      ghostEl: null,
+      overTarget: null,
+      overKey: null,
+      startX: 0,
+      startY: 0,
+      moved: false
+    };
+
+    function newGame() {
+      state = {
+        hero: makeHero(),
+        summons: [],
+        enemies: [
+          makeEnemy(ENEMY_ARCHETYPES.assault),
+          makeEnemy(ENEMY_ARCHETYPES.hexer),
+          makeEnemy(ENEMY_ARCHETYPES.bulwark)
+        ],
+
+        deck: [],
+        discard: [],
+        hand: [],
+        energy: 2,
+        maxEnergy: 2,
+        handSize: 4,
+        turn: 1,
+        ended: false,
+        selectedCardUid: null,
+        newlyDrawn: [],
+        inspect: null,
+        pendingHex: 0
+      };
+
+
+      state.deck = STARTER_DECK_IDS.map(id => ({ ...CARDS[id], uid: uid() }));
+      shuffle(state.deck);
+      state.enemies.forEach(pickEnemyIntent);
+      draw(state.handSize);
+      logClear();
+      log("战斗开始 · 左侧斩击手 / 中央压制手 / 右侧自护手已经现身", "summon");
+      render();
+
+    }
+
+    function uid() {
+      return Math.random().toString(36).slice(2, 9);
+    }
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function draw(n) {
+      const drawn = [];
+      for (let i = 0; i < n; i++) {
+        if (state.deck.length === 0) {
+          state.deck = shuffle(state.discard);
+          state.discard = [];
+        }
+        if (state.deck.length === 0) break;
+        const next = state.deck.pop();
+        state.hand.push(next);
+        drawn.push(next.uid);
+      }
+      state.newlyDrawn = drawn;
+    }
+
+    function pickEnemyIntent(e) {
+      if (!e.pattern || e.pattern.length === 0) {
+        e.intent = { type: "attack", value: 6, note: "默认攻击" };
+        return;
+      }
+      const step = e.pattern[e.patternIndex % e.pattern.length];
+      e.intent = { ...step };
+      e.patternIndex = (e.patternIndex + 1) % e.pattern.length;
+    }
+
+
+
+    function injectLinkCards(summonTpl) {
+      const tpl = SUMMONS[summonTpl];
+      tpl.linkCards.forEach(cid => state.deck.push({ ...CARDS[cid], uid: uid() }));
+      shuffle(state.deck);
+      log(`注入 ${tpl.name} 联动卡 x${tpl.linkCards.length}`, "inject");
+    }
+
+    function purgeLinkCards(summonTpl) {
+      const filter = c => !(c.isLink && c.linkTo === summonTpl);
+      state.deck = state.deck.filter(filter);
+      state.discard = state.discard.filter(filter);
+      state.hand = state.hand.filter(filter);
+      log(`清除 ${SUMMONS[summonTpl].name} 联动卡`, "inject");
+    }
+
+    function canPlay(c) {
+      if (!c || state.ended) return false;
+      if (c.cost > state.energy) return false;
+      if (c.isLink && !state.summons.some(s => s.tpl === c.linkTo)) return false;
+      if (c.type === "summon") return state.summons.length < 2;
+      if (c.target === "hero") return true;
+      if (c.target === "any_ally") return state.summons.length < 2 || state.summons.length > 0;
+      if (c.target === "summon") return state.summons.length > 0;
+      if (c.target === "enemy") return state.enemies.length > 0;
+      return true;
+    }
+
+    function tryPlay(cardUid, targetType, key) {
+      const idx = state.hand.findIndex(c => c.uid === cardUid);
+      if (idx < 0) return false;
+      const card = state.hand[idx];
+      if (!canPlay(card)) return false;
+
+      if (card.isLink && !state.summons.some(s => s.tpl === card.linkTo)) {
+        log(`${card.name} 失效：对应召唤物已离场`, "hit");
+        state.discard.push(card);
+        state.hand.splice(idx, 1);
+        state.selectedCardUid = null;
+        state.energy -= card.cost;
+        pulseCrystals();
+        render();
+        return true;
+      }
+
+      const ok = execAction(card, targetType, key);
+      if (!ok) return false;
+
+      state.energy -= card.cost;
+      pulseCrystals();
+      state.discard.push(card);
+      state.hand.splice(idx, 1);
+      state.selectedCardUid = null;
+
+      cleanupDead();
+      checkEnd();
+      render();
+      return true;
+    }
+
+    function execAction(card, targetType, key) {
+      switch (card.action) {
+        case "hero_cast": {
+          const e = findEnemyOrFirst(key, targetType);
+          if (!e) return false;
+          dealEnemyDmg(e, 5, getHeroEl());
+          flashUnit(state.hero.uid);
+          return true;
+        }
+        case "hero_curse": {
+          const e = findEnemyOrFirst(key, targetType);
+          if (!e) return false;
+          e.curse += 3;
+          floatOn(getEnemyEl(e.uid), "+3 蚀骨", "buff");
+          flashUnit(state.hero.uid);
+          log("诅咒缠上敌人", "buff");
+          return true;
+        }
+        case "hero_drain": {
+          const e = findEnemyOrFirst(key, targetType);
+          if (!e) return false;
+          dealEnemyDmg(e, 4, getHeroEl());
+          const heal = Math.min(3, state.hero.maxHp - state.hero.hp);
+          state.hero.hp += heal;
+          floatOn(getHeroEl(), `+${heal}`, "heal");
+          flashUnit(state.hero.uid);
+          return true;
+        }
+        case "hero_guard": {
+          state.hero.block += 5;
+          floatOn(getHeroEl(), "+5 护甲", "buff");
+          return true;
+        }
+
+        case "summon_imp": {
+          if (state.summons.length >= 2) return false;
+          const s = makeSummon("imp");
+          state.summons.push(s);
+          injectLinkCards("imp");
+          log(`召唤 ${s.name}`, "summon");
+          screenFlash();
+          return true;
+        }
+        case "summon_hound": {
+          if (state.summons.length >= 2) return false;
+          const s = makeSummon("hound");
+          state.summons.push(s);
+          injectLinkCards("hound");
+          log(`召唤 ${s.name}`, "summon");
+          screenFlash();
+          return true;
+        }
+
+        case "spell_bolt": {
+          const e = findEnemyOrFirst(key, targetType);
+          if (!e) return false;
+          dealEnemyDmg(e, 6, getHeroEl());
+          return true;
+        }
+        case "spell_blast": {
+          const e = findEnemyOrFirst(key, targetType);
+          if (!e) return false;
+          dealEnemyDmg(e, 10, getHeroEl());
+          return true;
+        }
+
+        case "link_imp_attack": {
+          const imp = state.summons.find(s => s.tpl === "imp");
+          if (!imp) return false;
+          const e = findEnemyOrFirst(key, targetType);
+          if (!e) return false;
+          dealEnemyDmg(e, imp.atk, getSummonEl(imp.uid));
+          flashUnit(imp.uid);
+          return true;
+        }
+        case "link_imp_sac": {
+          const imp = state.summons.find(s => s.tpl === "imp");
+          if (!imp) return false;
+          imp.hp = 0;
+          imp.dead = true;
+          draw(2);
+          floatOn(getSummonEl(imp.uid), "+2 抽牌", "link");
+          log("献祭小鬼，抽 2 张", "inject");
+          return true;
+        }
+        case "link_imp_boom": {
+          const imp = state.summons.find(s => s.tpl === "imp");
+          if (!imp) return false;
+          const e = findEnemyOrFirst(key, targetType);
+          if (!e) return false;
+          const dmg = imp.hp;
+          dealEnemyDmg(e, dmg, getSummonEl(imp.uid));
+          imp.hp = 0;
+          imp.dead = true;
+          log(`小鬼爆破，造成 ${dmg} 伤害`, "hit");
+          return true;
+        }
+
+        case "link_hound_attack": {
+          const h = state.summons.find(s => s.tpl === "hound");
+          if (!h) return false;
+          const e = findEnemyOrFirst(key, targetType);
+          if (!e) return false;
+          const dmg = h.atk + (h.buff || 0);
+          dealEnemyDmg(e, dmg, getSummonEl(h.uid));
+          flashUnit(h.uid);
+          return true;
+        }
+        case "link_hound_guard": {
+          const h = state.summons.find(s => s.tpl === "hound");
+          if (!h) return false;
+          h.block += 3;
+          state.hero.block += 2;
+          floatOn(getSummonEl(h.uid), "+3 甲", "buff");
+          floatOn(getHeroEl(), "+2 甲", "buff");
+          return true;
+        }
+        case "link_hound_rage": {
+          const h = state.summons.find(s => s.tpl === "hound");
+          if (!h) return false;
+          h.buff = (h.buff || 0) + 3;
+          floatOn(getSummonEl(h.uid), "+3 ATK", "buff");
+          const e = findEnemyOrFirst(key, targetType);
+          if (!e) return false;
+          const dmg = h.atk + h.buff;
+          dealEnemyDmg(e, dmg, getSummonEl(h.uid));
+          flashUnit(h.uid);
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function makeSummon(tplName) {
+      const tpl = SUMMONS[tplName];
+      return {
+        uid: "s_" + uid(),
+        tpl: tplName,
+        name: tpl.name,
+        face: tpl.face,
+        hp: tpl.hp,
+        maxHp: tpl.hp,
+        atk: tpl.atk,
+        block: 0,
+        buff: 0,
+        dead: false
+      };
+    }
+
+    function findEnemyOrFirst(key, targetType) {
+      if (targetType === "enemy" && key) {
+        const e = state.enemies.find(x => x.uid === key && x.hp > 0);
+        if (e) return e;
+      }
+      return state.enemies.find(e => e.hp > 0) || null;
+    }
+
+    function dealEnemyDmg(e, n, sourceEl) {
+      const el = getEnemyEl(e.uid);
+      if (sourceEl && el) flyLine(sourceEl, el);
+      const blocked = Math.min(e.block, n);
+      const dealt = Math.max(0, n - blocked);
+      e.block -= blocked;
+      e.hp = Math.max(0, e.hp - dealt);
+      floatOn(el, `-${dealt}`, "dmg");
+      shake(el);
+      screenFlash();
+      log(`造成 ${dealt} 伤害`, "hit");
+    }
+
+    function dealHeroDmg(n) {
+      const blocked = Math.min(state.hero.block, n);
+      const dealt = Math.max(0, n - blocked);
+      state.hero.block -= blocked;
+      state.hero.hp = Math.max(0, state.hero.hp - dealt);
+      floatOn(getHeroEl(), `-${dealt}`, "dmg");
+      shake(getHeroEl());
+    }
+
+    function dealSummonDmg(s, n) {
+      const blocked = Math.min(s.block, n);
+      const dealt = Math.max(0, n - blocked);
+      s.block -= blocked;
+      s.hp = Math.max(0, s.hp - dealt);
+      floatOn(getSummonEl(s.uid), `-${dealt}`, "dmg");
+      shake(getSummonEl(s.uid));
+      if (s.hp <= 0) s.dead = true;
+    }
+
+    function cleanupDead() {
+      const deadSummons = state.summons.filter(s => s.dead);
+      deadSummons.forEach(s => {
+        log(`${s.name} 陨落`, "hit");
+        purgeLinkCards(s.tpl);
+      });
+      state.summons = state.summons.filter(s => !s.dead);
+      state.enemies = state.enemies.filter(e => e.hp > 0);
+    }
+
+    function endTurn() {
+      if (state.ended) return;
+
+      state.selectedCardUid = null;
+      state.hero.hex = 0;
+      state.discard.push(...state.hand);
+      state.hand = [];
+
+      state.enemies.forEach(e => {
+        if (e.hp <= 0) return;
+        const it = e.intent;
+        if (!it) return;
+
+        if (it.type === "attack") {
+          if (state.summons.length > 0) {
+            const t = state.summons[0];
+            dealSummonDmg(t, it.value);
+            log(`敌人攻击 ${t.name}`, "hit");
+          } else {
+            dealHeroDmg(it.value);
+            log("敌人攻击术士", "hit");
+          }
+        } else if (it.type === "weaken") {
+          state.pendingHex = Math.max(state.pendingHex, it.value);
+          state.hero.hex = state.pendingHex;
+          floatOn(getHeroEl(), `能量-${it.value}`, "buff");
+          log(`敌人施加压制，下回合 -${it.value} 能量`, "buff");
+        } else if (it.type === "buff") {
+          e.block += it.value;
+          log(`敌人自护 +${it.value} 护甲`, "buff");
+        }
+
+        if (e.curse > 0 && e.hp > 0) {
+          const d = e.curse;
+          e.hp = Math.max(0, e.hp - d);
+          floatOn(getEnemyEl(e.uid), `蚀骨-${d}`, "buff");
+          log(`蚀骨扣 ${d}`, "buff");
+        }
+      });
+
+
+      cleanupDead();
+      checkEnd();
+      if (state.ended) return render();
+
+      const hasCurse = state.enemies.some(e => e.curse > 0);
+      const hexPenalty = state.pendingHex;
+      state.turn += 1;
+      state.energy = Math.max(0, state.maxEnergy + (hasCurse ? 1 : 0) - hexPenalty);
+      state.pendingHex = 0;
+      state.hero.block = 0;
+      state.hero.hex = hexPenalty;
+      state.summons.forEach(s => {
+        s.block = 0;
+        s.buff = 0;
+      });
+      state.enemies.forEach(pickEnemyIntent);
+      draw(state.handSize);
+      if (hasCurse) log("阴影汲取 +1 能量", "buff");
+      if (hexPenalty > 0) log(`压制生效：本回合 -${hexPenalty} 能量`, "hit");
+      render();
+
+    }
+
+    function checkEnd() {
+      if (state.enemies.length === 0) {
+        state.ended = true;
+        log("✦ 胜利 ✦", "summon");
+      } else if (state.hero.hp <= 0) {
+        state.ended = true;
+        log("✧ 败北 ✧", "hit");
+      }
+    }
+
+    function getHeroEl() {
+      return document.querySelector('.hero.actor');
+    }
+
+    function getSummonEl(id) {
+      return document.querySelector(`.summon.actor[data-uid="${id}"]`);
+    }
+
+    function getEnemyEl(id) {
+      return document.querySelector(`.enemy.actor[data-uid="${id}"]`);
+    }
+
+    function render() {
+      document.getElementById("turnBadge").textContent = `第 ${state.turn} 回合`;
+      document.getElementById("deckCount").textContent = state.deck.length;
+      document.getElementById("discardCount").textContent = state.discard.length;
+      document.getElementById("handCount").textContent = state.hand.length;
+
+      sanitizeInspect();
+      renderEnemies();
+      renderAllies();
+      renderHand();
+      renderDetail();
+
+      document.getElementById("endTurnBtn").textContent = state.ended ? "战斗结束" : "结束回合";
+      queueClearNewCards();
+
+    }
+
+    function renderMana() {}
+
+    function pulseCrystals() {
+      document.querySelectorAll(".crystal").forEach(c => {
+        c.classList.remove("pulse");
+        void c.offsetWidth;
+        c.classList.add("pulse");
+      });
+    }
+
+    function getIntentMeta(intent) {
+      if (!intent) return {
+        icon: "·",
+        badgeClass: "attack",
+        title: "待机",
+        short: "0",
+        note: "本回合暂无动作"
+      };
+      if (intent.type === "attack") {
+        return {
+          icon: "⚔",
+          badgeClass: "attack",
+          title: `攻击 ${intent.value}`,
+          short: `${intent.value}`,
+          note: intent.note || "直击你的前排单位"
+        };
+      }
+      if (intent.type === "weaken") {
+        return {
+          icon: "↓",
+          badgeClass: "debuff",
+          title: `压制 ${intent.value}`,
+          short: `${intent.value}`,
+          note: intent.note || `下回合让你少 ${intent.value} 点能量`
+        };
+      }
+      return {
+        icon: "↑",
+        badgeClass: "buff",
+        title: `自护 ${intent.value}`,
+        short: `${intent.value}`,
+        note: intent.note || `为自己施加 ${intent.value} 点护甲`
+      };
+    }
+
+    function describeIntent(intent) {
+      return getIntentMeta(intent).title;
+    }
+
+    function getIntentSentence(intent) {
+      if (!intent) return "暂时不会行动。";
+      if (intent.type === "attack") return `即将攻击你，造成 ${intent.value} 点伤害。`;
+      if (intent.type === "weaken") return `即将对你施加负面效果：下回合少 ${intent.value} 点能量。`;
+      return `即将强化自己，获得 ${intent.value} 点护甲。`;
+    }
+
+    function describePattern(unit) {
+      if (!unit?.pattern?.length) return "-";
+      return unit.pattern.map(step => {
+        const meta = getIntentMeta(step);
+        return `${meta.icon}${step.value}`;
+      }).join(" → ");
+    }
+
+
+    function renderIntentBadge(intent) {
+
+      if (!intent) return "";
+      const meta = getIntentMeta(intent);
+      return `
+        <div class="intent-badge ${meta.badgeClass}" aria-label="${meta.title}">
+          <span class="badge-icon">${meta.icon}</span>
+          <span class="badge-value">${meta.short}</span>
+        </div>
+      `;
+    }
+
+    function getHpPercent(unit) {
+      if (!unit || !unit.maxHp) return 0;
+      return Math.max(0, Math.min(100, Math.round(unit.hp / unit.maxHp * 100)));
+    }
+
+    function renderHpStack(unit) {
+      return `
+        <div class="health-stack">
+          <div class="bar-heart"></div>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:${getHpPercent(unit)}%"></div>
+            <div class="bar-text">${unit.hp}/${unit.maxHp}</div>
+          </div>
+        </div>
+      `;
+    }
+
+
+    function isInspecting(type, uid) {
+      return !!state.inspect && state.inspect.type === type && state.inspect.uid === uid;
+    }
+
+    function toggleInspect(type, uid) {
+      if (isInspecting(type, uid)) state.inspect = null;
+      else state.inspect = { type, uid };
+      render();
+    }
+
+    function sanitizeInspect() {
+      if (!state.inspect) return;
+      if (state.inspect.type === "hero") return;
+      if (state.inspect.type === "enemy" && !state.enemies.some(e => e.uid === state.inspect.uid)) {
+        state.inspect = null;
+      }
+      if (state.inspect?.type === "summon" && !state.summons.some(s => s.uid === state.inspect.uid)) {
+        state.inspect = null;
+      }
+    }
+
+    function getInspectUnit() {
+      if (!state.inspect) return null;
+      if (state.inspect.type === "hero") return state.hero;
+      if (state.inspect.type === "enemy") return state.enemies.find(e => e.uid === state.inspect.uid) || null;
+      if (state.inspect.type === "summon") return state.summons.find(s => s.uid === state.inspect.uid) || null;
+      return null;
+    }
+
+    function detailRow(label, value) {
+      return `
+        <div class="detail-row">
+          <div class="detail-label">${label}</div>
+          <div class="detail-value">${value}</div>
+        </div>
+      `;
+    }
+
+    function renderDetail() {
+      const layer = document.getElementById("detailLayer");
+      if (!layer) return;
+      const unit = getInspectUnit();
+      if (!unit) {
+        layer.classList.remove("active");
+        layer.innerHTML = "";
+        return;
+      }
+      layer.classList.add("active");
+
+      const type = state.inspect.type;
+      let flag = "主角";
+      let note = `当前 ${state.energy} 点能量，攻击 ${state.hero.atk}。`;
+      let badge = `<div class="detail-intent hero"><span class="badge-icon">✦</span></div>`;
+
+      if (type === "enemy") {
+        const meta = getIntentMeta(unit.intent);
+        flag = "敌方单位";
+        note = getIntentSentence(unit.intent);
+        badge = `
+          <div class="detail-intent ${meta.badgeClass}">
+            <span class="badge-icon">${meta.icon}</span>
+            <span class="badge-value">${meta.short}</span>
+          </div>
+        `;
+      } else if (type === "summon") {
+        flag = "召唤物";
+        const atk = unit.atk + (unit.buff || 0);
+        note = unit.block > 0 ? `当前攻击 ${atk}，护甲 ${unit.block}。` : `当前攻击 ${atk}。`;
+        badge = `<div class="detail-intent summon"><span class="badge-icon">${unit.face}</span></div>`;
+      } else if (unit.hex > 0) {
+        note = `当前 ${state.energy} 点能量，已被压制：本回合少 ${unit.hex} 点能量。`;
+      }
+
+      layer.innerHTML = `
+        <div class="detail-pop">
+          <div class="detail-top">
+            <div>
+              <div class="detail-flag">${flag}</div>
+              <div class="detail-name">${unit.name}</div>
+              <div class="detail-note">${note}</div>
+            </div>
+            ${badge}
+          </div>
+        </div>
+      `;
+    }
+
+
+    function renderEnemies() {
+      const zone = document.getElementById("enemyZone");
+      zone.innerHTML = "";
+      state.enemies.forEach((e, index) => {
+        const el = document.createElement("div");
+        const slot = e.slot || ["left", "mid", "right"][index] || "mid";
+        el.className = `enemy actor slot-${slot}${isInspecting("enemy", e.uid) ? " is-focused" : ""}`;
+        el.dataset.uid = e.uid;
+        el.innerHTML = `
+          ${renderHpStack(e)}
+          <div class="intent-stack">${renderIntentBadge(e.intent)}</div>
+          <div class="ground-ring"></div>
+          <div class="figure enemy-figure">
+            <span class="aura"></span>
+            <span class="horn h1"></span>
+            <span class="horn h2"></span>
+            <span class="head"></span>
+            <span class="body"></span>
+            <span class="cape"></span>
+            <span class="weapon"></span>
+          </div>
+        `;
+        el.addEventListener("click", ev => {
+          ev.stopPropagation();
+          toggleInspect("enemy", e.uid);
+        });
+        zone.appendChild(el);
+      });
+    }
+
+
+    function renderAllies() {
+      const zone = document.getElementById("allyZone");
+      zone.innerHTML = "";
+      zone.appendChild(buildHeroEl(state.hero));
+      if (state.summons[0]) zone.appendChild(buildSummonEl(state.summons[0]));
+      if (state.summons[1]) zone.appendChild(buildSummonEl(state.summons[1]));
+    }
+
+    function buildHeroEl(h) {
+      const el = document.createElement("div");
+      el.className = `hero actor${isInspecting("hero", h.uid) ? " is-focused" : ""}`;
+      el.dataset.uid = h.uid;
+      const displayMax = Math.max(state.maxEnergy, state.energy);
+      const crystals = Array.from({ length: displayMax }, (_, i) => `<div class="crystal${i >= state.energy ? " empty" : ""}"></div>`).join("");
+      el.innerHTML = `
+        ${renderHpStack(h)}
+        <div class="hero-energy">${crystals}</div>
+        <div class="ground-ring"></div>
+        <div class="figure hero-figure">
+          <span class="aura"></span>
+          <span class="hat"></span>
+          <span class="head"></span>
+          <span class="body"></span>
+          <span class="cape"></span>
+          <span class="arm"></span>
+          <span class="weapon"></span>
+          <span class="extra"></span>
+        </div>
+      `;
+      el.addEventListener("click", ev => {
+        ev.stopPropagation();
+        toggleInspect("hero", h.uid);
+      });
+      return el;
+    }
+
+    function buildSummonEl(s) {
+      const el = document.createElement("div");
+      el.className = `summon actor ${s.tpl} enter-anim${isInspecting("summon", s.uid) ? " is-focused" : ""}`;
+      el.dataset.uid = s.uid;
+      const figure = s.tpl === "imp"
+        ? `
+          <div class="figure">
+            <span class="aura"></span>
+            <span class="horn h1"></span>
+            <span class="horn h2"></span>
+            <span class="head"></span>
+            <span class="body"></span>
+            <span class="tail"></span>
+          </div>`
+        : `
+          <div class="figure">
+            <span class="aura"></span>
+            <span class="ear"></span>
+            <span class="head"></span>
+            <span class="muzzle"></span>
+            <span class="body"></span>
+            <span class="tail"></span>
+            <span class="arm"></span>
+          </div>`;
+
+      el.innerHTML = `
+        ${renderHpStack(s)}
+        <div class="ground-ring"></div>
+        ${figure}
+      `;
+      el.addEventListener("click", ev => {
+        ev.stopPropagation();
+        toggleInspect("summon", s.uid);
+      });
+      return el;
+    }
+
+
+    function isLandscapeLayout() {
+      return document.body.classList.contains("landscape-preview");
+    }
+
+    function renderHand() {
+      const fan = document.getElementById("handFan");
+      fan.innerHTML = "";
+      const n = state.hand.length;
+      if (n === 0) return;
+
+      const landscape = isLandscapeLayout();
+      const maxAngle = landscape ? 9 : 13;
+      const spread = landscape ? Math.min(86, 320 / Math.max(n, 3)) : Math.min(72, 236 / Math.max(n, 3));
+      const arcDepth = landscape ? (n > 2 ? 8 : 3) : (n > 2 ? 12 : 4);
+      const cardWidth = landscape ? 72 : 84;
+      const cardHeight = landscape ? 108 : 130;
+      const selectedWidth = landscape ? 94 : 114;
+      const selectedHeight = landscape ? 142 : 174;
+      const selectedLift = landscape ? 42 : 62;
+
+      state.hand.forEach((c, i) => {
+        const card = document.createElement("div");
+        const ok = canPlay(c);
+        const selected = state.selectedCardUid === c.uid;
+        card.className = `card type-${c.type}${ok ? "" : " disabled"}${selected ? " selected" : ""}`;
+        card.dataset.uid = c.uid;
+
+        const mid = (n - 1) / 2;
+        const dx = (i - mid) * spread;
+        const rot = ((i - mid) / Math.max(mid, 1)) * maxAngle;
+        const dy = Math.abs(i - mid) * arcDepth / Math.max(mid, 1);
+        const width = selected ? selectedWidth : cardWidth;
+        const height = selected ? selectedHeight : cardHeight;
+        const finalTransform = selected
+          ? `translateX(0px) translateY(${dy - selectedLift}px) rotate(0deg) scale(1)`
+          : `translateX(0px) translateY(${dy}px) rotate(${rot}deg) scale(1)`;
+
+
+        card.style.left = `calc(50% + ${dx}px)`;
+        card.style.marginLeft = `${-width / 2}px`;
+        card.style.width = `${width}px`;
+        card.style.height = `${height}px`;
+        card.style.transform = finalTransform;
+        card.style.zIndex = selected ? 200 : 10 + i;
+
+        card.innerHTML = `
+          <div class="card-inner">
+            <div class="cost-gem">${c.cost}</div>
+            ${c.isLink ? '<div class="card-link-mark">联动</div>' : ""}
+            <div class="card-art">${c.art}</div>
+            <div class="card-name">${c.name}</div>
+            <div class="card-desc">${c.text}</div>
+          </div>
+        `;
+
+        card.addEventListener("pointerdown", ev => startDrag(ev, c.uid, card));
+        card.addEventListener("click", () => {
+          state.selectedCardUid = state.selectedCardUid === c.uid ? null : c.uid;
+          renderHand();
+        });
+        fan.appendChild(card);
+
+        if (state.newlyDrawn.includes(c.uid)) {
+          card.animate(
+            [
+              { transform: `translateX(${landscape ? 110 : 150}px) translateY(${dy - (landscape ? 64 : 90)}px) rotate(${rot + 18}deg) scale(0.92)`, opacity: 0.2 },
+              { transform: finalTransform, opacity: 1 }
+
+            ],
+            { duration: 420, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)", fill: "both" }
+          );
+        }
+      });
+    }
+
+    function startDrag(e, uid, cardEl) {
+      const card = state.hand.find(c => c.uid === uid);
+      if (!card) return;
+
+      drag.active = true;
+      drag.uid = uid;
+      drag.pointerId = e.pointerId;
+      drag.cardEl = cardEl;
+      drag.overTarget = null;
+      drag.overKey = null;
+      drag.startX = e.clientX;
+      drag.startY = e.clientY;
+      drag.moved = false;
+
+      cardEl.classList.add("lifted");
+      document.addEventListener("pointermove", onDragMove);
+      document.addEventListener("pointerup", onDragEnd);
+      document.addEventListener("pointercancel", onDragEnd);
+    }
+
+    function onDragMove(e) {
+      if (!drag.active || e.pointerId !== drag.pointerId) return;
+      const card = state.hand.find(c => c.uid === drag.uid);
+      if (!card) return;
+      const dx = e.clientX - drag.startX;
+      const dy = e.clientY - drag.startY;
+
+      if (!drag.moved && Math.hypot(dx, dy) > 10 && canPlay(card)) {
+        drag.moved = true;
+        drag.cardEl.classList.remove("lifted");
+        drag.cardEl.classList.add("dragging");
+        const ghost = document.createElement("div");
+        ghost.className = "drag-ghost";
+        ghost.innerHTML = `<div class="${drag.cardEl.className.replace(' dragging', '').trim()}" style="position:relative;width:100%;height:100%;">${drag.cardEl.innerHTML}</div>`;
+        document.body.appendChild(ghost);
+        drag.ghostEl = ghost;
+      }
+
+      if (drag.moved) {
+        drag.ghostEl.style.left = `${e.clientX}px`;
+        drag.ghostEl.style.top = `${e.clientY}px`;
+        refreshOver(e.clientX, e.clientY);
+      }
+    }
+
+    function onDragEnd(e) {
+      if (!drag.active || e.pointerId !== drag.pointerId) return;
+      const t = drag.overTarget;
+      const k = drag.overKey;
+      const u = drag.uid;
+      const moved = drag.moved;
+      cleanupDrag();
+
+      const card = state.hand.find(c => c.uid === u);
+      if (!card) return;
+      if (!moved) return;
+      if (!canPlay(card)) return;
+
+      if (card.type === "summon" && t === "ally-zone") tryPlay(u, "summon", null);
+      else if (card.target === "hero" && t === "hero") tryPlay(u, "hero", null);
+      else if (card.target === "enemy" && t === "enemy") tryPlay(u, "enemy", k);
+      else if (card.target === "none" && t === "ally-zone") tryPlay(u, "none", null);
+    }
+
+    function refreshOver(x, y) {
+      const card = state.hand.find(c => c.uid === drag.uid);
+      if (!card) return;
+
+      let over = null;
+      let key = null;
+
+      if (card.target === "enemy") {
+        document.querySelectorAll(".enemy.actor").forEach(el => {
+          const r = el.getBoundingClientRect();
+          if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+            over = "enemy";
+            key = el.dataset.uid;
+          }
+        });
+      } else if (card.target === "hero") {
+        const el = getHeroEl();
+        if (el) {
+          const r = el.getBoundingClientRect();
+          if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+            over = "hero";
+            key = state.hero.uid;
+          }
+        }
+      } else if (card.type === "summon" || card.target === "none" || card.target === "any_ally") {
+        const zone = document.getElementById("allyZone");
+        const r = zone.getBoundingClientRect();
+        if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+          over = "ally-zone";
+          key = null;
+        }
+      }
+
+      drag.overTarget = over;
+      drag.overKey = key;
+      updateHighlight(over, key);
+    }
+
+    function updateHighlight(over, key) {
+      document.querySelectorAll(".actor.drop-ready, #allyZone.drop-ready").forEach(el => el.classList.remove("drop-ready"));
+
+      if (over === "enemy") {
+        const el = document.querySelector(`.enemy.actor[data-uid="${key}"]`);
+        if (el) el.classList.add("drop-ready");
+      } else if (over === "hero") {
+        getHeroEl()?.classList.add("drop-ready");
+      } else if (over === "ally-zone") {
+        document.getElementById("allyZone")?.classList.add("drop-ready");
+        getHeroEl()?.classList.add("drop-ready");
+      }
+    }
+
+    function cleanupDrag() {
+      if (drag.cardEl) {
+        drag.cardEl.classList.remove("dragging");
+        drag.cardEl.classList.remove("lifted");
+      }
+      if (drag.ghostEl && drag.ghostEl.parentNode) drag.ghostEl.parentNode.removeChild(drag.ghostEl);
+      document.querySelectorAll(".actor.drop-ready, #allyZone.drop-ready").forEach(el => el.classList.remove("drop-ready"));
+
+      drag.active = false;
+      drag.uid = null;
+      drag.pointerId = null;
+      drag.cardEl = null;
+      drag.ghostEl = null;
+      drag.overTarget = null;
+      drag.overKey = null;
+      drag.moved = false;
+
+      document.removeEventListener("pointermove", onDragMove);
+      document.removeEventListener("pointerup", onDragEnd);
+      document.removeEventListener("pointercancel", onDragEnd);
+    }
+
+    function floatOn(el, text, cls = "dmg") {
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      const f = document.createElement("div");
+      f.className = `float-num ${cls}`;
+      f.textContent = text;
+      f.style.left = `${r.left + r.width / 2}px`;
+      f.style.top = `${r.top + r.height * 0.34}px`;
+      document.body.appendChild(f);
+      setTimeout(() => f.remove(), 1000);
+    }
+
+    function shake(el) {
+      if (!el) return;
+      el.classList.remove("unit-hit");
+      void el.offsetWidth;
+      el.classList.add("unit-hit");
+    }
+
+    function flashUnit(unitUid) {
+      const el = document.querySelector(`.actor[data-uid="${unitUid}"]`);
+      if (!el) return;
+      el.classList.remove("just-acted");
+      void el.offsetWidth;
+      el.classList.add("just-acted");
+    }
+
+    function screenFlash() {
+      const f = document.createElement("div");
+      f.className = "screen-flash";
+      document.body.appendChild(f);
+      setTimeout(() => f.remove(), 260);
+    }
+
+    function flyLine(fromEl, toEl) {
+      if (!fromEl || !toEl) return;
+      const f = fromEl.getBoundingClientRect();
+      const t = toEl.getBoundingClientRect();
+      const sx = f.left + f.width / 2;
+      const sy = f.top + f.height / 2;
+      const ex = t.left + t.width / 2;
+      const ey = t.top + t.height / 2;
+      const len = Math.hypot(ex - sx, ey - sy);
+      const ang = Math.atan2(ey - sy, ex - sx) * 180 / Math.PI;
+
+      const line = document.createElement("div");
+      line.className = "strike-flash";
+      line.style.cssText = `
+        left: ${sx}px;
+        top: ${sy - 2}px;
+        width: ${len}px;
+        height: 4px;
+        background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,245,213,0.86), rgba(255,162,134,0.7));
+        transform-origin: 0% 50%;
+        transform: rotate(${ang}deg);
+        border-radius: 999px;
+        box-shadow: 0 0 10px rgba(255, 238, 192, 0.22);
+      `;
+      document.body.appendChild(line);
+      setTimeout(() => line.remove(), 320);
+    }
+
+    function setHint() {}
+
+    function queueClearNewCards() {
+      if (clearNewCardsTimer) clearTimeout(clearNewCardsTimer);
+      clearNewCardsTimer = setTimeout(() => {
+        if (!state) return;
+        state.newlyDrawn = [];
+      }, 460);
+    }
+
+    function log(text, cls = "") {
+      const el = document.getElementById("log");
+      const line = document.createElement("div");
+      if (cls === "hit") line.className = "log-hit";
+      else if (cls === "summon") line.className = "log-summon";
+      else if (cls === "buff") line.className = "log-buff";
+      else if (cls === "inject") line.className = "log-inject";
+      line.textContent = `• ${text}`;
+      el.prepend(line);
+      while (el.children.length > 18) el.lastChild.remove();
+    }
+
+    function logClear() {
+      document.getElementById("log").innerHTML = "";
+    }
+
+    document.getElementById("endTurnBtn").addEventListener("click", endTurn);
+    document.querySelector(".battle-stage").addEventListener("click", ev => {
+      if (ev.target === ev.currentTarget || ev.target.classList.contains("battle-stage") || ev.target.classList.contains("backdrop")) {
+        state.inspect = null;
+        render();
+      }
+    });
+    window.addEventListener("resize", () => renderHand());
+
+    newGame();
+
+  </script>
+</body>
+</html>

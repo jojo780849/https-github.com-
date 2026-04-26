@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
-  <title>Claw 機制鏡像 v1.6</title>
+  <title>Claw 機制鏡像 v1.7</title>
   <style>
     :root{--bg:#111;--panel:#1b1b1b;--card:#f5e8c8;--ink:#1a1712;--red:#d85c5c;--gold:#f0c977;--blue:#6cb8ff;--ok:#74d68f}
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
@@ -36,6 +36,9 @@
     .enemy.enemy_far{left:0;top:48px;width:134px}
     .enemy.enemy_mid{left:122px;top:24px;width:142px}
     .enemy.enemy_near{left:256px;top:0;width:134px}
+    .enemy-layer.single{width:260px;height:190px;right:34px;top:44px}
+    .enemy-layer.single .enemy.enemy_near{left:72px;top:14px;width:162px}
+
 
     .enemy.sel{outline:2px solid var(--gold)}
     .enemy.hover{outline:2px solid #8dd3ff;transform:translateY(-4px);box-shadow:0 0 0 2px rgba(141,211,255,.2),0 10px 20px rgba(0,0,0,.28)}
@@ -91,6 +94,9 @@
       .enemy.enemy_far{left:0;top:38px;width:116px}
       .enemy.enemy_mid{left:106px;top:18px;width:124px}
       .enemy.enemy_near{left:224px;top:0;width:118px}
+      .enemy-layer.single{width:222px;height:150px;right:12px;top:38px}
+      .enemy-layer.single .enemy.enemy_near{left:56px;top:8px;width:150px}
+
       .enemy .name{font-size:11px}
       .enemy .hp,.intent{font-size:10px}
       .hud-left{left:10px;bottom:14px;padding:6px 8px}
@@ -113,6 +119,9 @@
       .enemy.enemy_far{left:0;top:42px;width:124px}
       .enemy.enemy_mid{left:78px;top:24px;width:132px}
       .enemy.enemy_near{left:154px;top:0;width:96px}
+      .enemy-layer.single{width:200px;height:170px;right:20px;top:82px}
+      .enemy-layer.single .enemy.enemy_near{left:48px;top:12px;width:132px}
+
       .hand{width:min(410px,calc(100vw - 12px));gap:6px}
       .card{flex:0 0 92px;width:92px;min-height:132px}
       .ctl{width:min(410px,calc(100vw - 12px))}
@@ -123,7 +132,7 @@
 <body>
   <div class="app">
     <div class="row between top">
-      <div class="title">幽塔・術士（H5 機制鏡像 v1.6）</div>
+      <div class="title">幽塔・術士（H5 機制鏡像 v1.7）</div>
       <div class="pill" id="turn">回合 1</div>
     </div>
     <div class="meta">
@@ -132,7 +141,7 @@
     </div>
 
     <section class="battle" id="battle">
-      <div class="hint" id="hint">v1.6 起始牌組：攻擊、防禦 + 小鬼聯動</div>
+      <div class="hint" id="hint">v1.7 單怪測試：攻擊、防禦 + 小鬼聯動節奏</div>
 
 
       <div class="hero-stand"></div>
@@ -181,9 +190,7 @@ const INJECTION_TEMPLATES = {
 };
 
 const ENEMY_PRESET = [
-  {id:"enemy_far",name:"紙甲陰兵",maxHp:24,pattern:[6,7,8],idx:0},
-  {id:"enemy_mid",name:"請魂紙偶",maxHp:30,pattern:[7,9,11],idx:0},
-  {id:"enemy_near",name:"哨戒鬼差",maxHp:38,pattern:[8,10,12],idx:0}
+  {id:"enemy_near",name:"哨戒鬼差（測試）",maxHp:34,pattern:[6,7,8],idx:0}
 ];
 
 const S={
@@ -243,7 +250,9 @@ function renderEnergy(){
 }
 
 function renderEnemies(){
-  const root=document.getElementById("enemies");root.innerHTML="";
+  const root=document.getElementById("enemies");
+  root.innerHTML="";
+  root.classList.toggle("single",S.enemies.length===1);
   const posMap={enemy_far:"enemy_far",enemy_mid:"enemy_mid",enemy_near:"enemy_near"};
   S.enemies.forEach(e=>{
     const d=document.createElement("div");

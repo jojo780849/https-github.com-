@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
-  <title>Claw 機制鏡像 v1.3</title>
+  <title>Claw 機制鏡像 v1.4</title>
   <style>
     :root{--bg:#111;--panel:#1b1b1b;--card:#f5e8c8;--ink:#1a1712;--red:#d85c5c;--gold:#f0c977;--blue:#6cb8ff;--ok:#74d68f}
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
@@ -71,6 +71,33 @@
     .drag-line{position:fixed;left:0;top:0;height:3px;background:linear-gradient(90deg,rgba(130,210,255,.15),rgba(130,210,255,.95));transform-origin:0 50%;border-radius:999px;box-shadow:0 0 10px rgba(130,210,255,.45)}
     .drag-dot{position:fixed;left:0;top:0;width:14px;height:14px;border-radius:50%;background:#8dd3ff;box-shadow:0 0 12px rgba(141,211,255,.9);transform:translate(-50%,-50%)}
 
+    @media (orientation:landscape) and (max-height:430px) and (min-width:900px){
+      .app{max-width:926px;padding:4px 8px calc(env(safe-area-inset-bottom) + 4px)}
+      .top{margin-bottom:4px}
+      .title{font-size:14px}
+      .pill{padding:4px 8px;font-size:11px}
+      .battle{height:clamp(220px,58dvh,270px);min-height:220px;border-radius:14px}
+      .hint{left:8px;right:8px;top:8px;padding:4px 9px;font-size:11px}
+      .hero-stand{left:8px;bottom:50px;width:172px;height:152px}
+      .hero-panel{left:10px;bottom:58px;width:152px;padding:6px}
+      .enemy-layer{right:10px;top:32px;width:342px;height:170px}
+      .enemy{padding:6px}
+      .enemy.enemy_far{left:0;top:38px;width:116px}
+      .enemy.enemy_mid{left:106px;top:18px;width:124px}
+      .enemy.enemy_near{left:224px;top:0;width:118px}
+      .enemy .name{font-size:11px}
+      .enemy .hp,.intent{font-size:10px}
+      .hud-left{left:10px;bottom:14px;padding:6px 8px}
+      .hand{bottom:calc(env(safe-area-inset-bottom) + 42px);width:min(926px,calc(100vw - 8px));gap:6px;padding:0 6px 2px}
+      .card{flex:0 0 84px;width:84px;min-height:112px;padding:7px}
+      .card .cost{width:22px;height:22px;font-size:12px}
+      .card h4{margin:22px 0 3px;font-size:12px}
+      .card p{font-size:10px;line-height:1.25}
+      .card .hint-mini{margin-top:4px;font-size:9px}
+      .ctl{bottom:calc(env(safe-area-inset-bottom) + 6px);width:min(926px,calc(100vw - 8px));padding-right:6px}
+      .end{width:128px;padding:10px 8px;font-size:13px}
+    }
+
     @media (orientation:portrait){
       .app{max-width:430px;padding:8px 10px calc(env(safe-area-inset-bottom) + 8px)}
       .battle{height:calc(100dvh - 220px);min-height:420px}
@@ -90,13 +117,13 @@
 <body>
   <div class="app">
     <div class="row between top">
-      <div class="title">幽塔・術士（H5 機制鏡像 v1.3）</div>
+      <div class="title">幽塔・術士（H5 機制鏡像 v1.4）</div>
 
       <div class="pill" id="turn">回合 1</div>
     </div>
 
     <section class="battle" id="battle">
-      <div class="hint" id="hint">橫屏測試建議：拖曳卡牌指向怪物後放開出牌（v1.3）</div>
+      <div class="hint" id="hint">iPhone 13 Pro Max 橫屏測試：拖曳卡牌指向怪物後放開出牌（v1.4）</div>
 
 
       <div class="hero-stand"></div>

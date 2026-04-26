@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
-  <title>Claw 機制鏡像 v1.5</title>
+  <title>Claw 機制鏡像 v1.6</title>
   <style>
     :root{--bg:#111;--panel:#1b1b1b;--card:#f5e8c8;--ink:#1a1712;--red:#d85c5c;--gold:#f0c977;--blue:#6cb8ff;--ok:#74d68f}
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
@@ -123,16 +123,16 @@
 <body>
   <div class="app">
     <div class="row between top">
-      <div class="title">幽塔・術士（H5 機制鏡像 v1.5）</div>
+      <div class="title">幽塔・術士（H5 機制鏡像 v1.6）</div>
       <div class="pill" id="turn">回合 1</div>
     </div>
     <div class="meta">
       <div class="pill" id="deckInfo">抽牌 0｜棄牌 0</div>
-      <div class="pill" id="systemInfo">詛咒 0｜召喚 無</div>
+      <div class="pill" id="systemInfo">格擋 0｜召喚 無</div>
     </div>
 
     <section class="battle" id="battle">
-      <div class="hint" id="hint">v1.5 機制測試：詛咒、召喚注入、洗牌循環、敗北判定</div>
+      <div class="hint" id="hint">v1.6 起始牌組：攻擊、防禦 + 小鬼聯動</div>
 
 
       <div class="hero-stand"></div>
@@ -162,14 +162,15 @@
 const DRAW_PER_TURN = 4;
 
 const BASE_DECK = [
-  {name:"暗焰箭",cost:1,text:"造成 8 傷害",target:"enemy",damage:8},
-  {name:"暗焰箭",cost:1,text:"造成 8 傷害",target:"enemy",damage:8},
-  {name:"靈火連射",cost:2,text:"造成 14 傷害",target:"enemy",damage:14},
-  {name:"施咒印記",cost:1,text:"造成 4 傷害，附加 2 層詛咒",target:"enemy",damage:4,addCurse:2},
-  {name:"詛咒引爆",cost:1,text:"消耗目標全部詛咒，每層額外 +3 傷害",target:"enemy",baseDamage:4,consumeCurse:true},
-  {name:"召喚小鬼",cost:1,text:"召喚小鬼，並注入 2 張聯動卡",target:"self",summon:"imp"},
-  {name:"惡契汲取",cost:0,text:"失去 2 HP，+1 能量，抽 1",target:"self",selfDamage:2,energyGain:1,draw:1},
-  {name:"換手施法",cost:1,text:"抽 2",target:"self",draw:2}
+  {name:"普通攻擊",cost:1,text:"造成 7 傷害",target:"enemy",damage:7},
+  {name:"普通攻擊",cost:1,text:"造成 7 傷害",target:"enemy",damage:7},
+  {name:"普通攻擊",cost:1,text:"造成 7 傷害",target:"enemy",damage:7},
+  {name:"普通攻擊",cost:1,text:"造成 7 傷害",target:"enemy",damage:7},
+  {name:"防禦",cost:1,text:"獲得 5 格擋",target:"self",block:5},
+  {name:"防禦",cost:1,text:"獲得 5 格擋",target:"self",block:5},
+  {name:"防禦",cost:1,text:"獲得 5 格擋",target:"self",block:5},
+  {name:"防禦",cost:1,text:"獲得 5 格擋",target:"self",block:5},
+  {name:"召喚小鬼",cost:1,text:"召喚小鬼，並注入 2 張聯動卡",target:"self",summon:"imp"}
 ];
 
 const INJECTION_TEMPLATES = {
@@ -187,7 +188,7 @@ const ENEMY_PRESET = [
 
 const S={
   turn:1,playerTurn:true,battleOver:false,
-  player:{hp:80,maxHp:80,energy:3,maxEnergy:3},
+  player:{hp:80,maxHp:80,energy:3,maxEnergy:3,block:0},
   enemies:[],drawPile:[],discard:[],hand:[],uid:1,selectedCard:null,selectedEnemy:null,
   drag:null,
   curseByEnemy:{},
@@ -207,7 +208,7 @@ function init(){
   S.enemies=ENEMY_PRESET.map(e=>({...e,hp:e.maxHp,intent:e.pattern[0]}));
   S.drawPile=shuffle(BASE_DECK.map(cloneCard));
   drawCards(DRAW_PER_TURN);
-  setHint("你的回合：先用施咒印記疊層，再用詛咒引爆收頭");
+  setHint("你的回合：攻擊與防禦打節奏，抽到召喚小鬼就開聯動");
   renderAll();
 }
 
@@ -225,12 +226,12 @@ function drawCards(n){
 function renderAll(){renderTop();renderEnergy();renderEnemies();renderHand();renderMeta();}
 function renderTop(){
   document.getElementById("turn").textContent=`回合 ${S.turn}`;
-  document.getElementById("heroHpText").textContent=`HP ${S.player.hp}/${S.player.maxHp}`;
+  document.getElementById("heroHpText").textContent=`HP ${S.player.hp}/${S.player.maxHp}｜甲 ${S.player.block}`;
   document.getElementById("heroHpFill").style.width=`${Math.max(0,S.player.hp)/S.player.maxHp*100}%`;
 }
 function renderMeta(){
   document.getElementById("deckInfo").textContent=`抽牌 ${S.drawPile.length}｜棄牌 ${S.discard.length}`;
-  document.getElementById("systemInfo").textContent=`詛咒 ${totalCurse()}｜召喚 ${S.minions.imp?"小鬼在場":"無"}`;
+  document.getElementById("systemInfo").textContent=`格擋 ${S.player.block}｜召喚 ${S.minions.imp?"小鬼在場":"無"}`;
 }
 function renderEnergy(){
   const el=document.getElementById("energy");el.innerHTML="";
@@ -247,11 +248,10 @@ function renderEnemies(){
   S.enemies.forEach(e=>{
     const d=document.createElement("div");
     const hoverClass=S.drag?.hoverEnemyId===e.id?" hover":"";
-    const curse=S.curseByEnemy[e.id]||0;
     const intentTarget=S.minions.imp&&e.id==="enemy_near"?"小鬼":"主角";
     d.className="enemy "+(posMap[e.id]||"enemy_mid")+(e.hp<=0?" dead":"")+(S.selectedEnemy===e.id?" sel":"")+hoverClass;
     d.dataset.eid=e.id;
-    d.innerHTML=`<div class="row between"><span class="name">${e.name}</span><span class="hp">${e.hp}/${e.maxHp}</span></div><div class="bar" style="margin-top:4px"><div class="fill" style="width:${Math.max(0,e.hp)/e.maxHp*100}%"></div></div><div class="intent">⚔ ${e.intent} → ${intentTarget}${curse>0?`｜☠ ${curse}`:""}</div>`;
+    d.innerHTML=`<div class="row between"><span class="name">${e.name}</span><span class="hp">${e.hp}/${e.maxHp}</span></div><div class="bar" style="margin-top:4px"><div class="fill" style="width:${Math.max(0,e.hp)/e.maxHp*100}%"></div></div><div class="intent">⚔ ${e.intent} → ${intentTarget}</div>`;
     d.onclick=()=>{
       if(e.hp<=0||S.battleOver)return;
       S.selectedEnemy=e.id;
@@ -373,15 +373,7 @@ function resolveCard(c,targetId){
   }
 
   if(c.damage&&t) t.hp=Math.max(0,t.hp-c.damage);
-  if(c.addCurse&&t){S.curseByEnemy[t.id]=(S.curseByEnemy[t.id]||0)+c.addCurse;}
-
-  if(c.consumeCurse&&t){
-    const stack=S.curseByEnemy[t.id]||0;
-    const extra=stack*3;
-    t.hp=Math.max(0,t.hp-(c.baseDamage||0)-extra);
-    S.curseByEnemy[t.id]=0;
-    setHint(`詛咒引爆：基礎 ${(c.baseDamage||0)} + 額外 ${extra}`);
-  }
+  if(c.block) S.player.block=Math.min(99,S.player.block+c.block);
 
   if(c.selfDamage) S.player.hp=Math.max(0,S.player.hp-c.selfDamage);
   if(c.heal) S.player.hp=Math.min(S.player.maxHp,S.player.hp+c.heal);
@@ -411,6 +403,13 @@ function tryPlay(cardUid,targetId){
   renderAll();
 }
 
+function dealDamageToPlayer(dmg){
+  const blocked=Math.min(S.player.block,dmg);
+  S.player.block-=blocked;
+  const real=Math.max(0,dmg-blocked);
+  S.player.hp=Math.max(0,S.player.hp-real);
+}
+
 function enemyTurn(){
   for(const e of aliveEnemies()){
     const dmg=e.intent;
@@ -420,7 +419,7 @@ function enemyTurn(){
         setHint("小鬼替主角擋下重擊並倒下");
       }
     }else{
-      S.player.hp=Math.max(0,S.player.hp-dmg);
+      dealDamageToPlayer(dmg);
     }
     e.idx=(e.idx+1)%e.pattern.length;
     e.intent=e.pattern[e.idx];
@@ -437,9 +436,10 @@ function nextTurn(){
 
   S.turn+=1;
   S.player.energy=S.player.maxEnergy;
+  S.player.block=0;
   S.playerTurn=true;
   drawCards(DRAW_PER_TURN-S.hand.length);
-  setHint("你的回合：先疊詛咒，再引爆；可用召喚卡測注入循環");
+  setHint("你的回合：普通攻擊壓血、用防禦扛傷，抽到小鬼就測聯動");
   renderAll();
 }
 

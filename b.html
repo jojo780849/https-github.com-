@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
-  <title>Claw 機制鏡像 v2.10</title>
+  <title>Claw 機制鏡像 v2.11</title>
   <style>
     :root{--bg:#111;--panel:#1b1b1b;--card:#f5e8c8;--ink:#1a1712;--red:#d85c5c;--gold:#f0c977;--blue:#6cb8ff;--ok:#74d68f}
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
@@ -150,7 +150,7 @@
 <body>
   <div class="app">
     <div class="row between top">
-      <div class="title">幽塔・術士（H5 機制鏡像 v2.10）</div>
+      <div class="title">幽塔・術士（H5 機制鏡像 v2.11）</div>
       <div class="pill" id="turn">回合 1</div>
     </div>
     <div class="meta">
@@ -161,7 +161,7 @@
     </div>
 
     <section class="battle" id="battle">
-      <div class="hint" id="hint">v2.10：小鬼召喚後顯示 HP</div>
+      <div class="hint" id="hint">v2.11：號令改為雙段傷害（有鬼10/無鬼6）</div>
 
 
       <div class="hero-stand"></div>
@@ -203,7 +203,7 @@ const BASE_DECK = [
   {name:"防禦",cost:1,text:"獲得 5 格擋",target:"self",block:5},
   {name:"黑血回流",cost:1,text:"回復 4 HP",target:"self",heal:4},
   {name:"召喚小鬼",cost:1,text:"召喚小鬼：進場撕咬 5 + 注入2張；若已在場則改為抽1+格擋4",target:"self",summon:"imp",onSummonDamage:5,resummonDraw:1,resummonBlock:4},
-  {name:"使魔號令",cost:1,text:"若小鬼在場：立刻造成 10 傷害；否則抽 1",target:"self",impCommand:true,drawIfNoImp:1}
+  {name:"使魔號令",cost:1,text:"若小鬼在場：立刻造成 10 傷害；否則造成 6 傷害",target:"self",impCommand:true,damageIfNoImp:6}
 ];
 
 const INJECTION_TEMPLATES = {
@@ -581,8 +581,8 @@ function resolveCard(c,targetId){
 
 
   if(c.impCommand){
+    const cmdTarget=aliveEnemies()[0]||null;
     if(S.minions.imp){
-      const cmdTarget=aliveEnemies()[0]||null;
       if(cmdTarget){
         attackEnemyByAmount(cmdTarget,10);
 
@@ -590,12 +590,15 @@ function resolveCard(c,targetId){
         S.impLastEvent="在場（已號令追擊）";
         setHint("使魔號令生效：小鬼立刻追擊 10 傷害");
       }
-    }else if(c.drawIfNoImp){
-      drawCards(c.drawIfNoImp);
-      S.impLastEvent="不在場（號令轉抽牌）";
-      setHint("場上無小鬼，號令轉為抽牌");
+    }else if(c.damageIfNoImp){
+      if(cmdTarget){
+        attackEnemyByAmount(cmdTarget,c.damageIfNoImp);
+      }
+      S.impLastEvent=`不在場（號令降階 ${c.damageIfNoImp}）`;
+      setHint(`場上無小鬼，號令改為 ${c.damageIfNoImp} 傷害`);
     }
   }
+
 
   if(c.sacrifice&&S.minions[c.sacrifice]){
     onImpDefeated("你打出小鬼獻祭");

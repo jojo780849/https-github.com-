@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
-  <title>Claw 機制鏡像 v1.2</title>
+  <title>Claw 機制鏡像 v1.3</title>
   <style>
     :root{--bg:#111;--panel:#1b1b1b;--card:#f5e8c8;--ink:#1a1712;--red:#d85c5c;--gold:#f0c977;--blue:#6cb8ff;--ok:#74d68f}
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
@@ -16,37 +16,43 @@
     .pill{background:#201b18;border:1px solid #3a2f28;border-radius:999px;padding:6px 10px;font-size:12px}
     .title{font-weight:900;letter-spacing:.9px;font-size:16px}
 
-    .battle{position:relative;height:calc(100dvh - 170px);min-height:300px;background:radial-gradient(circle at 52% 10%,rgba(255,238,198,.08),transparent 30%),linear-gradient(180deg,#1a1412,#120e0d 60%,#100c0c);border:1px solid #3a2f28;border-radius:18px;overflow:hidden}
+    .battle{position:relative;height:clamp(280px,62dvh,420px);min-height:280px;background:radial-gradient(circle at 52% 10%,rgba(255,238,198,.08),transparent 30%),linear-gradient(180deg,#1a1412,#120e0d 60%,#100c0c);border:1px solid #3a2f28;border-radius:18px;overflow:hidden}
+
     .battle::after{content:"";position:absolute;inset:8px;border-radius:14px;border:1px solid rgba(255,255,255,.05);pointer-events:none}
 
     .hint{position:absolute;left:10px;right:10px;top:10px;font-size:12px;color:#dbc9a8;min-height:18px;z-index:8;background:rgba(18,14,12,.62);border:1px solid rgba(255,255,255,.06);border-radius:999px;padding:6px 10px}
 
-    .hero-stand{position:absolute;left:10px;bottom:96px;width:220px;height:220px;border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,0) 26%),linear-gradient(180deg,#3f203f,#221522);opacity:.35;z-index:1}
-    .hero-panel{position:absolute;left:12px;bottom:112px;width:188px;padding:8px;border:1px solid #433831;border-radius:12px;background:rgba(30,26,23,.9);z-index:4}
+    .hero-stand{position:absolute;left:10px;bottom:74px;width:210px;height:198px;border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,0) 26%),linear-gradient(180deg,#3f203f,#221522);opacity:.35;z-index:1}
+    .hero-panel{position:absolute;left:12px;bottom:84px;width:178px;padding:8px;border:1px solid #433831;border-radius:12px;background:rgba(30,26,23,.9);z-index:4}
+
     .bar{height:10px;background:#2c2622;border-radius:999px;overflow:hidden;border:1px solid #4a3f38}
     .fill{height:100%;background:linear-gradient(90deg,#b94444,#e88989)}
 
-    .enemy-layer{position:absolute;right:14px;top:74px;width:430px;height:260px;z-index:5}
+    .enemy-layer{position:absolute;right:20px;top:38px;width:390px;height:220px;z-index:5}
     .enemy{position:absolute;padding:7px;border:1px solid #493a33;border-radius:12px;background:#221c19;box-shadow:0 8px 16px rgba(0,0,0,.28);transition:transform .12s ease,outline-color .12s ease}
-    .enemy.enemy_far{left:0;top:54px;width:148px}
-    .enemy.enemy_mid{left:136px;top:30px;width:158px}
-    .enemy.enemy_near{left:286px;top:0;width:144px}
+    .enemy.enemy_far{left:0;top:48px;width:134px}
+    .enemy.enemy_mid{left:122px;top:24px;width:142px}
+    .enemy.enemy_near{left:256px;top:0;width:134px}
+
     .enemy.sel{outline:2px solid var(--gold)}
-    .enemy.hover{outline:2px solid #8dd3ff;transform:translateY(-4px)}
+    .enemy.hover{outline:2px solid #8dd3ff;transform:translateY(-4px);box-shadow:0 0 0 2px rgba(141,211,255,.2),0 10px 20px rgba(0,0,0,.28)}
+
     .enemy.dead{opacity:.4;filter:grayscale(1)}
     .enemy .name{font-size:12px;font-weight:700}
     .enemy .hp{font-size:10px;opacity:.9}
     .intent{font-size:11px;color:#ffd7cf;margin-top:4px}
 
-    .hud-left{position:absolute;left:12px;bottom:48px;display:flex;align-items:center;gap:7px;padding:7px 9px;border-radius:999px;background:rgba(17,14,13,.72);border:1px solid rgba(255,255,255,.08);z-index:8}
+    .hud-left{position:absolute;left:12px;bottom:34px;display:flex;align-items:center;gap:7px;padding:7px 9px;border-radius:999px;background:rgba(17,14,13,.72);border:1px solid rgba(255,255,255,.08);z-index:8}
+
     .hud-left .label{font-size:11px;color:#d7c8ab}
     .energy{display:flex;gap:4px}
     .gem{width:14px;height:14px;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:var(--blue)}
     .gem.off{opacity:.2}
 
-    .hand{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 62px);width:min(960px,calc(100vw - 12px));display:flex;gap:8px;justify-content:flex-start;overflow-x:auto;padding:0 8px 4px;z-index:12;scrollbar-width:none}
+    .hand{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 54px);width:min(980px,calc(100vw - 10px));display:flex;gap:7px;justify-content:center;overflow-x:auto;padding:0 10px 4px;z-index:12;scrollbar-width:none}
     .hand::-webkit-scrollbar{display:none}
-    .card{flex:0 0 108px;width:108px;min-height:142px;border:2px solid #6f5b46;border-radius:14px;background:var(--card);color:var(--ink);padding:8px;position:relative;box-shadow:0 8px 16px rgba(0,0,0,.25);user-select:none}
+    .card{flex:0 0 96px;width:96px;min-height:124px;border:2px solid #6f5b46;border-radius:14px;background:var(--card);color:var(--ink);padding:8px;position:relative;box-shadow:0 8px 16px rgba(0,0,0,.25);user-select:none}
+
     .card.playable{border-color:#8a724e}
     .card.target{box-shadow:0 0 0 2px rgba(108,184,255,.35),0 8px 16px rgba(0,0,0,.25)}
     .card.dragging{opacity:.7;transform:translateY(-8px)}
@@ -56,8 +62,9 @@
     .card .hint-mini{margin-top:6px;font-size:10px;color:#6a5b47}
     .card.disabled{opacity:.45}
 
-    .ctl{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 10px);width:min(960px,calc(100vw - 12px));display:flex;justify-content:flex-end;z-index:13;padding-right:6px}
-    .end{width:154px;border:0;border-radius:12px;padding:14px 10px;background:linear-gradient(180deg,#f0d79f,#cfaa68);font-weight:900;color:#2b2014;letter-spacing:1px;box-shadow:0 8px 18px rgba(0,0,0,.3)}
+    .ctl{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 10px);width:min(980px,calc(100vw - 10px));display:flex;justify-content:flex-end;z-index:13;padding-right:8px}
+    .end{width:144px;border:0;border-radius:12px;padding:13px 10px;background:linear-gradient(180deg,#f0d79f,#cfaa68);font-weight:900;color:#2b2014;letter-spacing:1px;box-shadow:0 8px 18px rgba(0,0,0,.3)}
+
 
     .drag-fx{position:fixed;inset:0;pointer-events:none;z-index:30;display:none}
     .drag-fx.show{display:block}
@@ -83,12 +90,14 @@
 <body>
   <div class="app">
     <div class="row between top">
-      <div class="title">幽塔・術士（H5 機制鏡像 v1.2）</div>
+      <div class="title">幽塔・術士（H5 機制鏡像 v1.3）</div>
+
       <div class="pill" id="turn">回合 1</div>
     </div>
 
     <section class="battle" id="battle">
-      <div class="hint" id="hint">橫屏測試建議：拖曳卡牌指向怪物後放開出牌</div>
+      <div class="hint" id="hint">橫屏測試建議：拖曳卡牌指向怪物後放開出牌（v1.3）</div>
+
 
       <div class="hero-stand"></div>
       <div class="hero-panel">

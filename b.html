@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
-  <title>Claw 機制鏡像 v2.5</title>
+  <title>Claw 機制鏡像 v2.6</title>
   <style>
     :root{--bg:#111;--panel:#1b1b1b;--card:#f5e8c8;--ink:#1a1712;--red:#d85c5c;--gold:#f0c977;--blue:#6cb8ff;--ok:#74d68f}
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
@@ -150,7 +150,7 @@
 <body>
   <div class="app">
     <div class="row between top">
-      <div class="title">幽塔・術士（H5 機制鏡像 v2.5）</div>
+      <div class="title">幽塔・術士（H5 機制鏡像 v2.6）</div>
       <div class="pill" id="turn">回合 1</div>
     </div>
     <div class="meta">
@@ -161,7 +161,7 @@
     </div>
 
     <section class="battle" id="battle">
-      <div class="hint" id="hint">v2.5：重召平衡 + 受擊優先級（格擋→小鬼→主角）</div>
+      <div class="hint" id="hint">v2.6：雙戰壓力提升（維持格擋→小鬼→主角）</div>
 
 
       <div class="hero-stand"></div>
@@ -217,14 +217,14 @@ const BATTLE_PRESET = [
   {
     label:"小怪戰",
     enemies:[
-      {id:"enemy_mid",name:"請魂紙偶",maxHp:28,pattern:[5,6,7],idx:0},
-      {id:"enemy_near",name:"哨戒鬼差",maxHp:34,pattern:[7,8,9],idx:0}
+      {id:"enemy_mid",name:"請魂紙偶",maxHp:32,pattern:[6,8,9],idx:0},
+      {id:"enemy_near",name:"哨戒鬼差",maxHp:40,pattern:[8,10,12],idx:0}
     ]
   },
   {
     label:"Boss戰",
     enemies:[
-      {id:"enemy_boss",name:"紙甲監軍（Boss）",maxHp:78,pattern:[9,11,13],impStrikeAt:[1],idx:0}
+      {id:"enemy_boss",name:"紙甲監軍（Boss）",maxHp:84,pattern:[10,12,14],impStrikeAt:[1],idx:0}
     ]
   }
 ];
@@ -306,7 +306,7 @@ function init(){
   S.enemies=buildEnemiesFromBattle(S.battleIndex);
   S.drawPile=shuffle(BASE_DECK.map(cloneCard));
   drawCards(DRAW_PER_TURN);
-  setHint("第1戰：先處理雙小怪，再進 Boss 戰");
+  setHint("第1戰：雙小怪壓力已提高，先保血線再進 Boss");
   renderAll();
 }
 
@@ -645,7 +645,7 @@ function nextTurn(){
   S.player.block=0;
   S.playerTurn=true;
   drawCards(DRAW_PER_TURN-S.hand.length);
-  setHint("你的回合：先穩住主角血線，召喚線留給點名回合做取捨");
+  setHint("你的回合：優先保命，利用小鬼承傷窗口換節奏");
   renderAll();
 }
 

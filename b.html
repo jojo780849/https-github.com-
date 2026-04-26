@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
-  <title>Claw 機制鏡像 v2.8</title>
+  <title>Claw 機制鏡像 v2.9</title>
   <style>
     :root{--bg:#111;--panel:#1b1b1b;--card:#f5e8c8;--ink:#1a1712;--red:#d85c5c;--gold:#f0c977;--blue:#6cb8ff;--ok:#74d68f}
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
@@ -150,7 +150,7 @@
 <body>
   <div class="app">
     <div class="row between top">
-      <div class="title">幽塔・術士（H5 機制鏡像 v2.8）</div>
+      <div class="title">幽塔・術士（H5 機制鏡像 v2.9）</div>
       <div class="pill" id="turn">回合 1</div>
     </div>
     <div class="meta">
@@ -161,7 +161,7 @@
     </div>
 
     <section class="battle" id="battle">
-      <div class="hint" id="hint">v2.8：手牌轉化可用（小鬼離場不再卡手）</div>
+      <div class="hint" id="hint">v2.9：血契復活保底（下次敵回合承傷+1）</div>
 
 
       <div class="hero-stand"></div>
@@ -237,9 +237,11 @@ const S={
   curseByEnemy:{},
   minions:{imp:false},
   impLastEvent:"未召喚",
+  impGuardBonusEnemyTurns:0,
   battleIndex:0,
   runCleared:false
 };
+
 
 function cloneCard(t){return {...t,uid:S.uid++};}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
@@ -303,12 +305,14 @@ function getEnemyTargetType(e){
 function init(){
   S.battleIndex=0;
   S.runCleared=false;
+  S.impGuardBonusEnemyTurns=0;
   S.enemies=buildEnemiesFromBattle(S.battleIndex);
   S.drawPile=shuffle(BASE_DECK.map(cloneCard));
   drawCards(DRAW_PER_TURN);
   setHint("第1戰：雙小怪壓力已提高，先保血線再進 Boss");
   renderAll();
 }
+
 
 
 function drawCards(n){
@@ -517,11 +521,13 @@ function purgeImpLinkedCardsOnDeath(){
 function onImpDefeated(reason){
   if(!S.minions.imp)return;
   S.minions.imp=false;
+  S.impGuardBonusEnemyTurns=0;
   const settle=purgeImpLinkedCardsOnDeath();
   drawCards(1);
   S.impLastEvent=`已離場（${reason}；清算 ${settle.removed} 張，轉化 ${settle.converted} 張）`;
   setHint(`小鬼離場：清算牌庫 ${settle.removed} 張，手牌轉化 ${settle.converted} 張血契回響，補抽 1`);
 }
+
 
 
 
@@ -532,14 +538,16 @@ function resolveCard(c,targetId){
     if(!S.minions.imp){
       S.minions.imp=true;
       S.player.block=Math.min(99,S.player.block+3);
-      S.impLastEvent="在場（血契回響復活）";
-      setHint("血契回響：小鬼復活（不注入）並獲得 3 格擋");
+      S.impGuardBonusEnemyTurns=1;
+      S.impLastEvent="在場（血契回響復活，下次敵回合承傷+1）";
+      setHint("血契回響：小鬼復活（不注入）+3格擋；下次敵回合承傷上限 +1");
     }else{
       drawCards(1);
       S.impLastEvent="在場（血契回響轉抽牌）";
       setHint("血契回響：小鬼已在場，改為抽 1");
     }
   }
+
 
 
   if(c.summon){
@@ -650,6 +658,10 @@ function dealDirectHpDamage(dmg){
   S.player.hp=Math.max(0,S.player.hp-dmg);
 }
 
+function getImpGuardCap(){
+  return IMP_GUARD_CAP + (S.impGuardBonusEnemyTurns>0?1:0);
+}
+
 function dealDamageToPlayer(dmg,sourceName="敵人"){
   let remain=dmg;
 
@@ -660,7 +672,7 @@ function dealDamageToPlayer(dmg,sourceName="敵人"){
   if(remain<=0)return;
 
   if(S.minions.imp){
-    const guard=Math.min(IMP_GUARD_CAP,remain);
+    const guard=Math.min(getImpGuardCap(),remain);
     popImpDamage(guard);
     remain-=guard;
     onImpDefeated(`${sourceName}承傷 ${guard}`);
@@ -673,12 +685,13 @@ function dealDamageToPlayer(dmg,sourceName="敵人"){
 }
 
 
+
 function enemyTurn(){
   for(const e of aliveEnemies()){
     const dmg=e.intent;
     const targetType=getEnemyTargetType(e);
     if(targetType==="imp_mark"&&S.minions.imp){
-      const guard=Math.min(IMP_GUARD_CAP,dmg);
+      const guard=Math.min(getImpGuardCap(),dmg);
       popImpDamage(guard);
       onImpDefeated(`${e.name}點名 ${guard}`);
       const overflow=Math.max(0,dmg-guard);
@@ -691,7 +704,12 @@ function enemyTurn(){
     e.idx=(e.idx+1)%e.pattern.length;
     e.intent=e.pattern[e.idx];
   }
+
+  if(S.impGuardBonusEnemyTurns>0){
+    S.impGuardBonusEnemyTurns-=1;
+  }
 }
+
 
 
 

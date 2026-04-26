@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
-  <title>Claw 機制鏡像 v2.11</title>
+  <title>Claw 機制鏡像 v2.12</title>
   <style>
     :root{--bg:#111;--panel:#1b1b1b;--card:#f5e8c8;--ink:#1a1712;--red:#d85c5c;--gold:#f0c977;--blue:#6cb8ff;--ok:#74d68f}
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
@@ -59,7 +59,7 @@
     .imp-avatar.on{display:block}
 
     .float-layer{position:fixed;inset:0;pointer-events:none;z-index:40}
-    .float-num{position:fixed;transform:translate(-50%,-50%);font-weight:900;font-size:18px;text-shadow:0 2px 8px rgba(0,0,0,.7);animation:floatUp .65s ease forwards}
+    .float-num{position:fixed;transform:translate(-50%,-50%);font-weight:900;font-size:18px;text-shadow:0 2px 8px rgba(0,0,0,.7);animation:floatUp .42s ease forwards}
     .float-num.dmg{color:#ffb3a6}
     .float-num.heal{color:#9ff4b8}
 
@@ -150,7 +150,7 @@
 <body>
   <div class="app">
     <div class="row between top">
-      <div class="title">幽塔・術士（H5 機制鏡像 v2.11）</div>
+      <div class="title">幽塔・術士（H5 機制鏡像 v2.12）</div>
       <div class="pill" id="turn">回合 1</div>
     </div>
     <div class="meta">
@@ -161,7 +161,7 @@
     </div>
 
     <section class="battle" id="battle">
-      <div class="hint" id="hint">v2.11：號令改為雙段傷害（有鬼10/無鬼6）</div>
+      <div class="hint" id="hint">v2.12：三分鐘局時觀測 + 第一輪節奏壓縮</div>
 
 
       <div class="hero-stand"></div>
@@ -217,14 +217,14 @@ const BATTLE_PRESET = [
   {
     label:"小怪戰",
     enemies:[
-      {id:"enemy_mid",name:"請魂紙偶",maxHp:32,pattern:[6,8,9],idx:0},
-      {id:"enemy_near",name:"哨戒鬼差",maxHp:40,pattern:[8,10,12],idx:0}
+      {id:"enemy_mid",name:"請魂紙偶",maxHp:28,pattern:[6,8,9],idx:0},
+      {id:"enemy_near",name:"哨戒鬼差",maxHp:34,pattern:[8,10,12],idx:0}
     ]
   },
   {
     label:"Boss戰",
     enemies:[
-      {id:"enemy_boss",name:"紙甲監軍（Boss）",maxHp:84,pattern:[10,12,14],impStrikeAt:[1],idx:0}
+      {id:"enemy_boss",name:"紙甲監軍（Boss）",maxHp:72,pattern:[10,12,14],impStrikeAt:[1],idx:0}
     ]
   }
 ];
@@ -239,8 +239,12 @@ const S={
   impLastEvent:"未召喚",
   impGuardBonusEnemyTurns:0,
   battleIndex:0,
-  runCleared:false
+  runCleared:false,
+  runStartTs:0,
+  battleStartTs:0,
+  battleDurations:[]
 };
+
 
 
 function cloneCard(t){return {...t,uid:S.uid++};}
@@ -249,7 +253,17 @@ function aliveEnemies(){return S.enemies.filter(e=>e.hp>0);}
 function setHint(t){document.getElementById("hint").textContent=t;}
 function enemyById(id){return S.enemies.find(e=>e.id===id&&e.hp>0)||aliveEnemies()[0]||null;}
 function totalCurse(){return Object.values(S.curseByEnemy).reduce((a,b)=>a+b,0);}
+function nowSec(){return Math.floor(Date.now()/1000);}
+function fmtClock(sec){
+  const s=Math.max(0,sec|0);
+  const m=Math.floor(s/60);
+  const r=s%60;
+  return `${m}:${String(r).padStart(2,"0")}`;
+}
+function getRunElapsedSec(){return S.runStartTs?nowSec()-S.runStartTs:0;}
+function getCurrentBattleElapsedSec(){return S.battleStartTs?nowSec()-S.battleStartTs:0;}
 function isSilentCard(c){return !!(c.linkOwner && !S.minions[c.linkOwner]);}
+
 function cardCost(c){return isSilentCard(c)?0:c.cost;}
 function enemyElById(id){return document.querySelector(`.enemy[data-eid="${id}"]`);} 
 function popFloatAtElement(el,value,kind="dmg"){
@@ -263,7 +277,7 @@ function popFloatAtElement(el,value,kind="dmg"){
   n.style.left=`${r.left+r.width*0.5}px`;
   n.style.top=`${r.top+r.height*0.35}px`;
   layer.appendChild(n);
-  setTimeout(()=>n.remove(),700);
+  setTimeout(()=>n.remove(),460);
 }
 function popEnemyDamage(enemyId,val){popFloatAtElement(enemyElById(enemyId),val,"dmg");}
 function popPlayerDamage(val){popFloatAtElement(document.querySelector(".hero-panel"),val,"dmg");}
@@ -306,12 +320,16 @@ function init(){
   S.battleIndex=0;
   S.runCleared=false;
   S.impGuardBonusEnemyTurns=0;
+  S.runStartTs=nowSec();
+  S.battleStartTs=S.runStartTs;
+  S.battleDurations=[];
   S.enemies=buildEnemiesFromBattle(S.battleIndex);
   S.drawPile=shuffle(BASE_DECK.map(cloneCard));
   drawCards(DRAW_PER_TURN);
-  setHint("第1戰：雙小怪壓力已提高，先保血線再進 Boss");
+  setHint("第1戰：目標三分鐘一局，先觀測首戰節奏");
   renderAll();
 }
+
 
 
 
@@ -338,9 +356,13 @@ function renderMeta(){
   const impState=S.minions.imp?`小鬼 HP ${getImpGuardCap()}/${getImpGuardCap()}`:"無";
   document.getElementById("systemInfo").textContent=`格擋 ${S.player.block}｜召喚 ${impState}`;
   document.getElementById("impInfo").textContent=`使魔事件：${S.impLastEvent}`;
-  const stageText=S.runCleared?"已完成兩戰流程":`進度 ${S.battleIndex+1}/${BATTLE_PRESET.length}｜${currentBattle().label}`;
+  const runElapsed=fmtClock(getRunElapsedSec());
+  const battleElapsed=fmtClock(getCurrentBattleElapsedSec());
+  const stageBase=S.runCleared?"已完成兩戰流程":`進度 ${S.battleIndex+1}/${BATTLE_PRESET.length}｜${currentBattle().label}`;
+  const stageText=`${stageBase}｜總 ${runElapsed}｜本戰 ${battleElapsed}`;
   document.getElementById("stageInfo").textContent=stageText;
 }
+
 
 function renderEnergy(){
   const el=document.getElementById("energy");el.innerHTML="";
@@ -627,7 +649,10 @@ function checkBattleEnd(){
   if(aliveEnemies().length>0)return false;
 
   if(S.battleIndex<BATTLE_PRESET.length-1){
+    const battleSec=getCurrentBattleElapsedSec();
+    S.battleDurations[S.battleIndex]=battleSec;
     S.battleIndex+=1;
+    S.battleStartTs=nowSec();
     S.enemies=buildEnemiesFromBattle(S.battleIndex);
     S.discard.push(...S.hand);
     S.hand=[];
@@ -637,16 +662,20 @@ function checkBattleEnd(){
     S.player.energy=S.player.maxEnergy;
     S.playerTurn=true;
     drawCards(DRAW_PER_TURN);
-    setHint(`已清掉前一戰，進入 ${currentBattle().label}`);
+    setHint(`前一戰耗時 ${fmtClock(battleSec)}，進入 ${currentBattle().label}`);
     return false;
   }
 
+  const finalBattleSec=getCurrentBattleElapsedSec();
+  S.battleDurations[S.battleIndex]=finalBattleSec;
   S.runCleared=true;
   S.battleOver=true;
   S.playerTurn=false;
-  setHint("Boss 已擊破，兩戰流程完成");
+  const totalSec=getRunElapsedSec();
+  setHint(`Boss 已擊破｜總耗時 ${fmtClock(totalSec)}（小怪 ${fmtClock(S.battleDurations[0]||0)} / Boss ${fmtClock(finalBattleSec)}）`);
   return true;
 }
+
 
 
 function tryPlay(cardUid,targetId){
@@ -744,7 +773,13 @@ function nextTurn(){
 }
 
 document.getElementById("endBtn").onclick=nextTurn;
+setInterval(()=>{
+  if(S.runStartTs && !S.battleOver){
+    renderMeta();
+  }
+},1000);
 init();
 </script>
+
 </body>
 </html>

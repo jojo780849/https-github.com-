@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
-  <title>Claw 機制鏡像 v2.7</title>
+  <title>Claw 機制鏡像 v2.8</title>
   <style>
     :root{--bg:#111;--panel:#1b1b1b;--card:#f5e8c8;--ink:#1a1712;--red:#d85c5c;--gold:#f0c977;--blue:#6cb8ff;--ok:#74d68f}
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
@@ -150,7 +150,7 @@
 <body>
   <div class="app">
     <div class="row between top">
-      <div class="title">幽塔・術士（H5 機制鏡像 v2.7）</div>
+      <div class="title">幽塔・術士（H5 機制鏡像 v2.8）</div>
       <div class="pill" id="turn">回合 1</div>
     </div>
     <div class="meta">
@@ -161,7 +161,7 @@
     </div>
 
     <section class="battle" id="battle">
-      <div class="hint" id="hint">v2.7：小鬼死亡清算（移除污染牌）</div>
+      <div class="hint" id="hint">v2.8：手牌轉化可用（小鬼離場不再卡手）</div>
 
 
       <div class="hero-stand"></div>
@@ -381,15 +381,22 @@ function cardPlayable(c){return !S.battleOver && S.playerTurn && S.player.energy
 function renderHand(){
   const root=document.getElementById("hand");root.innerHTML="";
   S.hand.forEach(c=>{
-    const silent=isSilentCard(c);
+    if(isSilentCard(c)){
+      const oldUid=c.uid;
+      const revived=makeImpReviveCard(c);
+      Object.keys(c).forEach(k=>delete c[k]);
+      Object.assign(c,revived,{uid:oldUid});
+    }
+
     const playable=cardPlayable(c);
     const d=document.createElement("div");
     d.className="card"+(playable?" playable":" disabled")+(c.target==="enemy"?" target":"")+(S.drag?.cardUid===c.uid?" dragging":"");
     d.dataset.uid=c.uid;
-    const title=silent?`${c.name}（沉默）`:c.name;
-    const text=silent?"目標已陨落：0 費空過":c.text;
-    const hintMini=silent?"可打出但無效果":(c.target==="enemy"?"拖曳到怪物施放":"點一下施放");
+    const title=c.name;
+    const text=c.text;
+    const hintMini=(c.target==="enemy"?"拖曳到怪物施放":"點一下施放");
     d.innerHTML=`<div class="cost">${cardCost(c)}</div><h4>${title}</h4><p>${text}</p><div class="hint-mini">${hintMini}</div>`;
+
 
     d.addEventListener("pointerdown",ev=>onCardPointerDown(ev,c,d));
     d.addEventListener("pointermove",onCardPointerMove);
@@ -480,24 +487,31 @@ function removeCardsInPlace(pile,pred){
   return removed;
 }
 
+function makeImpReviveCard(fromCard){
+  return {
+    name:"血契回響",
+    cost:1,
+    text:`承接「${fromCard.name}」：復活小鬼（不注入）並獲得 3 格擋；若小鬼已在場則抽 1`,
+    target:"self",
+    reviveImp:true,
+    revivedFrom:fromCard.name
+  };
+}
+
 function purgeImpLinkedCardsOnDeath(){
   const isImpLinked=(c)=>c.linkOwner==="imp";
   let removed=0;
   removed+=removeCardsInPlace(S.drawPile,isImpLinked);
   removed+=removeCardsInPlace(S.discard,isImpLinked);
 
-  const kept=[];
-  let keptOneInHand=false;
-  for(const c of S.hand){
-    if(isImpLinked(c)){
-      if(!keptOneInHand){kept.push(c);keptOneInHand=true;}
-      else removed+=1;
-    }else{
-      kept.push(c);
-    }
-  }
-  S.hand=kept;
-  return {removed,keptOneInHand};
+  let converted=0;
+  S.hand=S.hand.map(c=>{
+    if(!isImpLinked(c)) return c;
+    converted+=1;
+    return makeImpReviveCard(c);
+  });
+
+  return {removed,converted};
 }
 
 function onImpDefeated(reason){
@@ -505,15 +519,28 @@ function onImpDefeated(reason){
   S.minions.imp=false;
   const settle=purgeImpLinkedCardsOnDeath();
   drawCards(1);
-  S.impLastEvent=`已離場（${reason}；清算 ${settle.removed} 張）`;
-  const keepText=settle.keptOneInHand?"，手上保留 1 張":"";
-  setHint(`小鬼離場：清算 ${settle.removed} 張聯動牌${keepText}，補抽 1`);
+  S.impLastEvent=`已離場（${reason}；清算 ${settle.removed} 張，轉化 ${settle.converted} 張）`;
+  setHint(`小鬼離場：清算牌庫 ${settle.removed} 張，手牌轉化 ${settle.converted} 張血契回響，補抽 1`);
 }
 
 
+
 function resolveCard(c,targetId){
-  if(isSilentCard(c)){setHint("沉默廢牌：本回合空過");return;}
   const t=enemyById(targetId);
+
+  if(c.reviveImp){
+    if(!S.minions.imp){
+      S.minions.imp=true;
+      S.player.block=Math.min(99,S.player.block+3);
+      S.impLastEvent="在場（血契回響復活）";
+      setHint("血契回響：小鬼復活（不注入）並獲得 3 格擋");
+    }else{
+      drawCards(1);
+      S.impLastEvent="在場（血契回響轉抽牌）";
+      setHint("血契回響：小鬼已在場，改為抽 1");
+    }
+  }
+
 
   if(c.summon){
     const alreadySummoned=!!S.minions[c.summon];
@@ -553,10 +580,9 @@ function resolveCard(c,targetId){
   }
 
   if(c.sacrifice&&S.minions[c.sacrifice]){
-    S.minions[c.sacrifice]=false;
-    S.impLastEvent="已離場（你打出小鬼獻祭）";
-    setHint("小鬼已獻祭，相關聯動卡將轉為沉默廢牌");
+    onImpDefeated("你打出小鬼獻祭");
   }
+
 
   if(c.damage&&t) attackEnemyByAmount(t,c.damage);
 

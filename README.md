@@ -7,9 +7,9 @@
 - 处理原则：两个项目严格区分开，不继承彼此的任务细节，只保留联动关系与职责分工
 
 ## 当前技术栈
-- 纯 HTML5 Canvas + 原生 JavaScript 为主，另新增 `claw/godot-v01/` Godot Web 导出包用于同题材对照验证
-- 多个单文件原型并行推进：`demo_melee.html` / `demo_ranged_bazaar.html` / `demo_ranged_juice.html` / `juice.html` / `merge_shot_mobile_demo.html` / `m.html` / `msd_v2_20260421.html` / `block_combat_mobile_demo.html` / `spire_fusion_mobile_demo.html` / `squad_demo.html` / `warlock_v0_1.html` / `warlock_v0_2.html` / `b.html` / `demo_ranged.html` / `game.html` / `claw/index.html` / `claw/b.html` / `claw/h.html`
-- 分享与试玩入口同时保留根目录短链镜像（如 `juice.html` / `m.html` / `b.html`）与子目录正式入口（如 `claw/`）
+- 纯 HTML5 Canvas + 原生 JavaScript 为主，另保留 `claw/godot-v01/` Godot Web 导出包做同题材对照验证
+- 多个单文件原型并行推进：`index.html` / `b.html` / `w.html` / `warlock_prototype_v1.html` / `warlock_prototype_v2.html` / `warlock_prototype_v24_backup.html` / `demo_melee.html` / `demo_ranged_bazaar.html` / `demo_ranged_juice.html` / `juice.html` / `merge_shot_mobile_demo.html` / `m.html` / `msd_v2_20260421.html` / `block_combat_mobile_demo.html` / `spire_fusion_mobile_demo.html` / `squad_demo.html` / `warlock_v0_1.html` / `warlock_v0_2.html` / `demo_ranged.html` / `game.html` / `claw/index.html` / `claw/b.html` / `claw/h.html` / `claw/g.html`
+- 分享与试玩入口同时保留根目录直开主入口 / 短链镜像（如 `index.html` / `b.html` / `w.html` / `juice.html` / `m.html`）与子目录正式入口（如 `claw/`）
 - 无需构建工具，HTML 原型双击即可运行；`claw/godot-v01/` 为已导出的网页构建
 
 ## 跨电脑协作结构
@@ -29,16 +29,18 @@
 - `spire_fusion_mobile_demo.html`：**尖塔融合竖版验证线**，把“竖版舞台 + 美术预留 + 点按解说 + 拖拽出牌”揉成一张可讲解的移动端卡牌样机
 - `squad_demo.html`：**小队指挥验证线（分支1）**，验证 3 格站位 + 角色牌/技能牌拖拽出牌的指挥感
 - `warlock_v0_1.html`：**术士卡牌验证线 v0.1**，偏炉石式的出牌感对照样机
-- `warlock_v0_2.html`：**术士卡牌验证线 v0.2**，主角居中 + 召唤物侧翼 + 联动卡动态注入的当前迭代版
-- `b.html`：**Claw H5 机制镜像 v2.6**，根目录短链入口，主打双战流程、格挡→小鬼→主角的承伤传导，以及召唤物联动卡注入
-- `claw/index.html`：**幽塔·术士 v0.6 竖版正式版**，三怪站位 + 召唤物 + 联动卡的主入口
-- `claw/b.html`：`claw/index.html` 的主玩镜像入口，便于外发与手机试玩
-- `claw/h.html`：**幽塔·术士横版预览**，用于验证横版构图与信息密度
+- `warlock_v0_2.html`：**术士卡牌验证线 v0.2**，主角居中 + 召唤物侧翼 + 联动卡动态注入的前置验证版
+- `index.html`：**Warlock Prototype v2.4 主入口**，根路径直接打开章节化 Roguelike 构建
+- `b.html` / `w.html`：**Warlock Prototype v2.4 外发短链镜像**，与主入口同版，兼容微信路径截断与缓存问题
+- `warlock_prototype_v1.html` / `warlock_prototype_v2.html`：**Warlock Prototype v2.4 研发镜像**，用于继续迭代术士章节版
+- `warlock_prototype_v24_backup.html`：**Warlock v2.3 备份快照**，保留“小鬼堆叠召唤师”版本做回退与对照
+- `claw/index.html`：**幽塔·术士 v0.6 旧竖版正式版**，现作为前一阶段对照样机保留
+- `claw/b.html`：`claw/index.html` 的旧主玩镜像入口，便于外发与手机试玩
+- `claw/h.html`：**幽塔·术士横版旧预览**，用于验证横版构图与信息密度
 - `claw/g.html`：Godot Web 短链入口，自动跳转到 `claw/godot-v01/index.html`
 - `claw/godot-v01/index.html`：**Claw Godot Web 导出入口**
 - `demo_ranged.html`：远程版基础验证线
 - `game.html`：远程射击正式版旧主线
-- `index.html`：根路径跳转页，当前默认跳到 `m.html`
 
 - `割一波_玩法设计进度表.xlsx`：项目进度表
 - `docs/当前任务框架.md`：当前待办框架与优先级
@@ -47,14 +49,16 @@
 
 
 ## 在线体验
-- **近战版（主力）**：https://jojo780849.github.io/cut-them-all/demo_melee.html
+- **Warlock Prototype v2.4（主入口）**：https://jojo780849.github.io/cut-them-all/
+- **Warlock Prototype v2.4（b 短链）**：https://jojo780849.github.io/cut-them-all/b.html
+- **Warlock Prototype v2.4（w 短链）**：https://jojo780849.github.io/cut-them-all/w.html
+- **近战版（旧主力）**：https://jojo780849.github.io/cut-them-all/demo_melee.html
 - **纸扎夜市验证线**：https://jojo780849.github.io/cut-them-all/demo_ranged_bazaar.html
 - **远程爽感实验线**：https://jojo780849.github.io/cut-them-all/demo_ranged_juice.html
 - **远程爽感短路径**：https://jojo780849.github.io/cut-them-all/juice.html
-- **Claw H5 机制镜像**：https://jojo780849.github.io/cut-them-all/b.html
-- **Claw 竖版正式版**：https://jojo780849.github.io/cut-them-all/claw/
-- **Claw 竖版主玩镜像**：https://jojo780849.github.io/cut-them-all/claw/b.html
-- **Claw 横版预览**：https://jojo780849.github.io/cut-them-all/claw/h.html
+- **Claw 竖版旧正式版**：https://jojo780849.github.io/cut-them-all/claw/
+- **Claw 竖版旧主玩镜像**：https://jojo780849.github.io/cut-them-all/claw/b.html
+- **Claw 横版旧预览**：https://jojo780849.github.io/cut-them-all/claw/h.html
 - **Claw Godot Web 短链**：https://jojo780849.github.io/cut-them-all/claw/g.html
 - **远程版旧主线**：https://jojo780849.github.io/cut-them-all/game.html
 
@@ -100,14 +104,20 @@
 - 分支1 聚焦“你是指挥官，不是单角色本体”这一手感：3 格场位、角色牌上场、技能牌指定友军或敌人
 - 已验证角色/技能/战术三类卡、拖拽目标提示、场上单位即时反馈，适合继续往职业宇宙或小队协同发展
 
-## 术士卡牌验证线 (warlock_v0_1 / warlock_v0_2)
+## 术士卡牌前置验证线 (warlock_v0_1 / warlock_v0_2)
 - `warlock_v0_1.html`：先做偏炉石式出牌感，对照传统“我方在下、敌方在上”的回合制卡牌触感
 - `warlock_v0_2.html`：进一步改成构图 D，主角居中、召唤物站两侧，并在召唤时动态注入对应联动卡，验证“术士指挥召唤物”是否比纯单卡更有职业味
 
-## Claw / 幽塔术士验证线 (b.html / claw/)
-- `b.html`：根目录短链已演化为 **Claw H5 机制镜像 v2.6**，当前聚焦双战流程（小怪战 → Boss 战）、格挡→小鬼→主角的承伤传导，以及小鬼召唤 / 使魔号令 / 联动卡注入这套最小闭环
-- `claw/index.html` / `claw/b.html`：竖版 **v0.6 三怪站位正式版**，已具备哨戒鬼差 / 缚魂纸偶 / 纸甲阴兵三类敌人职责化，包含 intent badge、点按 inspect、压制（下回合减能量）与自护等战术提示
-- `claw/h.html`：横版预览入口，用同一套卡牌与敌人逻辑验证横版构图、信息密度与手牌可读性
+## Warlock 章节 Roguelike 主线 (index.html / b.html / w.html / warlock_prototype_v*.html)
+- **v2.1**：起始牌库收束为 10 张，召唤物从一次性爆发改为“进场小伤害 + 每回合自动攻击”，成长改成战后拿牌
+- **v2.2**：奖励池扩到 22 张，明确拆成“小鬼联动 / 诅咒深化 / 双召高光”三组 build，用来测试不同术士流派能否独立成型
+- **v2.3**：主线转成“小鬼堆叠召唤师”，小鬼最多 5 只；每只承伤 6 / 自动咬 3；敌方在 3 只以上会进入群凶觉醒；新增 `再召小鬼` / `双生仪式`
+- **v2.4**：进化为章节化 Roguelike；`index.html` / `b.html` / `w.html` / `warlock_prototype_v1.html` / `warlock_prototype_v2.html` 当前同步为同一构建，已具备主菜单、Ch.1「腐尸谷」、章首领“骨巫双子”、战后奖励、Boss 前营火、章末结算、localStorage 存档、继续游戏、清档，以及每 run 一次的“血契庇护”复活
+- `warlock_prototype_v24_backup.html`：保存 v2.3 小鬼堆叠召唤师版快照，便于回退或对照
+
+## Claw / 幽塔术士旧验证线 (claw/)
+- `claw/index.html` / `claw/b.html`：保留竖版 **v0.6 三怪站位正式版**，继续作为敌人职责化、intent badge、点按 inspect 与压制减能量表达的对照样机
+- `claw/h.html`：横版旧预览入口，用同一套卡牌与敌人逻辑验证横版构图、信息密度与手牌可读性
 - `claw/g.html` / `claw/godot-v01/index.html`：Godot Web 导出入口与短链，用来对照 H5 原型和 Godot 落地版的 UI / 战斗节奏差异
 
 ## 自动同步

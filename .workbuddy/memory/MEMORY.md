@@ -15,12 +15,14 @@
 - `claw/godot-v01/` 为 Godot Web 导出包，用于和 H5 原型做同题材对照验证。
 - GitHub 仓库：`jojo780849/cut-them-all`
 - GitHub Pages 主要入口：
+  - `index.html`：Warlock Prototype v2.4 主入口
+  - `b.html` / `w.html`：Warlock Prototype v2.4 短链镜像
+  - `warlock_prototype_v1.html` / `warlock_prototype_v2.html`：Warlock v2.4 研发镜像
   - `game.html`：远程射击旧主线
-  - `demo_melee.html`：近战主线
+  - `demo_melee.html`：近战主线归档
   - `demo_ranged_bazaar.html`：纸扎夜市验证线
   - `demo_ranged_juice.html` / `juice.html`：远程爽感验证线
-  - `b.html`：Claw H5 机制镜像
-  - `claw/`、`claw/b.html`、`claw/h.html`、`claw/g.html`：Claw 竖版、镜像、横版与 Godot Web 入口
+  - `claw/`、`claw/b.html`、`claw/h.html`、`claw/g.html`：Claw 旧竖版、镜像、横版与 Godot Web 对照入口
 
 ## 主要原型现状（精简版）
 - `game.html`：远程射击版，已具备自动索敌射击、敌人追踪、成长系统与多阶段 Boss 战。
@@ -30,9 +32,10 @@
 - `merge_shot_mobile_demo.html` / `m.html` / `msd_v2_20260421.html`：拖拽瞄准 + 松手连珠 + 三色技能的低负担射击验证。
 - `block_combat_mobile_demo.html`：拼块放置战斗验证线，用清线伤害和三色能量测试“低操作负担 + 空间策略”。
 - `spire_fusion_mobile_demo.html` / `squad_demo.html` / `warlock_v0_1.html` / `warlock_v0_2.html`：竖版卡牌展示、小队指挥、术士出牌与召唤联动的前置验证组。
-- `b.html`：已从旧 warlock 镜像演化为 `Claw 機制鏡像 v2.6`，聚焦双战流程、格挡→小鬼→主角承伤传导、召唤小鬼 / 使魔号令 / 联动卡闭环。
-- `claw/index.html` / `claw/b.html`：幽塔·术士竖版正式版入口，已形成敌人职责化、意图说明、点按 inspect 与压制减能量表达。
-- `claw/h.html`：同逻辑横版预览，用于布局与可读性对照。
+- `index.html` / `b.html` / `w.html` / `warlock_prototype_v1.html` / `warlock_prototype_v2.html`：当前已同步到 `Warlock Prototype v2.4`，主打章节化 Roguelike（Ch.1 腐尸谷 3 战流程）、小鬼堆叠 / 诅咒 build、战后奖励、Boss 前营火、章末结算、localStorage 存档与一次性新手复活。
+- `warlock_prototype_v24_backup.html`：保留 `Warlock v2.3` 小鬼堆叠召唤师快照，便于和章节版做回退对照。
+- `claw/index.html` / `claw/b.html`：幽塔·术士旧竖版正式版入口，保留敌人职责化、意图说明、点按 inspect 与压制减能量表达。
+- `claw/h.html`：同逻辑横版旧预览，用于布局与可读性对照。
 - `claw/g.html` / `claw/godot-v01/index.html`：Godot Web 对照入口。
 
 ## 近期里程碑
@@ -42,3 +45,4 @@
 - 2026-04-21：新增三条“降低操作负担”验证线：合球射击、拼块战斗、根路径兼容入口。
 - 2026-04-22：新增竖版卡牌 / 小队指挥 / 术士联动验证组。
 - 2026-04-26：补录 Claw / 幽塔术士 H5 + Godot Web 验证线，确认根目录 `b.html` 已切为 Claw 机制镜像，`claw/` 目录入口结构完成归档。
+- 2026-04-28：Warlock 原型从 v2.1 推进到 v2.4：完成 10 张起始牌库 + 战后拿牌、22 张奖励池、小鬼最多 5 只的堆叠召唤 build，并把根路径 / `b.html` / `w.html` 收束为带章节菜单、Ch.1 腐尸谷、章节结算、localStorage 存档与一次性复活的章节化 Roguelike 主线。

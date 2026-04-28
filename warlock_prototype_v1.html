@@ -288,7 +288,7 @@
     </div>
 
     <section class="battle" id="battle">
-      <div class="hint" id="hint">v2.4.2：戰後三選一強制跨流派（召喚/詛咒/爆發），小鬼遞減傷害</div>
+      <div class="hint" id="hint">v2.4.3：戰後三選一強制跨流派（召喚/詛咒/爆發），小鬼強度保持 v2.3</div>
 
 
       <div class="hero-stand"></div>
@@ -1719,25 +1719,21 @@ function onHoundDefeated(reason){
 }
 
 // v2.1：召喚物每回合自動攻擊（玩家回合開始時觸發）
-// v2.3：小鬼按堆疊數量連續攻擊
-// v2.4.2：遞減傷害曲線（3/2/2/1/1），避免召喚流一邊倒
+// v2.3：小鬼按堆疊數量連續攻擊（每隻獨立 3 傷，滿編 5 隻 = 15/回合，刻意保留強度）
 function minionAutoStrike(){
   if(S.battleOver) return;
   const impCount=S.minions.imp|0;
   if(impCount>0){
     const bonus=S.impBonusNextAuto||0;
-    // 遞減傷害序列：第1隻3、第2-3隻2、第4-5隻1
-    const dmgSeq=[3,2,2,1,1];
+    const dmgEach=3+bonus;
     if(impCount>=3) bigFlashMaybe(`小鬼群襲 ×${impCount}`);
-    else if(bonus>0) bigFlashMaybe("小鬼·強襲 "+(dmgSeq[0]+bonus));
+    else if(bonus>0) bigFlashMaybe("小鬼·強襲 "+dmgEach);
     else bigFlashMaybe(impCount>=2?`小鬼連咬 ×${impCount}`:"小鬼撕咬");
-    // 每隻依序攻擊當前前排（可能分批殺掉多個敵人），bonus 只加在第一隻
+    // 每隻依序攻擊當前前排（可能分批殺掉多個敵人）
     for(let i=0;i<impCount;i++){
       const tgt=aliveEnemies()[0];
       if(!tgt) break;
-      const base=dmgSeq[Math.min(i,dmgSeq.length-1)];
-      const dmg=base+(i===0?bonus:0);
-      attackEnemyByAmount(tgt,dmg);
+      attackEnemyByAmount(tgt,dmgEach);
     }
     S.impBonusNextAuto=0;
     const el=document.getElementById("impAvatar");

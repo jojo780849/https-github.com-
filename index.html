@@ -288,7 +288,7 @@
     </div>
 
     <section class="battle" id="battle">
-      <div class="hint" id="hint">v2.3：小鬼堆疊最多 5 隻 · 每隻承傷6/自動攻擊3 · 3 隻以上敵方群凶覺醒</div>
+      <div class="hint" id="hint">v2.4.2：戰後三選一強制跨流派（召喚/詛咒/爆發），小鬼遞減傷害</div>
 
 
       <div class="hero-stand"></div>
@@ -881,9 +881,33 @@ function makeFlowButton(text,onClick,isAlt=false){
 function getAllDeckCards(){
   return [...S.hand,...S.drawPile,...S.discard];
 }
+function classifyRewardCard(c){
+  // 召喚系：有 summon 屬性、或 doubleImp、或名字含「小鬼/獵犬/使魔/契印/雙生/血祭/黯咒/血契」
+  const summonKeywords=/(小鬼|獵犬|使魔|契印|雙生|血祭|黯咒|血契|滋養|聯擊|爆裂|雙獸|終焉)/;
+  if(c.summon||c.doubleImp||c.impCommand||c.bloodBurst||c.dualBeastRitual||c.finalSigil||c.bloodPact||c.minionNourish||c.impSpreadBone||summonKeywords.test(c.name)) return "summon";
+  // 詛咒系：有 curse 類屬性、或 decayChain、或 curseBurst/Drain/Resonate
+  if(c.curseWeak||c.curseDecay||c.curseBone||c.curseBurst||c.curseDrain||c.curseResonate||c.decayChain||c.damageScaleByCurse) return "curse";
+  // 其他 = 爆發/格擋/中性
+  return "neutral";
+}
 function getRewardChoices(){
-  const pool=shuffle(REWARD_POOL.map(x=>({...x})));
-  return pool.slice(0,3);
+  // v2.4.2 分組抽牌：強制每次三選一跨三條流派（召喚/詛咒/中性）
+  const groups={summon:[],curse:[],neutral:[]};
+  REWARD_POOL.forEach(c=>{
+    const k=classifyRewardCard(c);
+    groups[k].push({...c});
+  });
+  const out=[];
+  ["summon","curse","neutral"].forEach(k=>{
+    const g=shuffle(groups[k]);
+    if(g.length>0) out.push(g[0]);
+  });
+  // 萬一某類為空（目前不會），用 fallback 補到 3 張
+  if(out.length<3){
+    const rest=shuffle(REWARD_POOL.map(x=>({...x}))).filter(c=>!out.some(o=>o.name===c.name));
+    while(out.length<3 && rest.length) out.push(rest.shift());
+  }
+  return shuffle(out);
 }
 function renderFlowPanel(){
   const title=document.getElementById("flowTitle");
@@ -1696,20 +1720,24 @@ function onHoundDefeated(reason){
 
 // v2.1：召喚物每回合自動攻擊（玩家回合開始時觸發）
 // v2.3：小鬼按堆疊數量連續攻擊
+// v2.4.2：遞減傷害曲線（3/2/2/1/1），避免召喚流一邊倒
 function minionAutoStrike(){
   if(S.battleOver) return;
   const impCount=S.minions.imp|0;
   if(impCount>0){
     const bonus=S.impBonusNextAuto||0;
-    const dmgEach=3+bonus;
+    // 遞減傷害序列：第1隻3、第2-3隻2、第4-5隻1
+    const dmgSeq=[3,2,2,1,1];
     if(impCount>=3) bigFlashMaybe(`小鬼群襲 ×${impCount}`);
-    else if(bonus>0) bigFlashMaybe("小鬼·強襲 "+dmgEach);
+    else if(bonus>0) bigFlashMaybe("小鬼·強襲 "+(dmgSeq[0]+bonus));
     else bigFlashMaybe(impCount>=2?`小鬼連咬 ×${impCount}`:"小鬼撕咬");
-    // 每隻依序攻擊當前前排（可能分批殺掉多個敵人）
+    // 每隻依序攻擊當前前排（可能分批殺掉多個敵人），bonus 只加在第一隻
     for(let i=0;i<impCount;i++){
       const tgt=aliveEnemies()[0];
       if(!tgt) break;
-      attackEnemyByAmount(tgt,dmgEach);
+      const base=dmgSeq[Math.min(i,dmgSeq.length-1)];
+      const dmg=base+(i===0?bonus:0);
+      attackEnemyByAmount(tgt,dmg);
     }
     S.impBonusNextAuto=0;
     const el=document.getElementById("impAvatar");

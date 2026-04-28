@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="術士" />
   <meta name="theme-color" content="#0d0a0a" />
   <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='36' fill='%23140b08'/%3E%3Ctext x='50%25' y='54%25' font-size='110' text-anchor='middle' dominant-baseline='middle'%3E🔮%3C/text%3E%3Ctext x='50%25' y='85%25' font-size='22' fill='%23f0c977' text-anchor='middle' font-family='-apple-system' font-weight='700'%3E術士%3C/text%3E%3C/svg%3E" />
-  <title>Warlock Prototype v1.4 · 詛咒可視化 + 雙獸共存</title>
+  <title>Warlock Prototype v2.0 · 跑圖閉環 + 小 Boss</title>
   <style>
     :root{--bg:#111;--panel:#1b1b1b;--card:#f5e8c8;--ink:#1a1712;--red:#d85c5c;--gold:#f0c977;--blue:#6cb8ff;--ok:#74d68f}
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
@@ -44,7 +44,7 @@
     .curse-badge.bone{background:rgba(242,237,224,.18);color:#f2ede0;border-color:rgba(255,255,255,.4)}
     .curse-badge.weak{background:rgba(157,215,166,.15);color:#9dd7a6;border-color:rgba(157,215,166,.5)}
     .curse-badge.decay{background:rgba(201,139,255,.18);color:#e6c8ff;border-color:rgba(201,139,255,.55)}
-    .curse-badge.zero{opacity:.22;filter:grayscale(.6)}
+    .curse-badge.zero{display:none}
     .curse-badge.bump{animation:curseBump .35s ease}
     @keyframes curseBump{0%{transform:scale(1)}40%{transform:scale(1.38);filter:brightness(1.5)}100%{transform:scale(1)}}
 
@@ -181,14 +181,14 @@
       .battle{height:clamp(220px,58dvh,270px);min-height:220px;border-radius:14px}
       .hint{left:8px;right:8px;top:8px;padding:4px 9px;font-size:11px}
       .hero-stand{left:8px;bottom:50px;width:172px;height:152px}
-      .hero-panel{left:10px;bottom:58px;width:152px;padding:6px}
-      .enemy-layer{right:10px;top:32px;width:342px;height:170px}
-      .enemy{padding:6px}
-      .enemy.enemy_far{left:0;top:38px;width:116px}
-      .enemy.enemy_mid{left:106px;top:18px;width:124px}
-      .enemy.enemy_near{left:224px;top:0;width:118px}
-      .enemy-layer.single{width:222px;height:150px;right:12px;top:38px}
-      .enemy-layer.single .enemy.enemy_near{left:56px;top:8px;width:150px}
+      .hero-panel{left:10px;bottom:58px;width:146px;padding:6px}
+      .enemy-layer{right:14px;top:32px;width:330px;height:170px}
+      .enemy{padding:5px 6px}
+      .enemy.enemy_far{left:0;top:38px;width:108px}
+      .enemy.enemy_mid{left:100px;top:18px;width:116px}
+      .enemy.enemy_near{left:212px;top:0;width:118px}
+      .enemy-layer.single{width:222px;height:150px;right:16px;top:38px}
+      .enemy-layer.single .enemy.enemy_near{left:36px;top:8px;width:178px}
       .float-num{font-size:15px}
 
       .enemy .name{font-size:11px}
@@ -198,14 +198,14 @@
       .imp-avatar{left:176px;bottom:52px;min-width:62px;padding:5px 7px;font-size:10px}
       .hound-avatar{left:248px;bottom:52px;min-width:62px;padding:5px 7px;font-size:10px}
 
-      .hand{bottom:calc(env(safe-area-inset-bottom) + 42px);width:min(926px,calc(100vw - 8px));gap:6px;padding:0 6px 2px}
-      .card{flex:0 0 84px;width:84px;min-height:112px;padding:7px}
+      .hand{bottom:calc(env(safe-area-inset-bottom) + 52px);width:min(926px,calc(100vw - 8px));gap:6px;padding:0 6px 2px}
+      .card{flex:0 0 82px;width:82px;min-height:108px;padding:7px}
       .card .cost{width:22px;height:22px;font-size:12px}
       .card h4{margin:22px 0 3px;font-size:12px}
       .card p{font-size:10px;line-height:1.25}
       .card .hint-mini{margin-top:4px;font-size:9px}
-      .ctl{bottom:calc(env(safe-area-inset-bottom) + 6px);width:min(926px,calc(100vw - 8px));padding-right:6px}
-      .end{width:128px;padding:10px 8px;font-size:13px}
+      .ctl{bottom:calc(env(safe-area-inset-bottom) + 14px);width:min(926px,calc(100vw - 8px));padding-right:6px}
+      .end{width:120px;padding:10px 8px;font-size:13px}
     }
 
     @media (orientation:portrait){
@@ -233,18 +233,18 @@
 <body>
   <div class="app">
     <div class="row between top">
-      <div class="title">術士原型 v1.4 · 詛咒可視化 + 雙獸（Month 1 主線）</div>
+      <div class="title">術士 v2.0 · 跑圖閉環（Month 2）</div>
       <div class="pill" id="turn">回合 1</div>
     </div>
     <div class="meta">
       <div class="pill" id="deckInfo">抽牌 0｜棄牌 0</div>
       <div class="pill" id="systemInfo">格擋 0｜召喚 無</div>
       <div class="pill" id="impInfo">使魔事件：未召喚</div>
-      <div class="pill" id="stageInfo">進度 1/2｜術士試煉戰</div>
+      <div class="pill" id="stageInfo">戰 1/4</div>
     </div>
 
     <section class="battle" id="battle">
-      <div class="hint" id="hint">v1.4：詛咒徽章、斬殺阈值线、削衰減傷可見；小鬼＋獵犬可共存雙號令</div>
+      <div class="hint" id="hint">v2.0：3 場小怪戰 → 營火 → 小 Boss；戰後三選一可跳過</div>
 
 
       <div class="hero-stand"></div>
@@ -290,21 +290,19 @@ const IMP_GUARD_CAP = 6;
 const HOUND_GUARD_CAP = 9;
 
 
+// v2.1：起始牌库精简到 10 张（符合尖塔式获取节奏）
+// 召喚系改为「每回合自动攻击」而非一次性爆发，进场伤害大幅下调
 const BASE_DECK = [
   {name:"普通攻擊",cost:1,text:"造成 7 傷害",target:"enemy",damage:7},
   {name:"普通攻擊",cost:1,text:"造成 7 傷害",target:"enemy",damage:7},
+  {name:"普通攻擊",cost:1,text:"造成 7 傷害",target:"enemy",damage:7},
+  {name:"普通攻擊",cost:1,text:"造成 7 傷害",target:"enemy",damage:7},
   {name:"防禦",cost:1,text:"獲得 5 格擋",target:"self",block:5},
   {name:"防禦",cost:1,text:"獲得 5 格擋",target:"self",block:5},
-  {name:"召喚小鬼",cost:1,text:"召喚小鬼：進場撕咬 5 + 注入2張；若已在場則抽1+格擋3",target:"self",summon:"imp",onSummonDamage:5,resummonDraw:1,resummonBlock:3},
-  {name:"召喚獵犬",cost:2,text:"召喚獵犬（可與小鬼共存）：進場撕咬 8；若已在場則獲得 7 格擋",target:"self",summon:"hound",onSummonDamage:8,resummonDraw:0,resummonBlock:7},
-  {name:"使魔號令",cost:1,text:"若召喚在場：立刻造成 10 傷害；否則造成 6 傷害",target:"self",impCommand:true,damageIfNoImp:6},
-  {name:"痛苦詛咒",cost:1,text:"施加 蝕骨 +2（回合末持續掉血）",target:"enemy",curseBone:2},
-  {name:"痛苦詛咒",cost:1,text:"施加 蝕骨 +2（回合末持續掉血）",target:"enemy",curseBone:2},
-  {name:"衰朽印記",cost:1,text:"施加 削衰 +2（降低敵人攻擊）",target:"enemy",curseWeak:2},
-  {name:"腐朽刻印",cost:1,text:"施加 腐朽 +2（斬殺門檻）",target:"enemy",curseDecay:2},
-  {name:"暗影衝擊",cost:1,text:"造成 4 + 該敵詛咒總層數 的傷害",target:"enemy",damageBase:4,damageScaleByCurse:true},
-  {name:"腐蝕爆發",cost:2,text:"消耗該敵全部詛咒；每層造成 3 傷害",target:"enemy",curseBurst:true},
-  {name:"詛咒共鳴",cost:1,text:"若目標同時有三種詛咒：全部層數翻倍並抽 1",target:"enemy",curseResonate:true}
+  {name:"防禦",cost:1,text:"獲得 5 格擋",target:"self",block:5},
+  {name:"防禦",cost:1,text:"獲得 5 格擋",target:"self",block:5},
+  {name:"召喚小鬼",cost:1,text:"召喚小鬼：進場撕咬 2；每回合自動咬 3；若已在場則抽1+格擋3",target:"self",summon:"imp",onSummonDamage:2,resummonDraw:1,resummonBlock:3},
+  {name:"痛苦詛咒",cost:1,text:"施加 蝕骨 +2（回合末持續掉血）",target:"enemy",curseBone:2}
 ];
 
 const INJECTION_TEMPLATES = {
@@ -316,25 +314,48 @@ const INJECTION_TEMPLATES = {
 
 const BATTLE_PRESET = [
   {
-    label:"術士試煉戰",
+    label:"路口腐尸",
     enemies:[
-      {id:"enemy_far",name:"腐尸",maxHp:20,pattern:[3,4,5],idx:0},
+      {id:"enemy_mid",name:"腐尸",maxHp:20,pattern:[3,4,5],idx:0},
+      {id:"enemy_near",name:"小骷髏",maxHp:14,pattern:[2,3,4],idx:0}
+    ]
+  },
+  {
+    label:"毒瘴小隊",
+    enemies:[
+      {id:"enemy_far",name:"腐尸",maxHp:22,pattern:[3,4,5],idx:0},
       {id:"enemy_mid",name:"骷髏弓手",maxHp:18,pattern:[3,5,3],idx:0},
       {id:"enemy_near",name:"毒瘴鬼",maxHp:24,pattern:[4,5,7],idx:0}
     ]
   },
   {
-    label:"終局監軍",
+    label:"骨巫雙子",
     enemies:[
-      {id:"enemy_boss",name:"紙甲監軍（Boss）",maxHp:66,pattern:[9,11,13],impStrikeAt:[1],idx:0}
+      {id:"enemy_mid",name:"骨巫·左",maxHp:22,pattern:[4,6,4],curseSeed:{weak:1},idx:0},
+      {id:"enemy_near",name:"骨巫·右",maxHp:22,pattern:[5,3,6],curseSeed:{bone:1},idx:0}
+    ]
+  },
+  {
+    label:"紙甲監軍（小 Boss）",
+    enemies:[
+      {id:"enemy_boss",name:"紙甲監軍",maxHp:72,bossKind:"papercmdr",idx:0,intent:8,pattern:[8]}
     ]
   }
 ];
 
 const REWARD_POOL = [
+  // —— 從起始牌庫下放（讓「通關獲取」有存在感）——
+  {name:"衰朽印記",cost:1,text:"施加 削衰 +2（降低敵人攻擊）",target:"enemy",curseWeak:2},
+  {name:"腐朽刻印",cost:1,text:"施加 腐朽 +2（斬殺門檻）",target:"enemy",curseDecay:2},
+  {name:"暗影衝擊",cost:1,text:"造成 4 + 該敵詛咒總層數 的傷害",target:"enemy",damageBase:4,damageScaleByCurse:true},
+  {name:"腐蝕爆發",cost:2,text:"消耗該敵全部詛咒；每層造成 3 傷害",target:"enemy",curseBurst:true},
+  {name:"詛咒共鳴",cost:1,text:"若目標同時有三種詛咒：全部層數翻倍並抽 1",target:"enemy",curseResonate:true},
+  {name:"使魔號令",cost:1,text:"若召喚在場：立刻造成 8 傷害；否則造成 5 傷害",target:"self",impCommand:true,impCommandDamage:8,damageIfNoImp:5},
+  {name:"召喚獵犬",cost:2,text:"召喚獵犬（可與小鬼共存）：進場撕咬 4；每回合自動咬 5；若已在場則 +7 格擋",target:"self",summon:"hound",onSummonDamage:4,resummonDraw:0,resummonBlock:7},
+  // —— 全新獎勵池卡 ——
   {name:"魂裂彈",cost:1,text:"造成 9 傷害",target:"enemy",damage:9},
-  {name:"衰弱瘟印",cost:1,text:"施加 削衰 +3",target:"enemy",curseWeak:3},
   {name:"疫骨針",cost:1,text:"施加 蝕骨 +3",target:"enemy",curseBone:3},
+  {name:"衰弱瘟印",cost:1,text:"施加 削衰 +3",target:"enemy",curseWeak:3},
   {name:"腐滅觸",cost:1,text:"施加 腐朽 +3",target:"enemy",curseDecay:3},
   {name:"暗幕護體",cost:1,text:"獲得 8 格擋並抽 1",target:"self",block:8,draw:1},
   {name:"獵犬號令",cost:1,text:"若召喚在場：造成 12，否則造成 5",target:"self",impCommand:true,impCommandDamage:12,damageIfNoImp:5}
@@ -343,7 +364,7 @@ const REWARD_POOL = [
 
 const S={
   turn:1,playerTurn:true,battleOver:false,
-  player:{hp:54,maxHp:54,energy:3,maxEnergy:3,block:0},
+  player:{hp:70,maxHp:70,energy:3,maxEnergy:3,block:0},
   enemies:[],drawPile:[],discard:[],hand:[],uid:1,selectedCard:null,selectedEnemy:null,
   drag:null,
   curseByEnemy:{},
@@ -497,7 +518,21 @@ function healPlayerByAmount(v,label=""){
 
 function currentBattle(){return BATTLE_PRESET[S.battleIndex];}
 function buildEnemiesFromBattle(idx){
-  return BATTLE_PRESET[idx].enemies.map(e=>({...e,hp:e.maxHp,intent:e.pattern[0],curses:{bone:0,weak:0,decay:0}}));
+  return BATTLE_PRESET[idx].enemies.map(e=>{
+    const seed=e.curseSeed||{bone:0,weak:0,decay:0};
+    const curses={bone:seed.bone||0,weak:seed.weak||0,decay:seed.decay||0};
+    const copy={...e,hp:e.maxHp,curses};
+    if(e.bossKind==="papercmdr"){
+      // Boss 3 招循環：蓄力 → 重擊 → 召喚/反噬（交替）
+      copy.bossPhase=0;   // 0 蓄力 1 重擊 2 詛咒反噬
+      copy.bossCycle=0;   // 總循環次數
+      copy.intent=0;      // 蓄力不打
+      copy.bossMoveName="蓄力（下回合重擊）";
+    }else{
+      copy.intent=e.pattern[0];
+    }
+    return copy;
+  });
 }
 
 function getEnemyTargetType(e){
@@ -524,7 +559,7 @@ function init(){
   S.hand=[];
   S.player.block=8;
   drawCards(DRAW_PER_TURN+1);
-  setHint("術士試煉：開局已給 8 格擋與 +1 抽牌，先穩住再疊詛咒");
+  setHint(`戰 1：${currentBattle().label}。初始 10 張牌（通關三選一解鎖更多）；召喚物每回合自動攻擊`);
   renderAll();
 }
 
@@ -559,7 +594,7 @@ function renderMeta(){
   document.getElementById("impInfo").textContent=`使魔事件：${S.impLastEvent}`;
   const runElapsed=fmtClock(getRunElapsedSec());
   const battleElapsed=fmtClock(getCurrentBattleElapsedSec());
-  const stageBase=S.runCleared?"已完成術士試煉":`進度 ${S.battleIndex+1}/${BATTLE_PRESET.length}｜${currentBattle().label}`;
+  const stageBase=S.runCleared?"通關":`戰 ${S.battleIndex+1}/${BATTLE_PRESET.length}｜${currentBattle().label}`;
   const stageText=`${stageBase}｜總 ${runElapsed}｜本戰 ${battleElapsed}`;
   document.getElementById("stageInfo").textContent=stageText;
 }
@@ -590,8 +625,8 @@ function renderFlowPanel(){
   actions.innerHTML="";
 
   if(S.flowPhase==="reward"){
-    title.textContent="戰後三選一";
-    sub.textContent="挑一張新牌加入本局牌組（直接進棄牌堆）";
+    title.textContent=`戰 ${S.battleIndex+1} 結束 · 戰後三選一`;
+    sub.textContent="挑一張新牌進牌組；或跳過（+3 HP）直接進下一戰";
     S.rewardChoices.forEach((c,idx)=>{
       const item=document.createElement("div");
       item.className="flow-item";
@@ -599,32 +634,21 @@ function renderFlowPanel(){
       list.appendChild(item);
       actions.appendChild(makeFlowButton(`拿 ${c.name}`,()=>pickRewardCard(idx)));
     });
-  }else if(S.flowPhase==="shop"){
-    title.textContent="商店：刪牌";
-    sub.textContent="刪掉一張牌，提升抽牌品質";
-    const deck=getAllDeckCards();
-    if(!deck.length){
-      list.innerHTML="<div class=\"flow-item\"><b>目前無可刪牌</b><small>直接進入下一節點</small></div>";
-    }else{
-      deck.slice(0,10).forEach(c=>{
-        const item=document.createElement("div");
-        item.className="flow-item";
-        item.innerHTML=`<b>${c.name}</b><small>${c.text}</small>`;
-        list.appendChild(item);
-        actions.appendChild(makeFlowButton(`刪 ${c.name}`,()=>removeCardFromDeck(c.uid)));
-      });
-    }
-    actions.appendChild(makeFlowButton("跳過商店",()=>gotoCamp(),true));
+    actions.appendChild(makeFlowButton("跳過（+3 HP）",()=>skipReward(),true));
   }else if(S.flowPhase==="camp"){
-    title.textContent="營火：技能強化";
-    sub.textContent="選一個本局增益後進入 Boss";
-    list.innerHTML="<div class=\"flow-item\"><b>惡魔專注</b><small>能量上限 +1，並立刻回滿能量</small></div><div class=\"flow-item\"><b>血契調息</b><small>回復 10 HP 並抽 1</small></div>";
-    actions.appendChild(makeFlowButton("拿惡魔專注",()=>takeCampSkill("energy")));
-    actions.appendChild(makeFlowButton("拿血契調息",()=>takeCampSkill("heal")));
-  }else if(S.flowPhase==="boss"){
-    title.textContent="路線完成";
-    sub.textContent="已取得獎勵，準備進入終局監軍";
-    list.innerHTML="<div class=\"flow-item\"><b>下一戰：終局監軍</b><small>你可以在 Boss 戰驗證新增牌與增益是否有感</small></div>";
+    title.textContent="Boss 前營火";
+    sub.textContent="三選一（本局常駐）後進入 Boss 戰";
+    list.innerHTML=`
+      <div class="flow-item"><b>🔥 治療</b><small>回復 18 HP（最多至上限）</small></div>
+      <div class="flow-item"><b>⚡ 惡魔專注</b><small>能量上限 +1，並立刻回滿能量</small></div>
+      <div class="flow-item"><b>🗡 刪一張基礎牌</b><small>從抽+棄+手中的第一張「普通攻擊/防禦」移除</small></div>`;
+    actions.appendChild(makeFlowButton("治療 +18",()=>takeCampChoice("heal")));
+    actions.appendChild(makeFlowButton("惡魔專注",()=>takeCampChoice("energy")));
+    actions.appendChild(makeFlowButton("刪基礎牌",()=>takeCampChoice("purge")));
+  }else if(S.flowPhase==="bossReady"){
+    title.textContent="路線完成 · 準備 Boss";
+    sub.textContent="下一戰：紙甲監軍（蓄力 → 重擊 → 詛咒反噬 3 招循環）";
+    list.innerHTML=`<div class="flow-item"><b>下一戰：紙甲監軍</b><small>3 招循環：第 1 回合蓄力（不打），第 2 回合重擊 16+，第 3 回合詛咒反噬（每層 2 真傷）</small></div>`;
     actions.appendChild(makeFlowButton("進入 Boss 戰",()=>startNextBattleFromFlow()));
   }
 }
@@ -640,35 +664,44 @@ function pickRewardCard(idx){
   if(!c)return;
   S.discard.push(cloneCard(c));
   setHint(`已獲得新牌：${c.name}`);
-  gotoShop();
+  advanceToNextBattle();
 }
-function removeCardFromDeck(uid){
-  const removeIn=(arr)=>{const i=arr.findIndex(c=>c.uid===uid);if(i>=0){return arr.splice(i,1)[0];}return null;};
-  const removed=removeIn(S.hand)||removeIn(S.drawPile)||removeIn(S.discard);
-  if(removed){
-    setHint(`商店刪牌完成：${removed.name}`);
-  }
-  gotoCamp();
+function skipReward(){
+  healPlayerByAmount(3,"跳過獎勵");
+  setHint("跳過三選一：回復 3 HP");
+  advanceToNextBattle();
 }
-function gotoShop(){
-  S.shopUsed=true;
-  openFlow("shop");
+function advanceToNextBattle(){
+  setFlowVisible(false);
+  S.flowPhase="none";
+  S.battleIndex+=1;
+  S.battleStartTs=nowSec();
+  S.enemies=buildEnemiesFromBattle(S.battleIndex);
+  S.selectedCard=null;
+  S.selectedEnemy=null;
+  S.player.block=0;
+  S.player.energy=S.player.maxEnergy;
+  S.playerTurn=true;
+  S.battleOver=false;
+  drawCards(DRAW_PER_TURN-S.hand.length);
+  setHint(`進入戰 ${S.battleIndex+1}：${currentBattle().label}`);
+  renderAll();
 }
-function gotoCamp(){
-  S.campUsed=true;
-  openFlow("camp");
-}
-function takeCampSkill(type){
+function takeCampChoice(type){
   if(type==="energy"){
     S.player.maxEnergy=Math.min(6,S.player.maxEnergy+1);
     S.player.energy=S.player.maxEnergy;
-    setHint("獲得技能：惡魔專注（能量上限 +1）");
-  }else{
-    healPlayerByAmount(10,"血契調息");
-    drawCards(1);
-    setHint("獲得技能：血契調息（回10並抽1）");
+    setHint("營火：惡魔專注（能量上限 +1）");
+  }else if(type==="heal"){
+    healPlayerByAmount(18,"營火治療");
+  }else if(type==="purge"){
+    const isBase=(c)=>c.name==="普通攻擊"||c.name==="防禦";
+    const tryPurge=(arr)=>{const i=arr.findIndex(isBase);if(i>=0){return arr.splice(i,1)[0];}return null;};
+    const removed=tryPurge(S.discard)||tryPurge(S.drawPile)||tryPurge(S.hand);
+    if(removed){setHint(`營火刪牌：移除一張「${removed.name}」`);}
+    else{setHint("營火：找不到可刪的基礎牌，改為回血 10");healPlayerByAmount(10,"營火補償");}
   }
-  openFlow("boss");
+  openFlow("bossReady");
 }
 function startNextBattleFromFlow(){
   setFlowVisible(false);
@@ -683,7 +716,7 @@ function startNextBattleFromFlow(){
   S.playerTurn=true;
   S.battleOver=false;
   drawCards(DRAW_PER_TURN-S.hand.length);
-  setHint("進入終局監軍：用新牌與技能打穿 Boss");
+  setHint("進入 Boss：紙甲監軍（注意蓄力後那回合 16+ 重擊）");
   renderAll();
 }
 
@@ -705,14 +738,17 @@ function renderEnemies(){
   S.enemies.forEach(e=>{
     const d=document.createElement("div");
     const hoverClass=S.drag?.hoverEnemyId===e.id?" hover":"";
-    const targetType=getEnemyTargetType(e);
-    const intentTarget=targetType==="imp_mark"?"小鬼（點名）":(targetType==="player_then_imp"?"主角→小鬼/獵犬":"主角");
 
     d.className="enemy "+(posMap[e.id]||"enemy_mid")+(e.hp<=0?" dead":"")+(S.selectedEnemy===e.id?" sel":"")+hoverClass;
     d.dataset.eid=e.id;
     const c=initEnemyCurses(e);
     const intentVal=Math.max(1,(e.intent||0)-c.weak);
-    const intentStr=c.weak>0?`${intentVal}（-${c.weak}）`:`${intentVal}`;
+    // Boss 招式名稱 + 意圖短化
+    const bossMoveLabel=e.bossMoveName||"";
+    const intentCore=c.weak>0?`${intentVal}(-${c.weak})`:`${intentVal}`;
+    const intentLine=bossMoveLabel
+      ? `<div class="intent">${bossMoveLabel}：⚔${intentCore}</div>`
+      : `<div class="intent">⚔${intentCore} → 主</div>`;
     // 腐朽斩杀阈值（血条上一条紫色竖线）
     const thresholdPct=c.decay>0?Math.min(100,(c.decay/e.maxHp)*100):0;
     const thresholdHtml=thresholdPct>0?`<div class="threshold" style="left:${thresholdPct}%"></div>`:"";
@@ -724,7 +760,7 @@ function renderEnemies(){
       <span class="curse-badge decay${c.decay?"":" zero"}" data-curse="decay-${e.id}">☠ ${c.decay}</span>
     </div>`;
 
-    d.innerHTML=`<div class="row between"><span class="name">${e.name}</span><span class="hp">${e.hp}/${e.maxHp}</span></div><div class="${barClass}" style="margin-top:4px"><div class="fill" style="width:${Math.max(0,e.hp)/e.maxHp*100}%"></div>${thresholdHtml}</div><div class="intent">⚔ ${e.intent} → ${intentTarget}（實${intentStr}）</div>${badges}`;
+    d.innerHTML=`<div class="row between"><span class="name">${e.name}</span><span class="hp">${e.hp}/${e.maxHp}</span></div><div class="${barClass}" style="margin-top:4px"><div class="fill" style="width:${Math.max(0,e.hp)/e.maxHp*100}%"></div>${thresholdHtml}</div>${intentLine}${badges}`;
 
     d.onclick=()=>{
       if(e.hp<=0||S.battleOver)return;
@@ -1069,30 +1105,40 @@ function checkBattleEnd(){
   }
   if(aliveEnemies().length>0)return false;
 
-  if(S.battleIndex<BATTLE_PRESET.length-1){
-    const battleSec=getCurrentBattleElapsedSec();
-    S.battleDurations[S.battleIndex]=battleSec;
-    S.discard.push(...S.hand);
-    S.hand=[];
-    S.selectedCard=null;
-    S.selectedEnemy=null;
-    S.player.block=0;
-    S.player.energy=S.player.maxEnergy;
-    S.rewardChoices=getRewardChoices();
-    setHint(`試煉戰結束（${fmtClock(battleSec)}）：先拿牌，再走商店/營火`);
-    openFlow("reward");
-    renderAll();
+  // 最後一戰（Boss）結束
+  if(S.battleIndex>=BATTLE_PRESET.length-1){
+    const finalBattleSec=getCurrentBattleElapsedSec();
+    S.battleDurations[S.battleIndex]=finalBattleSec;
+    S.runCleared=true;
+    S.battleOver=true;
+    S.playerTurn=false;
+    const totalSec=getRunElapsedSec();
+    setHint(`通關！｜總耗時 ${fmtClock(totalSec)}（Boss 戰 ${fmtClock(finalBattleSec)}）`);
     return true;
   }
 
+  // 小怪戰結束
+  const battleSec=getCurrentBattleElapsedSec();
+  S.battleDurations[S.battleIndex]=battleSec;
+  S.discard.push(...S.hand);
+  S.hand=[];
+  S.selectedCard=null;
+  S.selectedEnemy=null;
+  S.player.block=0;
+  S.player.energy=S.player.maxEnergy;
 
-  const finalBattleSec=getCurrentBattleElapsedSec();
-  S.battleDurations[S.battleIndex]=finalBattleSec;
-  S.runCleared=true;
-  S.battleOver=true;
-  S.playerTurn=false;
-  const totalSec=getRunElapsedSec();
-  setHint(`試煉完成｜總耗時 ${fmtClock(totalSec)}（本戰 ${fmtClock(finalBattleSec)}）`);
+  // 打完第三場（idx=2，下一戰是 Boss）→ 營火；其他 → 三選一
+  const nextIdxAfter=S.battleIndex+1;
+  if(nextIdxAfter===BATTLE_PRESET.length-1){
+    // 進 Boss 前的營火
+    setHint(`戰 ${S.battleIndex+1} 結束（${fmtClock(battleSec)}）：Boss 前營火`);
+    openFlow("camp");
+  }else{
+    S.rewardChoices=getRewardChoices();
+    setHint(`戰 ${S.battleIndex+1} 結束（${fmtClock(battleSec)}）：戰後三選一`);
+    openFlow("reward");
+  }
+  renderAll();
   return true;
 }
 
@@ -1136,7 +1182,34 @@ function popHoundDamage(val){
 function onHoundDefeated(reason){
   if(!S.minions.hound)return;
   S.minions.hound=false;
-  setHint(`獵犬離場（${reason}）`);
+  // 忠誠之盾：獵犬死亡時給玩家 +6 格擋，讓「死」有交代
+  S.player.block=Math.min(99,S.player.block+6);
+  setHint(`獵犬離場（${reason}）→ 忠誠之盾 +6 格擋`);
+}
+
+// v2.1：召喚物每回合自動攻擊（玩家回合開始時觸發）
+function minionAutoStrike(){
+  if(S.battleOver) return;
+  const target=aliveEnemies()[0];
+  if(!target) return;
+  if(S.minions.imp){
+    bigFlashMaybe("小鬼撕咬");
+    attackEnemyByAmount(target,3);
+    const el=document.getElementById("impAvatar");
+    if(el){el.classList.remove("pop");void el.offsetWidth;el.classList.add("pop");}
+  }
+  // 重新取目標（小鬼可能秒殺）
+  const target2=aliveEnemies()[0];
+  if(!target2) return;
+  if(S.minions.hound){
+    attackEnemyByAmount(target2,5);
+    const el=document.getElementById("houndAvatar");
+    if(el){el.classList.remove("pop");void el.offsetWidth;el.classList.add("pop");}
+  }
+}
+
+function bigFlashMaybe(txt){
+  try{ if(typeof bigFlash==="function") bigFlash(txt); }catch(e){}
 }
 
 function dealDamageToPlayer(dmg,sourceName="敵人"){
@@ -1174,20 +1247,54 @@ function dealDamageToPlayer(dmg,sourceName="敵人"){
 
 
 
+function runBossAction(e){
+  // 紙甲監軍 3 招循環：0=蓄力（不打） 1=重擊(16) 2=詛咒反噬（當前場上詛咒層數 x2 直接扣玩家）
+  const phase=e.bossPhase||0;
+  if(phase===0){
+    // 蓄力：不打，自給 6 甲（用 block 欄位模擬 → 直接疊本回合扣玩家前的「未命中」概念，簡化處理：下回合傷害 +4）
+    e.bossBuff=4; // 重擊時 +4
+    bigFlash("紙甲監軍·蓄力","purple");
+    shakeBattle("small");
+  }else if(phase===1){
+    const dmg=16+(e.bossBuff||0);
+    e.bossBuff=0;
+    bigFlash("紙甲監軍·重擊","red");
+    shakeBattle("big");
+    dealDamageToPlayer(dmg,e.name);
+  }else{
+    // 詛咒反噬：消耗玩家所有敵人身上的詛咒，每層扣玩家 2 HP（繞過甲繞過小鬼獵犬，直擊 HP）
+    const total=getEnemyCurseTotal(e);
+    if(total>0){
+      const recoil=total*2;
+      consumeAllCurses(e);
+      bigFlash("詛咒反噬","purple");
+      shakeBattle("big");
+      dealDirectHpDamage(recoil);
+      setHint(`紙甲監軍·詛咒反噬：${total} 層 → ${recoil} 真傷`);
+    }else{
+      // 無詛咒 → 改為召喚紙兵（6 HP，下回合開始前自爆 8 傷害）
+      setHint("紙甲監軍召喚紙兵（當前無詛咒可反噬，改為壓迫）");
+      dealDamageToPlayer(6,e.name);
+    }
+  }
+  // 推進下一招
+  e.bossCycle+=1;
+  e.bossPhase=(phase+1)%3;
+  // 預告下一回合意圖
+  if(e.bossPhase===0){e.intent=0;e.bossMoveName="蓄力（下回合重擊）";}
+  else if(e.bossPhase===1){e.intent=16+(e.bossBuff||0);e.bossMoveName="重擊";}
+  else{e.intent=0;e.bossMoveName="詛咒反噬 / 召喚";}
+}
+
 function enemyTurn(){
   for(const e of aliveEnemies()){
+    if(e.bossKind==="papercmdr"){
+      runBossAction(e);
+      continue;
+    }
     const cc=initEnemyCurses(e);
     const dmg=Math.max(1,e.intent-cc.weak);
-    const targetType=getEnemyTargetType(e);
-    if(targetType==="imp_mark"&&S.minions.imp){
-      const guard=Math.min(getImpGuardCap(),dmg);
-      popImpDamage(guard);
-      onImpDefeated(`${e.name}點名 ${guard}`);
-      const overflow=Math.max(0,dmg-guard);
-      if(overflow>0) dealDirectHpDamage(overflow);
-    }else{
-      dealDamageToPlayer(dmg,e.name);
-    }
+    dealDamageToPlayer(dmg,e.name);
 
     e.idx=(e.idx+1)%e.pattern.length;
     e.intent=e.pattern[e.idx];
@@ -1222,6 +1329,9 @@ function nextTurn(){
   S.player.block=0;
   S.playerTurn=true;
   drawCards(DRAW_PER_TURN-S.hand.length);
+  // v2.1：召喚物回合起手自動攻擊（每回合 3/5 點持續輸出）
+  minionAutoStrike();
+  if(checkBattleEnd()){renderAll();return;}
   setHint("你的回合：優先保命，利用小鬼承傷窗口換節奏");
   renderAll();
 }

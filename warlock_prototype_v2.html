@@ -290,21 +290,19 @@ const IMP_GUARD_CAP = 6;
 const HOUND_GUARD_CAP = 9;
 
 
+// v2.1：起始牌库精简到 10 张（符合尖塔式获取节奏）
+// 召喚系改为「每回合自动攻击」而非一次性爆发，进场伤害大幅下调
 const BASE_DECK = [
   {name:"普通攻擊",cost:1,text:"造成 7 傷害",target:"enemy",damage:7},
   {name:"普通攻擊",cost:1,text:"造成 7 傷害",target:"enemy",damage:7},
+  {name:"普通攻擊",cost:1,text:"造成 7 傷害",target:"enemy",damage:7},
+  {name:"普通攻擊",cost:1,text:"造成 7 傷害",target:"enemy",damage:7},
   {name:"防禦",cost:1,text:"獲得 5 格擋",target:"self",block:5},
   {name:"防禦",cost:1,text:"獲得 5 格擋",target:"self",block:5},
-  {name:"召喚小鬼",cost:1,text:"召喚小鬼：進場撕咬 5 + 注入2張；若已在場則抽1+格擋3",target:"self",summon:"imp",onSummonDamage:5,resummonDraw:1,resummonBlock:3},
-  {name:"召喚獵犬",cost:2,text:"召喚獵犬（可與小鬼共存）：進場撕咬 8；若已在場則獲得 7 格擋",target:"self",summon:"hound",onSummonDamage:8,resummonDraw:0,resummonBlock:7},
-  {name:"使魔號令",cost:1,text:"若召喚在場：立刻造成 10 傷害；否則造成 6 傷害",target:"self",impCommand:true,damageIfNoImp:6},
-  {name:"痛苦詛咒",cost:1,text:"施加 蝕骨 +2（回合末持續掉血）",target:"enemy",curseBone:2},
-  {name:"痛苦詛咒",cost:1,text:"施加 蝕骨 +2（回合末持續掉血）",target:"enemy",curseBone:2},
-  {name:"衰朽印記",cost:1,text:"施加 削衰 +2（降低敵人攻擊）",target:"enemy",curseWeak:2},
-  {name:"腐朽刻印",cost:1,text:"施加 腐朽 +2（斬殺門檻）",target:"enemy",curseDecay:2},
-  {name:"暗影衝擊",cost:1,text:"造成 4 + 該敵詛咒總層數 的傷害",target:"enemy",damageBase:4,damageScaleByCurse:true},
-  {name:"腐蝕爆發",cost:2,text:"消耗該敵全部詛咒；每層造成 3 傷害",target:"enemy",curseBurst:true},
-  {name:"詛咒共鳴",cost:1,text:"若目標同時有三種詛咒：全部層數翻倍並抽 1",target:"enemy",curseResonate:true}
+  {name:"防禦",cost:1,text:"獲得 5 格擋",target:"self",block:5},
+  {name:"防禦",cost:1,text:"獲得 5 格擋",target:"self",block:5},
+  {name:"召喚小鬼",cost:1,text:"召喚小鬼：進場撕咬 2；每回合自動咬 3；若已在場則抽1+格擋3",target:"self",summon:"imp",onSummonDamage:2,resummonDraw:1,resummonBlock:3},
+  {name:"痛苦詛咒",cost:1,text:"施加 蝕骨 +2（回合末持續掉血）",target:"enemy",curseBone:2}
 ];
 
 const INJECTION_TEMPLATES = {
@@ -346,9 +344,18 @@ const BATTLE_PRESET = [
 ];
 
 const REWARD_POOL = [
+  // —— 從起始牌庫下放（讓「通關獲取」有存在感）——
+  {name:"衰朽印記",cost:1,text:"施加 削衰 +2（降低敵人攻擊）",target:"enemy",curseWeak:2},
+  {name:"腐朽刻印",cost:1,text:"施加 腐朽 +2（斬殺門檻）",target:"enemy",curseDecay:2},
+  {name:"暗影衝擊",cost:1,text:"造成 4 + 該敵詛咒總層數 的傷害",target:"enemy",damageBase:4,damageScaleByCurse:true},
+  {name:"腐蝕爆發",cost:2,text:"消耗該敵全部詛咒；每層造成 3 傷害",target:"enemy",curseBurst:true},
+  {name:"詛咒共鳴",cost:1,text:"若目標同時有三種詛咒：全部層數翻倍並抽 1",target:"enemy",curseResonate:true},
+  {name:"使魔號令",cost:1,text:"若召喚在場：立刻造成 8 傷害；否則造成 5 傷害",target:"self",impCommand:true,impCommandDamage:8,damageIfNoImp:5},
+  {name:"召喚獵犬",cost:2,text:"召喚獵犬（可與小鬼共存）：進場撕咬 4；每回合自動咬 5；若已在場則 +7 格擋",target:"self",summon:"hound",onSummonDamage:4,resummonDraw:0,resummonBlock:7},
+  // —— 全新獎勵池卡 ——
   {name:"魂裂彈",cost:1,text:"造成 9 傷害",target:"enemy",damage:9},
-  {name:"衰弱瘟印",cost:1,text:"施加 削衰 +3",target:"enemy",curseWeak:3},
   {name:"疫骨針",cost:1,text:"施加 蝕骨 +3",target:"enemy",curseBone:3},
+  {name:"衰弱瘟印",cost:1,text:"施加 削衰 +3",target:"enemy",curseWeak:3},
   {name:"腐滅觸",cost:1,text:"施加 腐朽 +3",target:"enemy",curseDecay:3},
   {name:"暗幕護體",cost:1,text:"獲得 8 格擋並抽 1",target:"self",block:8,draw:1},
   {name:"獵犬號令",cost:1,text:"若召喚在場：造成 12，否則造成 5",target:"self",impCommand:true,impCommandDamage:12,damageIfNoImp:5}
@@ -552,7 +559,7 @@ function init(){
   S.hand=[];
   S.player.block=8;
   drawCards(DRAW_PER_TURN+1);
-  setHint(`戰 1：${currentBattle().label}。開局 8 格擋 + 1 抽牌，先穩住再疊詛咒`);
+  setHint(`戰 1：${currentBattle().label}。初始 10 張牌（通關三選一解鎖更多）；召喚物每回合自動攻擊`);
   renderAll();
 }
 
@@ -1175,7 +1182,34 @@ function popHoundDamage(val){
 function onHoundDefeated(reason){
   if(!S.minions.hound)return;
   S.minions.hound=false;
-  setHint(`獵犬離場（${reason}）`);
+  // 忠誠之盾：獵犬死亡時給玩家 +6 格擋，讓「死」有交代
+  S.player.block=Math.min(99,S.player.block+6);
+  setHint(`獵犬離場（${reason}）→ 忠誠之盾 +6 格擋`);
+}
+
+// v2.1：召喚物每回合自動攻擊（玩家回合開始時觸發）
+function minionAutoStrike(){
+  if(S.battleOver) return;
+  const target=aliveEnemies()[0];
+  if(!target) return;
+  if(S.minions.imp){
+    bigFlashMaybe("小鬼撕咬");
+    attackEnemyByAmount(target,3);
+    const el=document.getElementById("impAvatar");
+    if(el){el.classList.remove("pop");void el.offsetWidth;el.classList.add("pop");}
+  }
+  // 重新取目標（小鬼可能秒殺）
+  const target2=aliveEnemies()[0];
+  if(!target2) return;
+  if(S.minions.hound){
+    attackEnemyByAmount(target2,5);
+    const el=document.getElementById("houndAvatar");
+    if(el){el.classList.remove("pop");void el.offsetWidth;el.classList.add("pop");}
+  }
+}
+
+function bigFlashMaybe(txt){
+  try{ if(typeof bigFlash==="function") bigFlash(txt); }catch(e){}
 }
 
 function dealDamageToPlayer(dmg,sourceName="敵人"){
@@ -1295,6 +1329,9 @@ function nextTurn(){
   S.player.block=0;
   S.playerTurn=true;
   drawCards(DRAW_PER_TURN-S.hand.length);
+  // v2.1：召喚物回合起手自動攻擊（每回合 3/5 點持續輸出）
+  minionAutoStrike();
+  if(checkBattleEnd()){renderAll();return;}
   setHint("你的回合：優先保命，利用小鬼承傷窗口換節奏");
   renderAll();
 }

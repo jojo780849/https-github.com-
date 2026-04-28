@@ -21,8 +21,8 @@
     .top{margin-bottom:8px}
     .pill{background:#201b18;border:1px solid #3a2f28;border-radius:999px;padding:6px 10px;font-size:12px}
     .title{font-weight:900;letter-spacing:.9px;font-size:16px}
-    .meta{margin:-2px 0 6px;display:flex;gap:6px;flex-wrap:wrap}
-    .meta .pill{padding:5px 9px;font-size:11px;opacity:.92}
+    .meta{margin:-2px 0 6px;display:flex;gap:6px;flex-wrap:wrap;max-width:100%}
+    .meta .pill{padding:5px 9px;font-size:11px;opacity:.92;white-space:nowrap}
 
 
     .battle{position:relative;height:clamp(280px,62dvh,420px);min-height:280px;background:radial-gradient(circle at 52% 10%,rgba(255,238,198,.08),transparent 30%),linear-gradient(180deg,#1a1412,#120e0d 60%,#100c0c);border:1px solid #3a2f28;border-radius:18px;overflow:hidden}
@@ -170,63 +170,64 @@
     .drag-line{position:fixed;left:0;top:0;height:3px;background:linear-gradient(90deg,rgba(130,210,255,.15),rgba(130,210,255,.95));transform-origin:0 50%;border-radius:999px;box-shadow:0 0 10px rgba(130,210,255,.45)}
     .drag-dot{position:fixed;left:0;top:0;width:14px;height:14px;border-radius:50%;background:#8dd3ff;box-shadow:0 0 12px rgba(141,211,255,.9);transform:translate(-50%,-50%)}
 
-    @media (orientation:landscape) and (max-height:430px) and (min-width:900px){
-      .app{max-width:926px;padding:4px 8px calc(env(safe-area-inset-bottom) + 4px)}
-      .top{margin-bottom:4px}
-      .title{font-size:14px}
+    @media (orientation:landscape) and (max-height:500px){
+      .app{max-width:100vw;padding:4px 8px calc(env(safe-area-inset-bottom) + 4px)}
+      .top{margin-bottom:3px}
+      .title{font-size:13px}
       .pill{padding:4px 8px;font-size:11px}
-      .meta{margin:-1px 0 4px;gap:5px}
+      .meta{margin:-1px 0 3px;gap:5px}
       .meta .pill{padding:3px 7px;font-size:10px}
 
-      .battle{height:clamp(220px,58dvh,270px);min-height:220px;border-radius:14px}
-      .hint{left:8px;right:8px;top:8px;padding:4px 9px;font-size:11px}
-      .hero-stand{left:8px;bottom:50px;width:172px;height:152px}
-      .hero-panel{left:10px;bottom:58px;width:146px;padding:6px}
-      .enemy-layer{right:14px;top:32px;width:330px;height:170px}
-      .enemy{padding:5px 6px}
-      .enemy.enemy_far{left:0;top:38px;width:108px}
-      .enemy.enemy_mid{left:100px;top:18px;width:116px}
-      .enemy.enemy_near{left:212px;top:0;width:118px}
-      .enemy-layer.single{width:222px;height:150px;right:16px;top:38px}
-      .enemy-layer.single .enemy.enemy_near{left:36px;top:8px;width:178px}
+      .battle{height:calc(100dvh - 184px);min-height:210px;border-radius:14px}
+      .hint{left:8px;right:8px;top:6px;padding:4px 9px;font-size:11px}
+      .hero-stand{left:8px;bottom:8px;width:28vw;max-width:200px;height:150px}
+      .hero-panel{left:10px;bottom:16px;width:28vw;max-width:200px;padding:7px}
+      .enemy-layer{right:14px;top:30px;width:58vw;max-width:420px;height:200px}
+      .enemy{padding:5px 7px}
+      .enemy.enemy_far{left:2%;top:44px;width:30%}
+      .enemy.enemy_mid{left:33%;top:22px;width:32%}
+      .enemy.enemy_near{left:66%;top:0;width:32%}
+      .enemy-layer.single{width:42vw;max-width:280px;right:4vw;top:34px;height:170px}
+      .enemy-layer.single .enemy.enemy_near{left:12%;top:12px;width:76%}
       .float-num{font-size:15px}
 
       .enemy .name{font-size:11px}
+      .enemy .hp{font-size:10px}
+      .intent{font-size:10px;margin-top:3px}
+      .hud-left{left:calc(28vw + 20px);bottom:14px;padding:6px 9px}
+      .imp-avatar{left:calc(28vw + 24px);bottom:58px;min-width:60px;padding:4px 7px;font-size:10px}
+      .hound-avatar{left:calc(28vw + 98px);bottom:58px;min-width:60px;padding:4px 7px;font-size:10px}
 
-      .enemy .hp,.intent{font-size:10px}
-      .hud-left{left:10px;bottom:14px;padding:6px 8px}
-      .imp-avatar{left:176px;bottom:52px;min-width:62px;padding:5px 7px;font-size:10px}
-      .hound-avatar{left:248px;bottom:52px;min-width:62px;padding:5px 7px;font-size:10px}
-
-      .hand{bottom:calc(env(safe-area-inset-bottom) + 52px);width:min(926px,calc(100vw - 8px));gap:6px;padding:0 6px 2px}
-      .card{flex:0 0 82px;width:82px;min-height:108px;padding:7px}
-      .card .cost{width:22px;height:22px;font-size:12px}
-      .card h4{margin:22px 0 3px;font-size:12px}
+      .hand{bottom:calc(env(safe-area-inset-bottom) + 54px);width:min(100vw,calc(100vw - 8px));gap:5px;padding:0 100px 2px 8px;justify-content:center}
+      .card{flex:0 0 80px;width:80px;min-height:104px;padding:6px}
+      .card .cost{width:20px;height:20px;font-size:11px;left:6px;top:6px}
+      .card h4{margin:20px 0 3px;font-size:11.5px}
       .card p{font-size:10px;line-height:1.25}
       .card .hint-mini{margin-top:4px;font-size:9px}
-      .ctl{bottom:calc(env(safe-area-inset-bottom) + 14px);width:min(926px,calc(100vw - 8px));padding-right:6px}
-      .end{width:120px;padding:10px 8px;font-size:13px}
+      .ctl{bottom:calc(env(safe-area-inset-bottom) + 10px);width:100vw;padding-right:10px}
+      .end{width:98px;padding:8px 6px;font-size:12px}
     }
 
     @media (orientation:portrait){
-      .app{max-width:430px;padding:8px 10px calc(env(safe-area-inset-bottom) + 8px)}
-      .battle{height:calc(100dvh - 220px);min-height:420px}
-      .hero-stand{left:8px;bottom:102px;width:160px;height:190px}
-      .hero-panel{left:10px;bottom:118px;width:148px}
-      .enemy-layer{right:8px;top:76px;width:250px;height:250px}
-      .enemy.enemy_far{left:0;top:42px;width:124px}
-      .enemy.enemy_mid{left:78px;top:24px;width:132px}
-      .enemy.enemy_near{left:154px;top:0;width:96px}
-      .enemy-layer.single{width:200px;height:170px;right:20px;top:82px}
-      .enemy-layer.single .enemy.enemy_near{left:48px;top:12px;width:132px}
-      .imp-avatar{left:150px;bottom:128px;min-width:64px;padding:5px 7px;font-size:10px}
-      .hound-avatar{left:222px;bottom:128px;min-width:64px;padding:5px 7px;font-size:10px}
+      .app{max-width:100vw;padding:8px 10px calc(env(safe-area-inset-bottom) + 8px)}
+      .battle{height:calc(100dvh - 260px);min-height:420px}
+      .hero-stand{display:none}
+      .hero-panel{left:8px;right:8px;bottom:8px;width:auto;padding:8px 10px}
+      .hero-panel .row{align-items:center}
+      .enemy-layer{left:8px;right:8px;top:46px;width:auto;height:calc(100% - 180px);max-height:300px}
+      .enemy.enemy_far{left:2%;top:46%;width:30%}
+      .enemy.enemy_mid{left:34%;top:24%;width:32%}
+      .enemy.enemy_near{left:66%;top:4%;width:32%}
+      .enemy-layer.single{left:25%;right:25%;top:10%;width:50%;height:160px}
+      .enemy-layer.single .enemy.enemy_near{left:0;top:0;width:100%}
+      .imp-avatar{left:10px;bottom:96px;min-width:64px;padding:5px 7px;font-size:10px}
+      .hound-avatar{left:88px;bottom:96px;min-width:64px;padding:5px 7px;font-size:10px}
+      .hud-left{left:auto;right:10px;bottom:96px;padding:6px 9px}
 
-      .hand{width:min(410px,calc(100vw - 12px));gap:6px}
-
-      .card{flex:0 0 92px;width:92px;min-height:132px}
-      .ctl{width:min(410px,calc(100vw - 12px))}
-      .end{width:142px}
+      .hand{width:calc(100vw - 12px);gap:5px;padding:0 6px 2px;justify-content:flex-start;overflow-x:auto}
+      .card{flex:0 0 88px;width:88px;min-height:124px}
+      .ctl{width:calc(100vw - 12px);padding-right:10px}
+      .end{width:118px}
     }
 
     /* ===== v2.4 章節化 UI ===== */
@@ -283,6 +284,7 @@
       <div class="pill" id="systemInfo">格擋 0｜召喚 無</div>
       <div class="pill" id="impInfo">使魔事件：未召喚</div>
       <div class="pill" id="stageInfo">戰 1/4</div>
+      <div class="pill" id="timeInfo">⏱ 0:00</div>
     </div>
 
     <section class="battle" id="battle">
@@ -861,8 +863,9 @@ function renderMeta(){
   const chap=CHAPTERS.find(c=>c.id===S.currentChapterId);
   const chapBattles=chap?.battles||[];
   const stageBase=S.runCleared?`${chap?.icon||""} ${chap?.name||""} 通關`:`${chap?.icon||""} ${chap?.name||"?"}｜戰 ${S.chapterBattleIdx+1}/${chapBattles.length}｜${currentBattle().label}`;
-  const stageText=`${stageBase}｜總 ${runElapsed}｜本戰 ${battleElapsed}`;
-  document.getElementById("stageInfo").textContent=stageText;
+  document.getElementById("stageInfo").textContent=stageBase;
+  const tEl=document.getElementById("timeInfo");
+  if(tEl) tEl.textContent=`⏱ 本戰 ${battleElapsed}｜總 ${runElapsed}`;
 }
 
 function setFlowVisible(show){

@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="術士" />
   <meta name="theme-color" content="#0d0a0a" />
   <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='36' fill='%23140b08'/%3E%3Ctext x='50%25' y='54%25' font-size='110' text-anchor='middle' dominant-baseline='middle'%3E🔮%3C/text%3E%3Ctext x='50%25' y='85%25' font-size='22' fill='%23f0c977' text-anchor='middle' font-family='-apple-system' font-weight='700'%3E術士%3C/text%3E%3C/svg%3E" />
-  <title>Warlock Prototype v2.3 · 小鬼堆疊召喚師</title>
+  <title>Warlock Prototype v2.4 · 章節化 Ch.1 腐尸谷</title>
   <style>
     :root{--bg:#111;--panel:#1b1b1b;--card:#f5e8c8;--ink:#1a1712;--red:#d85c5c;--gold:#f0c977;--blue:#6cb8ff;--ok:#74d68f}
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
@@ -228,12 +228,54 @@
       .ctl{width:min(410px,calc(100vw - 12px))}
       .end{width:142px}
     }
+
+    /* ===== v2.4 章節化 UI ===== */
+    .menu{position:fixed;inset:0;background:linear-gradient(180deg,#15100f,#0d0a0a);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;padding:20px;text-align:center}
+    .menu.hidden{display:none}
+    .menu-logo{font-size:48px;margin-bottom:4px;filter:drop-shadow(0 4px 12px rgba(240,201,119,.3))}
+    .menu-title{font-size:26px;font-weight:900;letter-spacing:3px;color:#f0c977;margin-bottom:6px;text-shadow:0 2px 12px rgba(240,201,119,.25)}
+    .menu-sub{font-size:13px;opacity:.7;margin-bottom:24px;letter-spacing:1px}
+    .menu-stats{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:20px;max-width:380px}
+    .menu-stat{background:#201b18;border:1px solid #3a2f28;border-radius:10px;padding:8px 12px;font-size:11px;color:#d7c8ab;min-width:90px}
+    .menu-stat b{display:block;font-size:15px;color:#f0c977;margin-top:2px}
+    .menu-btn{display:block;width:min(320px,86vw);margin:6px auto;padding:14px 18px;border:0;border-radius:14px;font-size:15px;font-weight:900;letter-spacing:2px;box-shadow:0 8px 18px rgba(0,0,0,.3);cursor:pointer}
+    .menu-btn.primary{background:linear-gradient(180deg,#f0d79f,#cfaa68);color:#2b2014}
+    .menu-btn.secondary{background:#2b241f;color:#f2dfbf;border:1px solid #51433a}
+    .menu-btn.locked{background:#1a1714;color:#6a5b47;border:1px solid #33291f;cursor:not-allowed}
+    .menu-chapters{width:min(380px,90vw);margin:10px 0 18px}
+    .chap-row{display:flex;align-items:center;gap:10px;background:#201b18;border:1px solid #3a2f28;border-radius:12px;padding:10px 12px;margin-bottom:8px;text-align:left}
+    .chap-row.done{border-color:#74d68f}
+    .chap-row.locked{opacity:.45}
+    .chap-icon{font-size:22px}
+    .chap-info{flex:1}
+    .chap-info b{display:block;font-size:14px;color:#f0c977}
+    .chap-info small{display:block;font-size:11px;opacity:.8;margin-top:2px}
+    .chap-badge{font-size:11px;padding:3px 8px;border-radius:999px;font-weight:800}
+    .chap-badge.done{background:rgba(116,214,143,.22);color:#9eebb4;border:1px solid rgba(116,214,143,.5)}
+    .chap-badge.active{background:rgba(240,201,119,.22);color:#f0c977;border:1px solid rgba(240,201,119,.55)}
+    .chap-badge.locked{background:#1a1714;color:#6a5b47;border:1px solid #33291f}
+    .menu-foot{font-size:10px;opacity:.5;margin-top:14px}
+    .menu-back{position:fixed;left:14px;top:14px;z-index:110;background:rgba(20,14,12,.85);border:1px solid #3a2f28;color:#f2dfbf;border-radius:999px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer}
+
+    /* 章末结算面板（沿用 flow-panel 但加顶部 ribbon） */
+    .chap-complete-ribbon{background:linear-gradient(90deg,#f0d79f,#cfaa68);color:#2b2014;padding:8px 14px;border-radius:10px;font-weight:900;font-size:15px;letter-spacing:2px;margin:-4px -4px 12px;text-align:center;box-shadow:0 4px 12px rgba(240,201,119,.25)}
+    .chap-complete-stats{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+    .chap-complete-stats .pill{flex:1;min-width:80px;text-align:center;padding:7px 8px;background:#241c18;border:1px solid #51433a;border-radius:8px;font-size:11px;color:#d7c8ab}
+    .chap-complete-stats .pill b{display:block;font-size:14px;color:#f0c977;margin-top:2px}
+
+    /* 新手保护复活提示 */
+    .revive-toast{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);background:rgba(20,14,12,.95);border:2px solid #f0c977;border-radius:18px;padding:20px 24px;z-index:60;max-width:320px;text-align:center;box-shadow:0 20px 40px rgba(0,0,0,.5),0 0 30px rgba(240,201,119,.3);animation:reviveIn .4s ease}
+    .revive-toast.hidden{display:none}
+    .revive-toast h3{margin:0 0 6px;color:#f0c977;font-size:18px;letter-spacing:2px}
+    .revive-toast p{margin:0 0 12px;font-size:13px;line-height:1.5;color:#f2dfbf}
+    .revive-toast button{background:linear-gradient(180deg,#f0d79f,#cfaa68);border:0;border-radius:10px;padding:10px 22px;font-weight:900;letter-spacing:2px;color:#2b2014;cursor:pointer}
+    @keyframes reviveIn{0%{opacity:0;transform:translate(-50%,-40%) scale(.8)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
   </style>
 </head>
 <body>
   <div class="app">
     <div class="row between top">
-      <div class="title">術士 v2.3 · 小鬼堆疊召喚師</div>
+      <div class="title">術士 v2.4 · Ch.1 腐尸谷</div>
       <div class="pill" id="turn">回合 1</div>
     </div>
     <div class="meta">
@@ -283,6 +325,29 @@
   </div>
   <div class="float-layer" id="floatLayer"></div>
 
+  <!-- v2.4：主菜单 -->
+  <div class="menu" id="mainMenu">
+    <div class="menu-logo">🔮</div>
+    <div class="menu-title">術士 · 腐尸跑圖</div>
+    <div class="menu-sub">v2.4 · 章節化 Roguelike · 可隨時停</div>
+    <div class="menu-stats" id="menuStats"></div>
+    <div class="menu-chapters" id="menuChapters"></div>
+    <button class="menu-btn primary" id="btnStart">開始遊戲</button>
+    <button class="menu-btn secondary" id="btnContinue">繼續（載入存檔）</button>
+    <button class="menu-btn secondary" id="btnReset" style="font-size:12px;padding:10px 14px;opacity:.7">清除存檔</button>
+    <div class="menu-foot">你只說想法 · 隨時可退出 · 章節自動存檔</div>
+  </div>
+
+  <!-- v2.4：游戏中返回菜单 -->
+  <button class="menu-back hidden" id="btnBackMenu">☰ 菜單</button>
+
+  <!-- v2.4：新手保护复活提示 -->
+  <div class="revive-toast hidden" id="reviveToast">
+    <h3>✨ 血契庇護</h3>
+    <p>首次死亡 · 黑暗契約之力將你拉回陽間<br><b>回復 15 HP，原地繼續戰鬥</b><br><small style="opacity:.6">（每趟旅程僅一次）</small></p>
+    <button id="btnReviveConfirm">繼續戰鬥</button>
+  </div>
+
 
 <script>
 const DRAW_PER_TURN = 4;
@@ -313,6 +378,38 @@ const INJECTION_TEMPLATES = {
   ]
 };
 
+// v2.4：章節化結構
+// Ch.1 腐尸谷（Month 1 實作 · 3 戰 · ~8 min）
+// Ch.2 瘴疫城 / Ch.3 獻祭祭壇（Month 2-3 實作 · 占位）
+const CHAPTERS = [
+  {
+    id:"ch1",
+    name:"腐尸谷",
+    icon:"🌫",
+    subtitle:"第一次成功 · 3 戰 · 約 8 分鐘",
+    battles:[0,1,2],
+    unlocked:true
+  },
+  {
+    id:"ch2",
+    name:"瘴疫城",
+    icon:"☣",
+    subtitle:"策略抉擇 · 4 戰 · 約 10 分鐘",
+    battles:[],
+    unlocked:false,
+    lockReason:"Month 2 開放"
+  },
+  {
+    id:"ch3",
+    name:"獻祭祭壇",
+    icon:"🔥",
+    subtitle:"最終決戰 · 5 戰 + Boss · 約 12 分鐘",
+    battles:[],
+    unlocked:false,
+    lockReason:"Month 3 開放"
+  }
+];
+
 const BATTLE_PRESET = [
   {
     label:"路口腐尸",
@@ -330,14 +427,14 @@ const BATTLE_PRESET = [
     ]
   },
   {
-    label:"骨巫雙子",
+    label:"骨巫雙子（章首領）",
     enemies:[
-      {id:"enemy_mid",name:"骨巫·左",maxHp:22,pattern:[4,6,4],curseSeed:{weak:1},idx:0},
-      {id:"enemy_near",name:"骨巫·右",maxHp:22,pattern:[5,3,6],curseSeed:{bone:1},idx:0}
+      {id:"enemy_mid",name:"骨巫·左",maxHp:30,pattern:[4,6,4],curseSeed:{weak:1},idx:0},
+      {id:"enemy_near",name:"骨巫·右",maxHp:30,pattern:[5,3,6],curseSeed:{bone:1},idx:0}
     ]
   },
   {
-    label:"紙甲監軍（小 Boss）",
+    label:"紙甲監軍（小 Boss · 保留未用）",
     enemies:[
       {id:"enemy_boss",name:"紙甲監軍",maxHp:72,bossKind:"papercmdr",idx:0,intent:8,pattern:[8]}
     ]
@@ -399,6 +496,11 @@ const S={
   flowPhase:"none",
   rewardChoices:[],
   campUsed:false,
+  // v2.4 章節化
+  currentChapterId:"ch1",
+  chapterBattleIdx:0,    // 當前章節內的戰鬥序號（0,1,2...）
+  reviveUsed:false,       // L1 新手保護：每 run 一次
+  inGame:false,
   shopUsed:false,
   // v2.2：構築 buff / 狀態
   impShieldedThisTurn:false,   // 使魔滋養：小鬼本回合不受擊
@@ -591,8 +693,16 @@ function getEnemyTargetType(e){
 }
 
 
-function init(){
-  S.battleIndex=0;
+function startRun(chapterId="ch1"){
+  // v2.4：用章節 ID 啟動一次 run
+  const chap=CHAPTERS.find(c=>c.id===chapterId);
+  if(!chap||!chap.unlocked){
+    alert((chap?.lockReason)||"此章節尚未開放");
+    return;
+  }
+  S.currentChapterId=chapterId;
+  S.chapterBattleIdx=0;
+  S.battleIndex=chap.battles[0]; // 映射到全域 BATTLE_PRESET 索引
   S.runCleared=false;
   S.impGuardBonusEnemyTurns=0;
   S.flowPhase="none";
@@ -603,17 +713,117 @@ function init(){
   S.impBonusNextAuto=0;
   S.nextAttackMult=1;
   S.nextAttackConsumed=false;
+  S.reviveUsed=false;
+  S.inGame=true;
   S.runStartTs=nowSec();
   S.battleStartTs=S.runStartTs;
   S.battleDurations=[];
+  S.player.hp=S.player.maxHp;
+  S.player.energy=S.player.maxEnergy;
   S.enemies=buildEnemiesFromBattle(S.battleIndex);
   S.drawPile=shuffle(BASE_DECK.map(cloneCard));
   S.discard=[];
   S.hand=[];
   S.player.block=8;
+  S.turn=1;
+  S.playerTurn=true;
+  S.battleOver=false;
   drawCards(DRAW_PER_TURN+1);
-  setHint(`戰 1：${currentBattle().label}。初始 10 張牌（通關三選一解鎖更多）；召喚物每回合自動攻擊`);
+  setHint(`${chap.icon} ${chap.name} · 戰 1：${currentBattle().label}`);
+  showMenu(false);
   renderAll();
+}
+
+// ===== v2.4 存檔 =====
+const SAVE_KEY="claw_save_v24";
+function loadSave(){
+  try{
+    const raw=localStorage.getItem(SAVE_KEY);
+    if(!raw) return {chaptersCleared:[],bestTime:{},totalRuns:0,totalDeaths:0};
+    return JSON.parse(raw);
+  }catch(e){return {chaptersCleared:[],bestTime:{},totalRuns:0,totalDeaths:0};}
+}
+function saveProgress(patch){
+  const cur=loadSave();
+  const next={...cur,...patch};
+  try{localStorage.setItem(SAVE_KEY,JSON.stringify(next));}catch(e){}
+  return next;
+}
+function markChapterClear(chapId,secs){
+  const cur=loadSave();
+  if(!cur.chaptersCleared) cur.chaptersCleared=[];
+  if(!cur.chaptersCleared.includes(chapId)) cur.chaptersCleared.push(chapId);
+  if(!cur.bestTime) cur.bestTime={};
+  if(!cur.bestTime[chapId]||secs<cur.bestTime[chapId]) cur.bestTime[chapId]=secs;
+  cur.totalRuns=(cur.totalRuns||0)+1;
+  localStorage.setItem(SAVE_KEY,JSON.stringify(cur));
+}
+function incDeath(){
+  const cur=loadSave();
+  cur.totalDeaths=(cur.totalDeaths||0)+1;
+  localStorage.setItem(SAVE_KEY,JSON.stringify(cur));
+}
+function resetSave(){
+  localStorage.removeItem(SAVE_KEY);
+  renderMenu();
+}
+
+// ===== v2.4 主菜單 =====
+function showMenu(show){
+  document.getElementById("mainMenu").classList.toggle("hidden",!show);
+  document.getElementById("btnBackMenu").classList.toggle("hidden",show);
+}
+function renderMenu(){
+  const save=loadSave();
+  const cleared=save.chaptersCleared||[];
+  // 動態解鎖：完成前章才能進下一章（目前 Month 1 只開 Ch.1）
+  CHAPTERS.forEach((c,i)=>{
+    if(c.id==="ch1") c.unlocked=true;
+    // Ch.2/Ch.3 本版固定鎖，等 Month 2/3 開放
+  });
+
+  // stats
+  const stats=document.getElementById("menuStats");
+  stats.innerHTML=`
+    <div class="menu-stat">章節通關<b>${cleared.length}/${CHAPTERS.length}</b></div>
+    <div class="menu-stat">跑圖次數<b>${save.totalRuns||0}</b></div>
+    <div class="menu-stat">Ch.1 最佳<b>${save.bestTime?.ch1?fmtClock(save.bestTime.ch1):"--"}</b></div>
+  `;
+
+  // chapter list
+  const list=document.getElementById("menuChapters");
+  list.innerHTML="";
+  CHAPTERS.forEach(c=>{
+    const done=cleared.includes(c.id);
+    const locked=!c.unlocked;
+    const row=document.createElement("div");
+    row.className="chap-row"+(done?" done":"")+(locked?" locked":"");
+    const badge=done?'<span class="chap-badge done">✓ 通關</span>':(locked?'<span class="chap-badge locked">🔒 鎖定</span>':'<span class="chap-badge active">可挑戰</span>');
+    row.innerHTML=`<div class="chap-icon">${c.icon}</div><div class="chap-info"><b>Ch.${CHAPTERS.indexOf(c)+1} · ${c.name}</b><small>${c.subtitle}${locked?"｜"+(c.lockReason||""):""}</small></div>${badge}`;
+    if(!locked){
+      row.style.cursor="pointer";
+      row.onclick=()=>startRun(c.id);
+    }
+    list.appendChild(row);
+  });
+
+  // continue 按鈕
+  const btnCont=document.getElementById("btnContinue");
+  if(cleared.length>0){
+    btnCont.style.display="block";
+    btnCont.textContent=`繼續挑戰（已通關 Ch.1${save.bestTime?.ch1?" · "+fmtClock(save.bestTime.ch1):""}）`;
+  }else{
+    btnCont.style.display="none";
+  }
+}
+function bootMenu(){
+  showMenu(true);
+  renderMenu();
+}
+
+function init(){
+  // v2.4：保留舊入口以防被外部叫
+  startRun("ch1");
 }
 
 
@@ -648,7 +858,9 @@ function renderMeta(){
   document.getElementById("impInfo").textContent=`使魔事件：${S.impLastEvent}`;
   const runElapsed=fmtClock(getRunElapsedSec());
   const battleElapsed=fmtClock(getCurrentBattleElapsedSec());
-  const stageBase=S.runCleared?"通關":`戰 ${S.battleIndex+1}/${BATTLE_PRESET.length}｜${currentBattle().label}`;
+  const chap=CHAPTERS.find(c=>c.id===S.currentChapterId);
+  const chapBattles=chap?.battles||[];
+  const stageBase=S.runCleared?`${chap?.icon||""} ${chap?.name||""} 通關`:`${chap?.icon||""} ${chap?.name||"?"}｜戰 ${S.chapterBattleIdx+1}/${chapBattles.length}｜${currentBattle().label}`;
   const stageText=`${stageBase}｜總 ${runElapsed}｜本戰 ${battleElapsed}`;
   document.getElementById("stageInfo").textContent=stageText;
 }
@@ -704,6 +916,32 @@ function renderFlowPanel(){
     sub.textContent="下一戰：紙甲監軍（蓄力 → 重擊 → 詛咒反噬 3 招循環）";
     list.innerHTML=`<div class="flow-item"><b>下一戰：紙甲監軍</b><small>3 招循環：第 1 回合蓄力（不打），第 2 回合重擊 16+，第 3 回合詛咒反噬（每層 2 真傷）</small></div>`;
     actions.appendChild(makeFlowButton("進入 Boss 戰",()=>startNextBattleFromFlow()));
+  }else if(S.flowPhase==="chapterComplete"){
+    // v2.4：章末結算
+    const chap=CHAPTERS.find(c=>c.id===S.currentChapterId);
+    const totalSec=getRunElapsedSec();
+    const save=loadSave();
+    const isBest=save.bestTime?.[chap.id]===totalSec;
+    title.innerHTML=`<div class="chap-complete-ribbon">✨ ${chap.name} 通關 ✨</div>${chap.icon} 章節完成`;
+    sub.textContent="你的選擇：進入下一章 / 回主菜單 / 再打一次";
+    list.innerHTML=`
+      <div class="chap-complete-stats">
+        <div class="pill">本章耗時<b>${fmtClock(totalSec)}</b></div>
+        <div class="pill">最終 HP<b>${S.player.hp}/${S.player.maxHp}</b></div>
+        <div class="pill">戰鬥數<b>${chap.battles.length}</b></div>
+        <div class="pill">復活<b>${S.reviveUsed?"已用":"未用"}</b></div>
+      </div>
+      <div class="flow-item"><b>${isBest?"🏆 最佳紀錄！":"章節進度已存檔"}</b><small>${chap.name} 已永久解鎖。後續章節 Ch.2/Ch.3 將在 Month 2-3 開放。</small></div>
+    `;
+    // Ch.2 目前鎖定
+    const ch2=CHAPTERS[1];
+    if(!ch2.unlocked){
+      actions.appendChild(makeFlowButton("🔒 下一章（Month 2 開放）",()=>setHint("Ch.2 瘴疫城 正在 Month 2 開發中，敬請期待"),true));
+    }else{
+      actions.appendChild(makeFlowButton("進入 Ch.2",()=>startRun("ch2")));
+    }
+    actions.appendChild(makeFlowButton("回主菜單",()=>{S.inGame=false;setFlowVisible(false);bootMenu();}));
+    actions.appendChild(makeFlowButton("再打一次 Ch.1",()=>{setFlowVisible(false);startRun("ch1");},true));
   }
 }
 function openFlow(phase){
@@ -728,7 +966,10 @@ function skipReward(){
 function advanceToNextBattle(){
   setFlowVisible(false);
   S.flowPhase="none";
-  S.battleIndex+=1;
+  // v2.4：章節內推進
+  const chap=CHAPTERS.find(c=>c.id===S.currentChapterId);
+  S.chapterBattleIdx+=1;
+  S.battleIndex=chap.battles[S.chapterBattleIdx];
   S.battleStartTs=nowSec();
   S.enemies=buildEnemiesFromBattle(S.battleIndex);
   S.selectedCard=null;
@@ -738,7 +979,7 @@ function advanceToNextBattle(){
   S.playerTurn=true;
   S.battleOver=false;
   drawCards(DRAW_PER_TURN-S.hand.length);
-  setHint(`進入戰 ${S.battleIndex+1}：${currentBattle().label}`);
+  setHint(`進入戰 ${S.chapterBattleIdx+1}/${chap.battles.length}：${currentBattle().label}`);
   renderAll();
 }
 function takeCampChoice(type){
@@ -1343,28 +1584,54 @@ function resolveCard(c,targetId){
 
 function checkBattleEnd(){
   if(S.player.hp<=0){
+    // v2.4 L1 新手保護：首次死亡原地復活 + 15 HP
+    if(!S.reviveUsed){
+      S.reviveUsed=true;
+      S.player.hp=15;
+      S.player.block=5;
+      // 清掉自身與敵方中場效果，但保留戰局
+      document.getElementById("reviveToast").classList.remove("hidden");
+      setHint("血契庇護觸發：15 HP 原地復活 + 5 格擋（本趟僅一次）");
+      return false; // 不算死
+    }
     S.battleOver=true;
     S.playerTurn=false;
+    incDeath();
     setHint("主角 HP 歸零，挑戰失敗");
+    // 3 秒後回主菜單
+    setTimeout(()=>{
+      if(S.inGame&&S.player.hp<=0){
+        S.inGame=false;
+        bootMenu();
+      }
+    },3000);
     return true;
   }
   if(aliveEnemies().length>0)return false;
 
-  // 最後一戰（Boss）結束
-  if(S.battleIndex>=BATTLE_PRESET.length-1){
+  // 取得當前章節
+  const chap=CHAPTERS.find(c=>c.id===S.currentChapterId);
+  const chapBattles=chap?.battles||[];
+  const isLastInChapter=S.chapterBattleIdx>=chapBattles.length-1;
+
+  if(isLastInChapter){
+    // 章末
     const finalBattleSec=getCurrentBattleElapsedSec();
-    S.battleDurations[S.battleIndex]=finalBattleSec;
+    S.battleDurations[S.chapterBattleIdx]=finalBattleSec;
     S.runCleared=true;
     S.battleOver=true;
     S.playerTurn=false;
     const totalSec=getRunElapsedSec();
-    setHint(`通關！｜總耗時 ${fmtClock(totalSec)}（Boss 戰 ${fmtClock(finalBattleSec)}）`);
+    markChapterClear(chap.id,totalSec);
+    setHint(`${chap.icon} ${chap.name} 通關！｜總耗時 ${fmtClock(totalSec)}`);
+    // 打開章末結算面板
+    openFlow("chapterComplete");
     return true;
   }
 
-  // 小怪戰結束
+  // 章節內非最後一戰
   const battleSec=getCurrentBattleElapsedSec();
-  S.battleDurations[S.battleIndex]=battleSec;
+  S.battleDurations[S.chapterBattleIdx]=battleSec;
   S.discard.push(...S.hand);
   S.hand=[];
   S.selectedCard=null;
@@ -1372,17 +1639,9 @@ function checkBattleEnd(){
   S.player.block=0;
   S.player.energy=S.player.maxEnergy;
 
-  // 打完第三場（idx=2，下一戰是 Boss）→ 營火；其他 → 三選一
-  const nextIdxAfter=S.battleIndex+1;
-  if(nextIdxAfter===BATTLE_PRESET.length-1){
-    // 進 Boss 前的營火
-    setHint(`戰 ${S.battleIndex+1} 結束（${fmtClock(battleSec)}）：Boss 前營火`);
-    openFlow("camp");
-  }else{
-    S.rewardChoices=getRewardChoices();
-    setHint(`戰 ${S.battleIndex+1} 結束（${fmtClock(battleSec)}）：戰後三選一`);
-    openFlow("reward");
-  }
+  S.rewardChoices=getRewardChoices();
+  setHint(`戰 ${S.chapterBattleIdx+1} 結束（${fmtClock(battleSec)}）：戰後三選一`);
+  openFlow("reward");
   renderAll();
   return true;
 }
@@ -1611,12 +1870,38 @@ function nextTurn(){
 }
 
 document.getElementById("endBtn").onclick=nextTurn;
+
+// v2.4：菜單按鈕綁定
+document.getElementById("btnStart").onclick=()=>startRun("ch1");
+document.getElementById("btnContinue").onclick=()=>{
+  const save=loadSave();
+  // 簡單策略：繼續 = 再打一次當前可挑戰章節（下一個未通關且解鎖的）
+  const next=CHAPTERS.find(c=>c.unlocked&&!(save.chaptersCleared||[]).includes(c.id))||CHAPTERS[0];
+  startRun(next.id);
+};
+document.getElementById("btnReset").onclick=()=>{
+  if(confirm("確定清除所有存檔？（章節通關紀錄、最佳時間會重置）")){
+    resetSave();
+    alert("存檔已清除");
+  }
+};
+document.getElementById("btnBackMenu").onclick=()=>{
+  if(confirm("回主菜單？當前跑圖進度將結束（已通關的章節仍保留）。")){
+    S.inGame=false;
+    bootMenu();
+  }
+};
+document.getElementById("btnReviveConfirm").onclick=()=>{
+  document.getElementById("reviveToast").classList.add("hidden");
+  renderAll();
+};
+
 setInterval(()=>{
   if(S.runStartTs && !S.battleOver){
     renderMeta();
   }
 },1000);
-init();
+bootMenu();
 </script>
 
 </body>

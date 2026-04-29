@@ -288,7 +288,7 @@
     </div>
 
     <section class="battle" id="battle">
-      <div class="hint" id="hint">v2.4.3：戰後三選一強制跨流派（召喚/詛咒/爆發），小鬼強度保持 v2.3</div>
+      <div class="hint" id="hint">v2.5：詛咒流爆點 — 蝕骨自漲滾雪球 · 腐朽斬殺(HP≤10%/層) · 黯霧縈繞 Power</div>
 
 
       <div class="hero-stand"></div>
@@ -469,6 +469,8 @@ const REWARD_POOL = [
   {name:"詛咒吸蝕",cost:1,text:"消耗目標 2 層任意詛咒 → 回 4 HP，小鬼下回合自動攻擊 +3",target:"enemy",curseDrain:true},
   {name:"三相毒血",cost:2,text:"目標獲得 蝕骨+1 / 削衰+1 / 腐朽+1（一次湊齊三型）",target:"enemy",curseBone:1,curseWeak:1,curseDecay:1},
   {name:"腐朽連鎖",cost:1,text:"若目標有腐朽，所有其他敵人獲得相同層數腐朽",target:"enemy",decayChain:true},
+  // v2.5：Power 卡（類似尖塔 Power，打出後整場戰鬥持續）
+  {name:"黯霧縈繞",cost:1,text:"【持續】每回合起手，全體敵人 蝕骨 +1（打出當回合即生效）",target:"self",power:"miasma"},
 
   // —— v2.2 新增：協同高光組（3 張，雙滿才爆炸）——
   {name:"血祭爆裂",cost:1,text:"若小鬼在場且目標詛咒 ≥3：造成 18 並消耗小鬼；否則造成 6",target:"enemy",bloodBurst:true},
@@ -508,7 +510,9 @@ const S={
   impShieldedThisTurn:false,   // 使魔滋養：小鬼本回合不受擊
   impBonusNextAuto:0,          // 詛咒吸蝕：小鬼下回合自動攻擊加成
   nextAttackMult:1,            // 終焉契印：下一張攻擊 3 倍傷害
-  nextAttackConsumed:false
+  nextAttackConsumed:false,
+  // v2.5 Power 系統（整場戰鬥持續）
+  powers:{miasma:false}
 };
 
 
@@ -730,6 +734,7 @@ function startRun(chapterId="ch1"){
   S.turn=1;
   S.playerTurn=true;
   S.battleOver=false;
+  S.powers={miasma:false};
   drawCards(DRAW_PER_TURN+1);
   setHint(`${chap.icon} ${chap.name} · 戰 1：${currentBattle().label}`);
   showMenu(false);
@@ -885,8 +890,8 @@ function classifyRewardCard(c){
   // 召喚系：有 summon 屬性、或 doubleImp、或名字含「小鬼/獵犬/使魔/契印/雙生/血祭/黯咒/血契」
   const summonKeywords=/(小鬼|獵犬|使魔|契印|雙生|血祭|黯咒|血契|滋養|聯擊|爆裂|雙獸|終焉)/;
   if(c.summon||c.doubleImp||c.impCommand||c.bloodBurst||c.dualBeastRitual||c.finalSigil||c.bloodPact||c.minionNourish||c.impSpreadBone||summonKeywords.test(c.name)) return "summon";
-  // 詛咒系：有 curse 類屬性、或 decayChain、或 curseBurst/Drain/Resonate
-  if(c.curseWeak||c.curseDecay||c.curseBone||c.curseBurst||c.curseDrain||c.curseResonate||c.decayChain||c.damageScaleByCurse) return "curse";
+  // 詛咒系：有 curse 類屬性、或 decayChain、或 curseBurst/Drain/Resonate、或 Power 卡黯霧
+  if(c.curseWeak||c.curseDecay||c.curseBone||c.curseBurst||c.curseDrain||c.curseResonate||c.decayChain||c.damageScaleByCurse||c.power==="miasma") return "curse";
   // 其他 = 爆發/格擋/中性
   return "neutral";
 }
@@ -1005,6 +1010,7 @@ function advanceToNextBattle(){
   S.player.energy=S.player.maxEnergy;
   S.playerTurn=true;
   S.battleOver=false;
+  S.powers={miasma:false};
   drawCards(DRAW_PER_TURN-S.hand.length);
   setHint(`進入戰 ${S.chapterBattleIdx+1}/${chap.battles.length}：${currentBattle().label}`);
   renderAll();
@@ -1037,6 +1043,7 @@ function startNextBattleFromFlow(){
   S.player.energy=S.player.maxEnergy;
   S.playerTurn=true;
   S.battleOver=false;
+  S.powers={miasma:false};
   drawCards(DRAW_PER_TURN-S.hand.length);
   setHint("進入 Boss：紙甲監軍（注意蓄力後那回合 16+ 重擊）");
   renderAll();
@@ -1408,6 +1415,24 @@ function resolveCard(c,targetId){
     popCurseFloat(t.id,"decay",c.curseDecay);
     setHint(`施加腐朽 +${c.curseDecay}`);
   }
+
+  // v2.5 Power 卡：黯霧縈繞 — 整場戰鬥每回合起手全體敵人 +1 蝕骨
+  if(c.power==="miasma"){
+    if(!S.powers) S.powers={miasma:false};
+    if(!S.powers.miasma){
+      S.powers.miasma=true;
+      // 即時先鋪一層（類似尖塔 Power 出牌當回合也生效）
+      for(const e of aliveEnemies()){
+        applyCurse(e,"bone",1);
+        popCurseFloat(e.id,"bone",1);
+      }
+      bigFlash("黯霧縈繞","purple");
+      setHint("黯霧縈繞：整場戰鬥每回合起手全體敵人 蝕骨 +1");
+    }else{
+      setHint("黯霧縈繞已生效，重複打出無額外效果");
+    }
+  }
+
 
   if(c.curseResonate&&t){
     const cc=initEnemyCurses(t);
@@ -1858,10 +1883,26 @@ function enemyTurn(){
     e.intent=e.pattern[e.idx];
   }
 
+  // v2.5 詛咒 tick：①蝕骨先扣當前層數、再自漲 +1（滾雪球）；②腐朽斬殺（HP ≤ decay×10% 直接處決）
   for(const e of aliveEnemies()){
     const cc=initEnemyCurses(e);
     if(cc.bone>0){
       damageEnemyByAmount(e,cc.bone);
+      if(e.hp>0){
+        cc.bone=Math.min(10,cc.bone+1); // 自漲
+        popCurseFloat(e.id,"bone",1);
+      }
+    }
+  }
+  // 腐朽斬殺：回合末結算（在蝕骨 tick 之後，先扣血再判斬）
+  for(const e of aliveEnemies()){
+    const cc=initEnemyCurses(e);
+    if(cc.decay>0 && e.hp>0){
+      const threshold=Math.ceil(e.maxHp * cc.decay * 0.10);
+      if(e.hp <= threshold){
+        bigFlashMaybe(`腐朽處決 ×${cc.decay}`);
+        damageEnemyByAmount(e,e.hp); // 直接處決
+      }
     }
   }
 
@@ -1889,6 +1930,14 @@ function nextTurn(){
   S.player.block=0;
   S.playerTurn=true;
   drawCards(DRAW_PER_TURN-S.hand.length);
+  // v2.5 黯霧縈繞（Power）：每回合起手，全體敵人 +1 蝕骨
+  if(S.powers && S.powers.miasma){
+    for(const e of aliveEnemies()){
+      applyCurse(e,"bone",1);
+      popCurseFloat(e.id,"bone",1);
+    }
+    bigFlashMaybe("黯霧縈繞");
+  }
   // v2.1：召喚物回合起手自動攻擊（每回合 3/5 點持續輸出）
   minionAutoStrike();
   if(checkBattleEnd()){renderAll();return;}

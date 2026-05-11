@@ -3,36 +3,53 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>埋汰线进度与人员工作计划</title>
+<title>埋汰线项目 · 指挥仪表盘</title>
 <script>
-// 埋汰线进度与人员工作计划 - 数据源
-// 数据基线：v1 - 2026-04-27（图片提取）
-// 后续直接改这个文件就能更新看板
+// 埋汰线指挥仪表盘 - 数据源 v2
+// 受众：邱哥（指挥用）+ 领导（汇报用）
+// 公开 GitHub Pages 站点 - 永远不放真实工作图
+
 window.DASHBOARD_DATA = {
   meta: {
-    title: "埋汰线进度与人员工作计划",
-    version: "v1 · 2026-04-27",
+    title: "埋汰线项目 · 指挥仪表盘",
+    subtitle: "TKPartyGame · 关卡 L_m_BP_S_R6_D 资产整合",
+    version: "v2 · 2026-05-11",
     rangeStart: "2026-04-27",
     rangeEnd: "2026-05-26",
     today: "2026-05-11",
     totalDays: 30,
     holidayDays: 5,
     holidayRange: "5/1 - 5/5",
-    keyMilestoneCount: 4,
     reviewCadence: "每周五复盘",
-    note: "5/9 白模阶段成，将版整推送 5/15、5/23、5/26、5/7 安排预检。"
+    note: "5/9 白模阶段成，将版整推送 5/15、5/23、5/26、5/7 安排预检。",
+    // 真实工作图所在的腾讯文档（你与团队的协作权威源，仅展示链接，不做接口对接）
+    tencentDocUrl: "https://doc.weixin.qq.com/sheet/e3_AOUAaga6ACgCNNCAqj1fXQHGuTIBq",
+    tencentDocLabel: "腾讯文档原表（需登录查看工作图）"
   },
+
+  // 邱哥每周/不定期补一句话观察，我会自动排版
+  // 留空 [] 不显示这块
+  observations: [
+    // {
+    //   date: "2026-05-11",
+    //   text: "朝晖 AI 流程跑通，节奏起来了；筱琳还在适应，下周给她加一点物件密度。"
+    // }
+  ],
+
   milestones: [
-    { date: "05/09", title: "策划初版白模完成", desc: "全链路下游依赖启动", status: "todo" },
+    { date: "05/09", title: "策划初版白模完成", desc: "全链路下游依赖启动", status: "active" },
     { date: "05/15", title: "美术粗估时间验收", desc: "资源可行性资产节点", status: "todo" },
     { date: "05/23", title: "线版白模回交",   desc: "测试规模、前期任务回收", status: "todo" },
     { date: "05/26", title: "美术粗估工作量", desc: "下阶段排期输入",         status: "todo" }
+    // status: done / active / todo / risk
   ],
-  // 甘特图横条：start / end 是日期；track 决定显示在哪个人员行
+
   members: [
     {
       id: "ziuxan", name: "子轩", role: "玩法策划 - 钢铁广电、美术线",
       color: "#7BC8FF",
+      // 当前状态：on-track / off / blocked / heavy / light
+      current: { status: "on-track", task: "AI/Blender 流程跑通中，准备进入埋汰线落地配合" },
       bars: [
         { start: "2026-04-27", end: "2026-05-01", label: "AI/Blender流程跑通", tone: "blue" },
         { start: "2026-05-06", end: "2026-05-09", label: "配合策划制定白模", tone: "violet" },
@@ -43,6 +60,7 @@ window.DASHBOARD_DATA = {
     {
       id: "sicheng", name: "思呈", role: "鸟瞰图",
       color: "#F0B45F",
+      current: { status: "light", task: "鸟瞰图准备中，等 5/9 白盒后微调" },
       bars: [
         { start: "2026-04-27", end: "2026-05-01", label: "鸟瞰图准备", tone: "amber" },
         { start: "2026-05-09", end: "2026-05-12", label: "初版白盒后微调（2-3天）", tone: "violet" }
@@ -51,22 +69,25 @@ window.DASHBOARD_DATA = {
     {
       id: "yuanshuai", name: "沅率", role: "服务中心氛围",
       color: "#F87171",
+      current: { status: "on-track", task: "服务中心氛围浮冰版完成，等策划对齐" },
       bars: [
         { start: "2026-05-04", end: "2026-05-08", label: "氛围图", tone: "rose" },
         { start: "2026-05-09", end: "2026-05-13", label: "需要做对齐 / 修复", tone: "violet" }
       ]
     },
     {
-      id: "chaohui", name: "朝晖", role: "神秘洗陆地版 · AI",
+      id: "chaohui", name: "朝晖", role: "神秘泉陆地版 · AI",
       color: "#A78BFA",
+      current: { status: "on-track", task: "Blender 流程跑通，结合 AI 推进神秘泉陆地版" },
       bars: [
         { start: "2026-04-27", end: "2026-05-02", label: "Blender流程先跑通", tone: "blue" },
         { start: "2026-05-06", end: "2026-05-22", label: "结合 AI（神秘泉陆地版）", tone: "violet" }
       ]
     },
     {
-      id: "xiaolin", name: "筱琳", role: "单物件单流程跑图",
+      id: "xiaolin", name: "筱琳", role: "单物件流程跑图",
       color: "#34D399",
+      current: { status: "heavy", task: "楼梯单物件跑通中，下周尝试多物件" },
       bars: [
         { start: "2026-04-27", end: "2026-05-01", label: "跑通单单件图照", tone: "amber" },
         { start: "2026-05-06", end: "2026-05-22", label: "多物件试跑 · 流程跑熟", tone: "violet" }
@@ -75,121 +96,135 @@ window.DASHBOARD_DATA = {
     {
       id: "xingyuan", name: "星源", role: "去AI味 · 卓小吃街",
       color: "#FBBF24",
+      current: { status: "on-track", task: "Blender 上手中，小吃街试跑去 AI 味" },
       bars: [
         { start: "2026-04-27", end: "2026-05-01", label: "Blender上手 · 去AI味", tone: "amber" },
         { start: "2026-05-06", end: "2026-05-22", label: "卓小吃街试跑 · 品质打磨", tone: "violet" },
         { start: "2026-05-23", end: "2026-05-26", label: "反复修正 · 轻红交付", tone: "violet" }
       ]
     }
-  ],
-  // 人员任务清单（来源：表格 4-22 行）
-  taskList: [
-    {
-      who: "子轩",
-      tasks: [
-        { task: "去AI味", push: "1.AI方式与麟晨合作 2.星源blender传统流程跑一次, 时间记录", note: "太细碎物件关键词约束测试, 不行就2次收尾" },
-        { task: "钢铁厂电子城补充跟进", push: "不定期少量新增", note: "" },
-        { task: "埋汰线麟晨落地跟进", push: "5/9策划给到初版, 5/23美术完成初版, 5/26策划最终白盒调整预计1~2周微调后收尾", note: "具体时间看5/23的修改量" }
-      ]
-    },
-    { who: "思呈", tasks: [{ task: "鸟瞰图", push: "先进行鸟瞰图, 等5/9有初版白盒, 花2-3天微调", note: "" }] },
-    {
-      who: "沅率",
-      tasks: [
-        { task: "服务中心氛围", push: "约4/27下午做一版, 浮冰版本", note: "这张完成就可以跟策划对了" },
-        { task: "室外第五个出口脑爆", push: "", note: "" }
-      ]
-    },
-    { who: "朝晖", tasks: [{ task: "AI味解决+神秘泉陆地版", push: "blender流程先跑, 后面结合AI, 先去AI味再谈落地", note: "" }] },
-    { who: "筱琳", tasks: [{ task: "单物件流程适应", push: "目前在跑楼梯单物件, 打算给她多跑几个, 把流程跑熟", note: "" }] },
-    { who: "星源", tasks: [{ task: "去AI味", push: "现在拿小吃街做尝试, 用blender流程", note: "品质达标后, 反推工作流时间" }] }
   ]
 };
 
 </script>
 <style>
   :root{
-    --bg:#0d1018; --bg2:#141826; --panel:#1a1f30; --line:#272d40;
+    --bg:#0a0d14; --bg2:#141826; --panel:#1a1f30; --line:#272d40;
     --text:#e5e8f0; --dim:#9aa3b8; --accent:#5a7cff;
-    --today:#f87171; --milestone:#22d3ee;
+    --today:#f87171;
+    --ok:#10b981; --warn:#f59e0b; --risk:#ef4444; --light:#3b82f6; --off:#9ca3af;
+    --milestone:#22d3ee;
     --blue:#3b82f6; --violet:#8b5cf6; --amber:#f59e0b; --rose:#ef4444;
   }
   *{box-sizing:border-box}
   html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 -apple-system,"PingFang SC","Microsoft YaHei",Segoe UI,sans-serif;}
-  a{color:var(--accent)}
-
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
   .wrap{max-width:1480px;margin:0 auto;padding:24px 24px 80px}
-  header{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:20px}
+
+  /* Header */
+  header{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:18px}
   header h1{font-size:22px;margin:0;letter-spacing:1px}
   header .sub{color:var(--dim);font-size:12px;margin-top:6px}
-  header .right{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-  .btn{background:var(--panel);border:1px solid var(--line);color:var(--text);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px}
-  .btn:hover{border-color:var(--accent)}
+  header .right{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--dim)}
+  .btn{background:var(--panel);border:1px solid var(--line);color:var(--text);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;text-decoration:none;display:inline-block}
+  .btn:hover{border-color:var(--accent);text-decoration:none}
+
+  /* KPI 顶栏 */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+  .kpi{background:linear-gradient(135deg,var(--bg2),var(--panel));border:1px solid var(--line);border-radius:10px;padding:14px 18px;position:relative;overflow:hidden}
+  .kpi .lbl{color:var(--dim);font-size:11px;letter-spacing:1px;text-transform:uppercase}
+  .kpi .val{font-size:28px;font-weight:700;color:#fff;margin-top:4px;line-height:1.2}
+  .kpi .unit{font-size:13px;color:var(--dim);margin-left:4px;font-weight:400}
+  .kpi .desc{color:var(--dim);font-size:11px;margin-top:4px}
+  .kpi.warn .val{color:var(--warn)}
+  .kpi.risk .val{color:var(--risk)}
+  .kpi .bar{position:absolute;left:0;bottom:0;height:3px;background:var(--accent);transition:width .3s}
+
+  /* 风险信号 */
+  .panel{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:18px}
+  .panel h2{font-size:13px;margin:0 0 12px;color:var(--dim);font-weight:500;letter-spacing:2px;display:flex;align-items:center;gap:8px}
+  .panel h2 .count{background:var(--line);color:var(--text);font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;letter-spacing:0}
+
+  .risks{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:10px}
+  .risk-item{display:flex;gap:10px;padding:10px 12px;background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:6px;font-size:13px}
+  .risk-item.high{border-left-color:var(--risk)}
+  .risk-item.low{border-left-color:var(--accent)}
+  .risk-item .ic{flex:none;font-size:16px}
+  .risk-item .who{color:var(--dim);font-size:11px;margin-top:2px}
+  .empty-hint{color:var(--dim);font-size:12px;padding:10px 12px;background:var(--panel);border:1px dashed var(--line);border-radius:6px}
+
+  /* 观察 */
+  .observation{background:linear-gradient(135deg,rgba(90,124,255,.1),rgba(139,92,246,.05));border:1px solid rgba(90,124,255,.3);border-radius:10px;padding:14px 18px;margin-bottom:18px;font-size:14px}
+  .observation .ttl{color:var(--accent);font-size:11px;letter-spacing:2px;margin-bottom:6px}
+  .observation .txt{color:#fff}
+  .observation .when{color:var(--dim);font-size:11px;margin-top:4px}
 
   /* 里程碑 */
-  .milestones{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
-  .ms{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:14px 16px;position:relative;overflow:hidden}
-  .ms::before{content:"";position:absolute;left:0;top:0;width:4px;height:100%;background:var(--milestone)}
-  .ms .d{font-size:18px;font-weight:600;letter-spacing:1px;color:#fff}
-  .ms .t{font-size:13px;margin-top:4px}
-  .ms .desc{color:var(--dim);font-size:11px;margin-top:6px}
+  .milestones{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+  .ms{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:12px 14px;position:relative;overflow:hidden}
+  .ms::before{content:"";position:absolute;left:0;top:0;width:3px;height:100%;background:var(--milestone)}
+  .ms.done::before{background:var(--ok)}
+  .ms.active::before{background:var(--warn)}
+  .ms.risk::before{background:var(--risk)}
+  .ms .d{font-size:16px;font-weight:600;color:#fff}
+  .ms .badge{display:inline-block;font-size:10px;padding:1px 6px;border-radius:8px;background:var(--line);margin-left:6px;vertical-align:1px}
+  .ms.done .badge{background:rgba(16,185,129,.2);color:var(--ok)}
+  .ms.active .badge{background:rgba(245,158,11,.2);color:var(--warn)}
+  .ms.todo .badge{background:rgba(34,211,238,.15);color:var(--milestone)}
+  .ms.risk .badge{background:rgba(239,68,68,.2);color:var(--risk)}
+  .ms .t{font-size:13px;margin-top:3px;color:#e5e8f0}
+  .ms .desc{color:var(--dim);font-size:11px;margin-top:3px}
+  .ms .countdown{position:absolute;right:10px;top:10px;font-size:10px;color:var(--dim)}
 
-  /* 甘特图 */
-  .panel{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:18px}
-  .panel h2{font-size:14px;margin:0 0 14px;color:var(--dim);font-weight:500;letter-spacing:1px}
-
+  /* 甘特 */
   .gantt{position:relative;overflow-x:auto}
   .gantt-inner{position:relative;min-width:1200px}
   .gantt-head{display:grid;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:8px;font-size:11px;color:var(--dim)}
   .gantt-head .cell{text-align:center;padding:2px 0}
   .gantt-head .cell.weekend{color:#6b7280}
   .gantt-head .cell.today{color:#fff;background:rgba(248,113,113,.2);border-radius:4px}
-
   .row{display:grid;align-items:center;height:42px;border-bottom:1px dashed rgba(255,255,255,.04);position:relative}
   .row:hover{background:rgba(255,255,255,.02)}
   .who{display:flex;align-items:center;gap:8px;padding-left:6px;padding-right:8px}
   .dot{width:10px;height:10px;border-radius:50%;flex:none}
   .name{font-weight:600}
   .role{color:var(--dim);font-size:11px;margin-left:auto}
-
   .track{position:relative;height:100%}
   .gridline{position:absolute;top:0;bottom:0;border-left:1px dashed rgba(255,255,255,.04)}
   .gridline.weekend{background:rgba(255,255,255,.025)}
   .gridline.today{border-left:2px solid var(--today);z-index:5}
   .gridline.milestone{border-left:1px dashed var(--milestone);z-index:4}
   .gridline.holiday{background:rgba(239,68,68,.08)}
-
-  .bar{position:absolute;top:7px;height:26px;border-radius:5px;display:flex;align-items:center;padding:0 8px;font-size:11px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default;box-shadow:0 1px 2px rgba(0,0,0,.4)}
+  .bar{position:absolute;top:7px;height:26px;border-radius:5px;display:flex;align-items:center;padding:0 8px;font-size:11px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default}
   .bar.blue{background:linear-gradient(90deg,#2563eb,#3b82f6)}
   .bar.violet{background:linear-gradient(90deg,#7c3aed,#8b5cf6)}
   .bar.amber{background:linear-gradient(90deg,#d97706,#f59e0b)}
   .bar.rose{background:linear-gradient(90deg,#dc2626,#ef4444)}
 
-  .legend{display:flex;gap:16px;margin-top:10px;flex-wrap:wrap;font-size:11px;color:var(--dim)}
-  .legend span i{display:inline-block;width:14px;height:10px;border-radius:2px;vertical-align:middle;margin-right:5px}
+  /* 当前状态卡 */
+  .members{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+  .mcard{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:14px 16px;border-left:4px solid var(--ok)}
+  .mcard.heavy{border-left-color:var(--warn)}
+  .mcard.light{border-left-color:var(--light)}
+  .mcard.blocked{border-left-color:var(--risk)}
+  .mcard.off{border-left-color:var(--off)}
+  .mcard .top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .mcard .top .name{font-size:15px}
+  .mcard .role{margin-left:auto;font-size:11px}
+  .mcard .status-tag{font-size:10px;padding:2px 7px;border-radius:8px;background:rgba(16,185,129,.15);color:var(--ok)}
+  .mcard.heavy .status-tag{background:rgba(245,158,11,.15);color:var(--warn)}
+  .mcard.light .status-tag{background:rgba(59,130,246,.15);color:var(--light)}
+  .mcard.blocked .status-tag{background:rgba(239,68,68,.15);color:var(--risk)}
+  .mcard.off .status-tag{background:rgba(156,163,175,.15);color:var(--off)}
+  .mcard .task{color:#cbd5e1;font-size:13px;margin-top:6px;line-height:1.5}
+  .mcard .footer{display:flex;justify-content:space-between;margin-top:10px;font-size:11px;color:var(--dim);padding-top:8px;border-top:1px dashed rgba(255,255,255,.06)}
 
-  /* 信息条 */
-  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}
-  .stat{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 14px}
-  .stat .k{color:var(--dim);font-size:11px}
-  .stat .v{font-size:18px;font-weight:600;margin-top:2px}
-
-  /* 人员任务卡 */
-  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:14px}
-  .card{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
-  .card h3{margin:0 0 10px;font-size:14px;display:flex;align-items:center;gap:8px}
-  .card .ttl{flex:1}
-  .badge{font-size:10px;padding:2px 6px;border-radius:10px;background:rgba(91,124,255,.12);color:#a5b4fc;border:1px solid rgba(91,124,255,.3)}
-  .task{border-top:1px dashed rgba(255,255,255,.06);padding:8px 0;font-size:12px}
-  .task:first-of-type{border-top:0}
-  .task .label{color:#fff;font-weight:600;margin-bottom:3px}
-  .task .push{color:#cbd5e1}
-  .task .note{color:var(--dim);font-size:11px;margin-top:3px;padding-left:8px;border-left:2px solid rgba(255,255,255,.1)}
-
-  footer{color:var(--dim);font-size:11px;text-align:center;margin-top:24px}
+  footer{color:var(--dim);font-size:11px;text-align:center;margin-top:24px;padding-top:14px;border-top:1px solid var(--line)}
+  footer a{color:var(--accent)}
 
   @media (max-width:900px){
-    .milestones,.stats{grid-template-columns:repeat(2,1fr)}
+    .kpis,.milestones{grid-template-columns:repeat(2,1fr)}
   }
 </style>
 </head>
@@ -197,41 +232,44 @@ window.DASHBOARD_DATA = {
 <div class="wrap">
   <header>
     <div>
-      <h1 id="title">埋汰线进度与人员工作计划</h1>
+      <h1 id="title"></h1>
       <div class="sub" id="sub"></div>
     </div>
     <div class="right">
-      <span class="sub">今日 <b id="todayTxt" style="color:#f87171"></b></span>
-      <button class="btn" onclick="window.print()">打印 / 存 PDF</button>
-      <button class="btn" onclick="copyShare()">复制分享链接</button>
+      <span>今日 <b id="todayTxt" style="color:#f87171"></b></span>
+      <a class="btn" id="docLink" target="_blank">📎 看工作图（腾讯文档）</a>
+      <button class="btn" onclick="window.print()">打印 / PDF</button>
     </div>
   </header>
 
-  <div class="milestones" id="milestones"></div>
+  <!-- KPI 顶栏 -->
+  <div class="kpis" id="kpis"></div>
 
+  <!-- 我的判断 / 本周观察 -->
+  <div id="observation"></div>
+
+  <!-- 风险信号 -->
   <div class="panel">
-    <h2>📊 甘特图（按日期排布）</h2>
-    <div class="gantt"><div class="gantt-inner" id="gantt"></div></div>
-    <div class="legend">
-      <span><i style="background:#3b82f6"></i>流程跑通</span>
-      <span><i style="background:#8b5cf6"></i>主线推进</span>
-      <span><i style="background:#f59e0b"></i>资产准备</span>
-      <span><i style="background:#ef4444"></i>氛围图</span>
-      <span><i style="background:rgba(239,68,68,.4);border:0"></i>假期停工</span>
-      <span><i style="background:#22d3ee"></i>关键里程碑</span>
-      <span><i style="background:#f87171"></i>今日</span>
-    </div>
-    <div class="stats">
-      <div class="stat"><div class="k">总工期</div><div class="v" id="stTotal"></div></div>
-      <div class="stat"><div class="k">假期停工</div><div class="v" id="stHoliday"></div></div>
-      <div class="stat"><div class="k">关键里程碑</div><div class="v" id="stMs"></div></div>
-      <div class="stat"><div class="k">周进度检查</div><div class="v" id="stReview"></div></div>
-    </div>
+    <h2>⚠️ 风险信号 · 需关注 <span class="count" id="riskCount">0</span></h2>
+    <div class="risks" id="risks"></div>
   </div>
 
+  <!-- 里程碑 -->
   <div class="panel">
-    <h2>👥 人员任务清单</h2>
-    <div class="cards" id="cards"></div>
+    <h2>🎯 关键里程碑</h2>
+    <div class="milestones" id="milestones"></div>
+  </div>
+
+  <!-- 甘特图 -->
+  <div class="panel">
+    <h2>📊 项目甘特图</h2>
+    <div class="gantt"><div class="gantt-inner" id="gantt"></div></div>
+  </div>
+
+  <!-- 6 人当前状态 -->
+  <div class="panel">
+    <h2>👥 团队当前状态</h2>
+    <div class="members" id="members"></div>
   </div>
 
   <footer id="footer"></footer>
@@ -245,156 +283,258 @@ window.DASHBOARD_DATA = {
   const today = new Date(D.meta.today);
   const dayMs = 86400000;
   const totalDays = Math.round((end - start)/dayMs) + 1;
-  const colWho = 220;       // 左侧人员列宽
-  const colDay = 36;        // 每日列宽
+  const todayIdx = Math.round((today - start)/dayMs);
+  const colWho = 220, colDay = 36;
 
-  function fmt(d){ return (d.getMonth()+1) + "/" + d.getDate(); }
+  function fmt(d){ return (d.getMonth()+1)+"/"+d.getDate(); }
   function isWeekend(d){ const w=d.getDay(); return w===0||w===6; }
-  function isHoliday(d){ // 5/1 - 5/5
-    const y=d.getFullYear(), m=d.getMonth()+1, dd=d.getDate();
-    return y===2026 && m===5 && dd>=1 && dd<=5;
+  function isHoliday(d){
+    const m=d.getMonth()+1, dd=d.getDate();
+    return d.getFullYear()===2026 && m===5 && dd>=1 && dd<=5;
   }
-  function dayIndex(dateStr){
-    return Math.round((new Date(dateStr) - start)/dayMs);
+  function dayIndex(s){ return Math.round((new Date(s)-start)/dayMs); }
+  function daysBetween(a, b){ return Math.round((new Date(b) - new Date(a))/dayMs); }
+  function parseMs(mmdd){ const [m,d] = mmdd.split('/').map(Number); return new Date(2026, m-1, d); }
+
+  // ========= 计算 KPI =========
+  const elapsed = Math.max(0, todayIdx + 1);
+  const progressPct = Math.min(100, Math.round(elapsed / totalDays * 100));
+
+  // 下一个里程碑
+  let nextMs = null, nextMsDays = null;
+  for(const m of D.milestones){
+    const md = parseMs(m.date);
+    if(md >= today){ nextMs = m; nextMsDays = daysBetween(today, md); break; }
   }
 
-  // header
-  document.getElementById("title").textContent = D.meta.title;
-  document.getElementById("sub").textContent =
-    D.meta.version + "　·　范围 " + D.meta.rangeStart + " → " + D.meta.rangeEnd + "　·　" + D.meta.note;
-  document.getElementById("todayTxt").textContent = D.meta.today;
-  document.getElementById("stTotal").textContent = D.meta.totalDays + " 天";
-  document.getElementById("stHoliday").textContent = D.meta.holidayDays + " 天 (" + D.meta.holidayRange + ")";
-  document.getElementById("stMs").textContent = D.meta.keyMilestoneCount + " 个";
-  document.getElementById("stReview").textContent = D.meta.reviewCadence;
+  // 团队负载（heavy + on-track 比例）
+  const total = D.members.length;
+  const onTrack = D.members.filter(m=>m.current.status==='on-track' || m.current.status==='heavy').length;
+  const loadPct = Math.round(onTrack/total*100);
 
-  // milestones
-  const ms = document.getElementById("milestones");
-  D.milestones.forEach(m=>{
-    const el = document.createElement("div");
-    el.className = "ms";
-    el.innerHTML = `<div class="d">${m.date}</div><div class="t">${m.title}</div><div class="desc">${m.desc}</div>`;
-    ms.appendChild(el);
+  // ========= 自动风险扫描 =========
+  const risks = [];
+
+  // 规则 1：里程碑距今 ≤ 3 天，且仍是 todo（未启动）
+  for(const m of D.milestones){
+    const md = parseMs(m.date);
+    const left = daysBetween(today, md);
+    if(left >= 0 && left <= 3 && (m.status==='todo' || m.status==='active')){
+      risks.push({
+        level: left <= 1 ? 'high' : 'mid',
+        ic: '🎯',
+        who: '里程碑',
+        text: `${m.date} 「${m.title}」距今仅 ${left} 天，请确认进度`
+      });
+    }
+  }
+
+  // 规则 2：成员任务跨度 > 14 天且无中段里程碑
+  D.members.forEach(m => {
+    m.bars.forEach(b => {
+      const span = daysBetween(b.start, b.end) + 1;
+      const startD = new Date(b.start), endD = new Date(b.end);
+      if(span > 14 && startD <= today && today <= endD){
+        risks.push({
+          level: 'low',
+          ic: '⏳',
+          who: m.name,
+          text: `当前任务「${b.label}」跨度 ${span} 天，建议设中段检查点`
+        });
+      }
+    });
   });
 
-  // gantt
-  const gantt = document.getElementById("gantt");
-  const gridTemplate = `${colWho}px repeat(${totalDays}, ${colDay}px)`;
-  const innerW = colWho + totalDays*colDay;
-  gantt.style.width = innerW + "px";
+  // 规则 3：成员状态 blocked / heavy 自动出风险
+  D.members.forEach(m => {
+    if(m.current.status === 'blocked'){
+      risks.push({ level:'high', ic:'🚧', who:m.name, text:`受阻：${m.current.task}` });
+    } else if(m.current.status === 'heavy'){
+      risks.push({ level:'mid', ic:'🔥', who:m.name, text:`负载偏重：${m.current.task}` });
+    }
+  });
 
-  // header row
-  const head = document.createElement("div");
-  head.className = "gantt-head";
-  head.style.gridTemplateColumns = gridTemplate;
-  head.innerHTML = `<div class="cell" style="text-align:left;padding-left:8px">人员 / 日期</div>`;
+  // 规则 4：今日之后无任务的人（产能可能闲置）
+  D.members.forEach(m => {
+    const lastEnd = m.bars.reduce((max,b)=>{
+      const ed = new Date(b.end);
+      return !max || ed > max ? ed : max;
+    }, null);
+    if(lastEnd){
+      const left = daysBetween(today, lastEnd);
+      if(left >= 0 && left < 4){
+        risks.push({
+          level: 'low',
+          ic: '🪫',
+          who: m.name,
+          text: `仅剩 ${left} 天有排期，需补充后续任务`
+        });
+      }
+    }
+  });
+
+  // ========= 渲染 =========
+  document.getElementById('title').innerHTML = D.meta.title;
+  document.getElementById('sub').innerHTML =
+    D.meta.subtitle + '　·　' + D.meta.version + '　·　' + D.meta.note;
+  document.getElementById('todayTxt').textContent = D.meta.today;
+  document.getElementById('docLink').href = D.meta.tencentDocUrl;
+
+  // KPI
+  const kpis = [
+    { lbl:'整体进度', val: progressPct + '%', desc: `Day ${elapsed} / ${totalDays}（含 ${D.meta.holidayDays} 天假期）`, bar: progressPct },
+    { lbl:'下个里程碑', val: nextMs ? nextMsDays : '—', unit: nextMs ? '天' : '', desc: nextMs ? `${nextMs.date} ${nextMs.title}` : '本期里程碑全部完成', cls: nextMsDays !== null && nextMsDays <= 3 ? 'warn' : '' },
+    { lbl:'风险信号', val: risks.length, unit: '条', desc: risks.length===0?'当前无风险':'其中高优 '+risks.filter(r=>r.level==='high').length+' 条', cls: risks.filter(r=>r.level==='high').length > 0 ? 'risk' : (risks.length>0?'warn':'') },
+    { lbl:'团队负载', val: loadPct + '%', desc: `${onTrack} / ${total} 人在推进` }
+  ];
+  document.getElementById('kpis').innerHTML = kpis.map(k=>`
+    <div class="kpi ${k.cls||''}">
+      <div class="lbl">${k.lbl}</div>
+      <div class="val">${k.val}<span class="unit">${k.unit||''}</span></div>
+      <div class="desc">${k.desc}</div>
+      ${k.bar !== undefined ? `<div class="bar" style="width:${k.bar}%"></div>` : ''}
+    </div>`).join('');
+
+  // 观察
+  const obsEl = document.getElementById('observation');
+  if(D.observations && D.observations.length){
+    const o = D.observations[D.observations.length-1];
+    obsEl.innerHTML = `<div class="observation">
+      <div class="ttl">📌 我的判断 · 本周观察</div>
+      <div class="txt">${o.text}</div>
+      <div class="when">— 邱哥 · ${o.date}</div>
+    </div>`;
+  }
+
+  // 风险
+  const riskEl = document.getElementById('risks');
+  document.getElementById('riskCount').textContent = risks.length;
+  if(risks.length === 0){
+    riskEl.innerHTML = '<div class="empty-hint">✓ 系统未扫到机械可见的风险（任务跨度、空窗期、里程碑临近、状态异常都正常）</div>';
+  } else {
+    risks.sort((a,b)=>{
+      const order = {high:0, mid:1, low:2};
+      return order[a.level] - order[b.level];
+    });
+    riskEl.innerHTML = risks.map(r => `
+      <div class="risk-item ${r.level}">
+        <div class="ic">${r.ic}</div>
+        <div>
+          <div>${r.text}</div>
+          <div class="who">${r.who}</div>
+        </div>
+      </div>`).join('');
+  }
+
+  // 里程碑
+  const msEl = document.getElementById('milestones');
+  msEl.innerHTML = D.milestones.map(m => {
+    const md = parseMs(m.date);
+    const left = daysBetween(today, md);
+    let realStatus = m.status;
+    if(left < 0) realStatus = 'done';
+    else if(left <= 3) realStatus = 'active';
+
+    const badgeMap = { done:'已完成', active:'临近', todo:'待开始', risk:'风险' };
+    return `<div class="ms ${realStatus}">
+      <div class="d">${m.date}<span class="badge">${badgeMap[realStatus]||''}</span></div>
+      <div class="countdown">${left>=0?'还有 '+left+' 天':'已过 '+(-left)+' 天'}</div>
+      <div class="t">${m.title}</div>
+      <div class="desc">${m.desc}</div>
+    </div>`;
+  }).join('');
+
+  // 甘特
+  const gantt = document.getElementById('gantt');
+  gantt.style.width = (colWho + totalDays*colDay) + 'px';
+  const head = document.createElement('div');
+  head.className = 'gantt-head';
+  head.style.gridTemplateColumns = colWho + 'px repeat(' + totalDays + ',' + colDay + 'px)';
+  head.innerHTML = '<div class="cell" style="text-align:left;padding-left:8px">人员 / 日期</div>';
   for(let i=0;i<totalDays;i++){
     const d = new Date(start.getTime()+i*dayMs);
-    const cls = ["cell"];
-    if(isWeekend(d)) cls.push("weekend");
-    if(d.toDateString()===today.toDateString()) cls.push("today");
-    head.innerHTML += `<div class="${cls.join(' ')}">${fmt(d)}</div>`;
+    const cls = ['cell'];
+    if(isWeekend(d)) cls.push('weekend');
+    if(d.toDateString()===today.toDateString()) cls.push('today');
+    head.innerHTML += '<div class="'+cls.join(' ')+'">'+fmt(d)+'</div>';
   }
   gantt.appendChild(head);
 
-  // member rows
-  D.members.forEach(m=>{
-    const row = document.createElement("div");
-    row.className = "row";
-    row.style.gridTemplateColumns = `${colWho}px 1fr`;
+  D.members.forEach(m => {
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.style.gridTemplateColumns = colWho + 'px 1fr';
+    row.innerHTML = `<div class="who">
+      <span class="dot" style="background:${m.color}"></span>
+      <span class="name">${m.name}</span>
+      <span class="role">${m.role}</span>
+    </div>`;
+    const track = document.createElement('div');
+    track.style.position = 'relative';
+    track.style.width = (totalDays*colDay) + 'px';
+    track.style.height = '42px';
 
-    const who = document.createElement("div");
-    who.className = "who";
-    who.innerHTML = `<span class="dot" style="background:${m.color}"></span>
-                     <span class="name">${m.name}</span>
-                     <span class="role">${m.role}</span>`;
-    row.appendChild(who);
-
-    const track = document.createElement("div");
-    track.className = "track";
-    track.style.position = "relative";
-    track.style.width = (totalDays*colDay) + "px";
-    track.style.height = "42px";
-
-    // gridlines
     for(let i=0;i<totalDays;i++){
       const d = new Date(start.getTime()+i*dayMs);
-      const gl = document.createElement("div");
-      gl.className = "gridline";
-      if(isWeekend(d)) gl.classList.add("weekend");
-      if(isHoliday(d)) gl.classList.add("holiday");
-      gl.style.left = (i*colDay) + "px";
-      gl.style.width = colDay + "px";
+      const gl = document.createElement('div');
+      gl.className = 'gridline';
+      if(isWeekend(d)) gl.classList.add('weekend');
+      if(isHoliday(d)) gl.classList.add('holiday');
+      gl.style.left = (i*colDay) + 'px'; gl.style.width = colDay + 'px';
       track.appendChild(gl);
     }
-    // milestones lines
-    D.milestones.forEach(ms=>{
-      const [mm,dd] = ms.date.split("/").map(Number);
-      const d = new Date(2026, mm-1, dd);
-      const idx = Math.round((d-start)/dayMs);
+    D.milestones.forEach(ms => {
+      const md = parseMs(ms.date);
+      const idx = Math.round((md - start)/dayMs);
       if(idx<0||idx>=totalDays) return;
-      const ml = document.createElement("div");
-      ml.className = "gridline milestone";
-      ml.style.left = (idx*colDay + colDay/2) + "px";
+      const ml = document.createElement('div');
+      ml.className = 'gridline milestone';
+      ml.style.left = (idx*colDay + colDay/2) + 'px';
       track.appendChild(ml);
     });
-    // today
-    const tIdx = Math.round((today - start)/dayMs);
-    if(tIdx>=0 && tIdx<totalDays){
-      const tl = document.createElement("div");
-      tl.className = "gridline today";
-      tl.style.left = (tIdx*colDay + colDay/2) + "px";
+    if(todayIdx>=0 && todayIdx<totalDays){
+      const tl = document.createElement('div');
+      tl.className = 'gridline today';
+      tl.style.left = (todayIdx*colDay + colDay/2) + 'px';
       track.appendChild(tl);
     }
-
-    // bars
-    m.bars.forEach(b=>{
-      const sIdx = dayIndex(b.start);
-      const eIdx = dayIndex(b.end);
-      const bar = document.createElement("div");
-      bar.className = "bar " + (b.tone||"violet");
-      bar.style.left = (sIdx*colDay + 2) + "px";
-      bar.style.width = ((eIdx - sIdx + 1)*colDay - 4) + "px";
+    m.bars.forEach(b => {
+      const sIdx = dayIndex(b.start), eIdx = dayIndex(b.end);
+      const bar = document.createElement('div');
+      bar.className = 'bar ' + (b.tone||'violet');
+      bar.style.left = (sIdx*colDay + 2) + 'px';
+      bar.style.width = ((eIdx - sIdx + 1)*colDay - 4) + 'px';
       bar.textContent = b.label;
       bar.title = `${b.label}\n${b.start} → ${b.end}`;
       track.appendChild(bar);
     });
-
     row.appendChild(track);
     gantt.appendChild(row);
   });
 
-  // 人员任务卡
-  const cards = document.getElementById("cards");
-  D.taskList.forEach(p=>{
-    const m = D.members.find(x=>x.name===p.who) || {};
-    const card = document.createElement("div");
-    card.className = "card";
-    let html = `<h3><span class="dot" style="background:${m.color||'#888'}"></span>
-                <span class="ttl">${p.who}</span>
-                <span class="badge">${p.tasks.length} 项</span></h3>`;
-    p.tasks.forEach(t=>{
-      html += `<div class="task">
-                 <div class="label">${t.task}</div>
-                 ${t.push?`<div class="push">↳ ${t.push}</div>`:''}
-                 ${t.note?`<div class="note">备注：${t.note}</div>`:''}
-               </div>`;
-    });
-    card.innerHTML = html;
-    cards.appendChild(card);
-  });
+  // 当前状态卡
+  const memEl = document.getElementById('members');
+  const statusMap = {
+    'on-track':'推进中', 'heavy':'负载重', 'light':'空档', 'blocked':'受阻', 'off':'休假'
+  };
+  memEl.innerHTML = D.members.map(m => `
+    <div class="mcard ${m.current.status}">
+      <div class="top">
+        <span class="dot" style="background:${m.color}"></span>
+        <span class="name">${m.name}</span>
+        <span class="role">${m.role}</span>
+        <span class="status-tag">${statusMap[m.current.status]||m.current.status}</span>
+      </div>
+      <div class="task">${m.current.task||'—'}</div>
+      <div class="footer">
+        <span>共 ${m.bars.length} 段排期</span>
+        <a href="${D.meta.tencentDocUrl}" target="_blank">📎 看作品</a>
+      </div>
+    </div>`).join('');
 
   // footer
-  document.getElementById("footer").textContent =
-    `${D.meta.title} · ${D.meta.version} · 数据基线来源：腾讯文档表格截图 · 单页 HTML 离线可看`;
-
-  window.copyShare = function(){
-    navigator.clipboard.writeText(location.href).then(()=>{
-      alert("已复制当前页面链接");
-    },()=>{
-      prompt("请手动复制：", location.href);
-    });
-  };
+  document.getElementById('footer').innerHTML =
+    `${D.meta.title} · ${D.meta.version} · 工作图与日报数据请见 <a href="${D.meta.tencentDocUrl}" target="_blank">${D.meta.tencentDocLabel}</a>`;
 })();
 </script>
 </body>

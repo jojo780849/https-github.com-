@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>工作监控台 · Chris</title>
+<style>
+  :root{--bg:#0d1018;--bg2:#1a1f30;--line:#272d40;--text:#e5e8f0;--dim:#9aa3b8;--accent:#5a7cff;}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.6 -apple-system,"PingFang SC","Microsoft YaHei",Segoe UI,sans-serif}
+  .wrap{max-width:1080px;margin:0 auto;padding:60px 24px}
+  h1{font-size:28px;margin:0 0 8px;letter-spacing:1px}
+  .sub{color:var(--dim);margin-bottom:40px}
+  h2{font-size:14px;color:var(--dim);font-weight:500;letter-spacing:2px;margin:36px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+  a.card{display:block;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:18px 20px;color:var(--text);text-decoration:none;transition:all .2s}
+  a.card:hover{border-color:var(--accent);transform:translateY(-2px)}
+  a.card .t{font-size:16px;font-weight:600;margin-bottom:6px}
+  a.card .d{color:var(--dim);font-size:12px;line-height:1.5}
+  a.card .meta{margin-top:10px;font-size:11px;color:var(--accent)}
+  .empty{color:var(--dim);font-size:12px;padding:14px;background:var(--bg2);border:1px dashed var(--line);border-radius:8px}
+  footer{color:var(--dim);font-size:11px;margin-top:60px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>📋 Chris · 工作监控台</h1>
+  <div class="sub">把每个项目的进度看板都汇总到这里，按需分享给协作者</div>
+
+  <h2>工作 · WORK</h2>
+  <div class="grid">
+    <a class="card" href="./maitaixian-progress/">
+      <div class="t">🌫️ 埋汰线进度与人员工作计划</div>
+      <div class="d">TKPartyGame · L_m_BP_S_R6_D 关卡资产整合，6 人甘特图 + 任务清单</div>
+      <div class="meta">v1 · 2026-04-27 → 2026-05-26 · 30 天</div>
+    </a>
+    <!-- 后续工作类项目继续往下加 -->
+  </div>
+
+  <h2>独立项目 · SIDE PROJECTS</h2>
+  <div class="empty">暂无 · 后续可以把 Claw / Cut Them All / 加密交易机器人的进度看板加进来</div>
+
+  <footer>
+    chrisciou · 静态站点托管于 GitHub Pages · 数据基线见各看板内说明
+  </footer>
+</div>
+</body>
+</html>

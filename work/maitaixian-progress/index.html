@@ -22,9 +22,12 @@ window.DASHBOARD_DATA = {
     holidayRange: "5/1 - 5/5",
     reviewCadence: "每周五复盘",
     note: "5/9 白模阶段成，将版整推送 5/15、5/23、5/26、5/7 安排预检。",
-    // 真实工作图所在的腾讯文档（你与团队的协作权威源，仅展示链接，不做接口对接）
-    tencentDocUrl: "https://doc.weixin.qq.com/sheet/e3_AOUAaga6ACgCNNCAqj1fXQHGuTIBq",
-    tencentDocLabel: "腾讯文档原表（需登录查看工作图）"
+    // 真实工作图所在的腾讯文档（每日进度图墙，团队每天上传截图的地方，仅展示链接）
+    tencentDocUrl: "https://doc.weixin.qq.com/sheet/e3_AaUA0gZzAKMfry4DTWbTJCS4C4DpZ?scode=AIYAlgfPAAcDGw4ICFAOUAaga6ACg&tab=ss_o51w0n&viewId=vXbiwP",
+    tencentDocLabel: "场景原画每日进度图（团队每天上传截图）",
+    // 项目主表（甘特图与人员工作计划的源数据）
+    tencentMainDocUrl: "https://doc.weixin.qq.com/sheet/e3_AOUAaga6ACgCNNCAqj1fXQHGuTIBq?scode=AJEAIQdfAAoqWepPBsAOUAaga6ACg&tab=BB08J2",
+    tencentMainDocLabel: "埋汰线进度与人员工作计划主表"
   },
 
   // 邱哥每周/不定期补一句话观察，我会自动排版
@@ -237,7 +240,8 @@ window.DASHBOARD_DATA = {
     </div>
     <div class="right">
       <span>今日 <b id="todayTxt" style="color:#f87171"></b></span>
-      <a class="btn" id="docLink" target="_blank">📎 看工作图（腾讯文档）</a>
+      <a class="btn" id="docLink" target="_blank">📎 看每日进度图（腾讯文档）</a>
+      <a class="btn" id="mainDocLink" target="_blank" style="opacity:.7">📋 看主表</a>
       <button class="btn" onclick="window.print()">打印 / PDF</button>
     </div>
   </header>
@@ -379,6 +383,7 @@ window.DASHBOARD_DATA = {
     D.meta.subtitle + '　·　' + D.meta.version + '　·　' + D.meta.note;
   document.getElementById('todayTxt').textContent = D.meta.today;
   document.getElementById('docLink').href = D.meta.tencentDocUrl;
+  document.getElementById('mainDocLink').href = D.meta.tencentMainDocUrl || D.meta.tencentDocUrl;
 
   // KPI
   const kpis = [
